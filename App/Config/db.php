@@ -1,10 +1,10 @@
 <?php
 if (!defined('APP_RAN')) {
-    die('Direct access not permitted');
+    die('Acesso não permitido.');
 }
 class Database {
     private $host = 'localhost';
-    private $db_name = 'ondetemDB_us'; // Change this based on the database being accessed
+    private $db_name = 'cpbd';
     private $username = 'root';
     private $password = '';
     public $conn;

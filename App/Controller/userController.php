@@ -17,12 +17,12 @@ class UserController {
         $this->user->name = $name;
         $this->user->nickname = $nickname;
         $this->user->email = $email;
-        $this->user->upassword = $password;
-        $this->user->urank = $rank;
+        $this->user->password = $password;
+        $this->user->rank = $rank;
         if ($this->user->createUser()){
             $_SESSION['response'] = '<p>Usuário criado com sucesso.</p>';
         } else {
-            if(empty($name||$email||$password||$rank)){
+            if(empty($name||$email||$password||$rank||$nickname)){
                 if(empty($name)){
                     $_SESSION['response'] = '<p>Insira o nome completo.</p>';
                 }elseif(empty($email)){
@@ -37,7 +37,7 @@ class UserController {
     }
     public function authenticateUser($nickname, $password){
         $this->user->nickname = $nickname;
-        $this->user->upassword = $password;
+        $this->user->password = $password;
         if($this->user->authenticateUser()){
             header('Location:../');
         }else{

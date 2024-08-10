@@ -83,15 +83,15 @@ class User {
         $params = [];
         $queries = [];
         if (isset($this->name)) {
-            $updateFields['users'][] = "name = :name";
+            $updateFields['users'][] = "uname = :name";
             $params['users'][':name'] = $this->name;
         }
         if (isset($this->email)) {
-            $updateFields['users'][] = "email = :email";
+            $updateFields['users'][] = "uemail = :email";
             $params['users'][':email'] = $this->email;
         }
         if (isset($this->nickname) && $this->nickname != $_SESSION['nickname']) {
-            $updateFields['userdata'][] = "username = :uname";
+            $updateFields['userdata'][] = "unickname = :nickname";
             $params['userdata'][':nickname'] = $this->nickname;
         }
         if (isset($this->defaultTheme) && $this->defaultTheme != $_SESSION['defaultTheme']) {
