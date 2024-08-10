@@ -22,16 +22,9 @@ class UserController {
         if ($this->user->createUser()){
             $_SESSION['response'] = '<p>Usuário criado com sucesso.</p>';
         } else {
-            if(empty($name||$email||$password||$nickname)){
-                if(empty($name)){
-                    $_SESSION['response'] = '<p>Insira o nome completo.</p>';
-                }elseif(empty($email)){
-                    $_SESSION['response'] = '<p>Insira o e-mail.</p>';
-                }elseif(empty($password)){
-                    $_SESSION['response'] = '<p>Insira a senha.</p>';
-                }elseif(empty($nickname)){
-                    $_SESSION['response'] = '<p>Insira o nome de usuário.</p>';
-                }
+            if(empty($name) || empty($email) || empty($password) || empty($nickname)){
+                    $_SESSION['userdata'] = 
+                    $_SESSION['response'] = '<p>Preencha todos os dados.</p>';
             }
         }
     }
@@ -41,7 +34,7 @@ class UserController {
         if($this->user->authenticateUser()){
             header('Location:../');
         }else{
-            echo '<p>User password or email invalid. </p>';
+            echo '<p>Usuário ou senha incorreto. </p>';
             }
     }
     public function updateUser($name, $id, $email, $nickname, $oldPassword, $newPassword, $confirmPassword,$defaultTheme){

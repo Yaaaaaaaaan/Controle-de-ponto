@@ -39,9 +39,11 @@
 
                         $controller = new UserController();
                         $controller->createUser($_POST['name'],$_POST['nickname'], $_POST['email'], $_POST['password']);
+
+                        echo $_SESSION['response'];
                     }
                 ?>
-                <div class="d-grid"><button class="" type="submit">Login</button></div> <a href="../Index/index.php">Voltar</a>
+                <div class="d-grid"><button class="" type="submit">Registrar</button></div> <a href="../Index/index.php">Voltar</a>
         
             </form>
         </div>
