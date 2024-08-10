@@ -7,9 +7,10 @@
 </head>
 <body>
     <h2>Create User</h2>
-    <form action="create_user.php" method="post">
+    <form action="<?php $_SERVER['PHP_SELF']; ?>" method="post">
         <label for="name">Name:</label><br>
         <input type="text" id="name" name="name"><br><br>
+        <input type="text" id="nickname" name="nickname"><br><br>
         <label for="email">Email:</label><br>
         <input type="email" id="email" name="email"><br><br>
         <label for="password">Password:</label><br>
@@ -25,7 +26,7 @@
         include_once '../../../../Estudos/App/controller/UserController.php';
 
         $controller = new UserController();
-        $controller->createUser($_POST['name'], $_POST['email'], $_POST['password'], $_POST['rank']);
+        $controller->createUser($_POST['name'],$_POST['nickname'], $_POST['email'], $_POST['password'], $_POST['rank']);
     }
     ?>
 </body>

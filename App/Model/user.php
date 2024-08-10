@@ -4,8 +4,8 @@ if (!defined('APP_RAN')) {
 }
 class User {
     private $conn;
-    private $table_name = 'users';
-    private $table_name2 = 'userdata';
+    private $table_name = 'userdata';
+    private $table_name2 = 'profilepictures';
 
     public $id;
     public $name;
