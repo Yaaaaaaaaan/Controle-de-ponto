@@ -6,9 +6,9 @@ CREATE TABLE userdata(
     uname VARCHAR(100),
     uemail VARCHAR(88) UNIQUE,
     upassword VARCHAR(50),
-    urank int(2) null
+    urank int(2) null,
     username varchar(50) UNIQUE NOT NULL,
-    udefaultTheme BOOLEAN NOT NULL,
+    udefaultTheme BOOLEAN NOT NULL
 );
 CREATE TABLE profilePictures(
     cod INT PRIMARY KEY AUTO_INCREMENT,
