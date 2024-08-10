@@ -28,6 +28,7 @@ CREATE TABLE pictures(
     cod INT PRIMARY KEY AUTO_INCREMENT,
     path varchar(255) not null,
     description longtext,
-    idUserFK INT NULL,
-    dateload datetime default CURRENT_TIMESTAMP
+    uidUserFK INT NULL,
+    dateload datetime default CURRENT_TIMESTAMP,
+    FOREIGN KEY(uidUserFK) REFERENCES userdata(uid)
 );
