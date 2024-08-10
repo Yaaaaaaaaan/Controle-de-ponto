@@ -35,7 +35,7 @@
                 <?php
                     if ($_POST) {
                         define('APP_RAN', true);
-                        include_once '../../../../Estudos/App/controller/UserController.php';
+                        include_once '../../../App/Controller/UserController.php';
 
                         $controller = new UserController();
                         $controller->createUser($_POST['name'],$_POST['nickname'], $_POST['email'], $_POST['password']);
