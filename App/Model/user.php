@@ -27,7 +27,7 @@ class User {
     }
     public function createUser() {
         if(!empty($this->name && $this->email && $this->password && $this->rank && $this->nickname)){
-            $query = 'INSERT INTO ' . $this->table_name . ' SET uname=:name, unickname=:nickname, uemail=:email, upassword=:password, urank=:rank';
+            $query = 'INSERT INTO ' . $this->table_name . ' SET uname=:name, username=:nickname, uemail=:email, upassword=:password, urank=:rank';
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':name', $this->name);
             $stmt->bindParam(':nickname', $this->nickname);
