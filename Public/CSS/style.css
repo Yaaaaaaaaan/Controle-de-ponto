@@ -46,7 +46,13 @@ body {
     min-height: 100vh;
     background-color: #f0f0f0;
 }
-
+.container-userlogin2 {
+    width:760px;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
 .container-userlogin {
     width:380px;
     background-color: #fff;
@@ -89,13 +95,4 @@ button {
 
 button:hover {
     background-color: #45a049;
-}
-
-
-.container-userregister{
-    width:760px;
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
