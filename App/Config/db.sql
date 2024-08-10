@@ -12,21 +12,22 @@ CREATE TABLE userdata(
 );
 CREATE TABLE profilePictures(
     cod INT PRIMARY KEY AUTO_INCREMENT,
-    image varchar(255) null,
-    
-    dateIn datetime default CURRENT_TIMESTAMP
+    uimage varchar(255) null,
+    dateload datetime default CURRENT_TIMESTAMP,
+    uidUserFK INT NOT NULL,
+    FOREIGN KEY(uidUserFK) REFERENCES userdata(uid)
 );
 CREATE TABLE history(
     cod INT PRIMARY KEY AUTO_INCREMENT,
     description longtext,
-    idUserFK INT NOT NULL,
+    uidUserFK INT NOT NULL,
     dateIn datetime default CURRENT_TIMESTAMP,
-    FOREIGN KEY(idUserFK) REFERENCES users(id)
+    FOREIGN KEY(uidUserFK) REFERENCES userdata(uid)
 );
 CREATE TABLE pictures(
     cod INT PRIMARY KEY AUTO_INCREMENT,
     path varchar(255) not null,
     description longtext,
     idUserFK INT NULL,
-    dateIn datetime default CURRENT_TIMESTAMP
+    dateload datetime default CURRENT_TIMESTAMP
 );
