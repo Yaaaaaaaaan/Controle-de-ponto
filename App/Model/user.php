@@ -51,14 +51,12 @@ class User {
                 $stmt->execute();
                 if ($stmt->rowCount() > 0) {
                     $row = $stmt->fetch(PDO::FETCH_ASSOC);
-                    $_SESSION['name'] = $row['name'];
-                    $_SESSION['email'] = $row['email'];
+                    $_SESSION['name'] = $row['uname'];
+                    $_SESSION['email'] = $row['uemail'];
                     $_SESSION['rank'] = $row['urank'];
-                    $_SESSION['uname'] = $row['username'];
-                    $_SESSION['CPF'] = $row['cpf'];
-                    $_SESSION['location'] = $row['location'];
-                    $_SESSION['id'] = $row['id'];
-                    $_SESSION['lastImageProfileUser'] = $row['image'];
+                    $_SESSION['nickname'] = $row['unickname'];
+                    $_SESSION['id'] = $row['uid'];
+                    $_SESSION['lastImageProfileUser'] = $row['uimage'];
                     $_SESSION['defaultTheme'] = $row['defaultTheme'];
                     $_SESSION['logged'] = true;
                     return true;
