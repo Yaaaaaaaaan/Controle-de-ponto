@@ -13,12 +13,12 @@ class UserController {
         $this->db = $database->getConnection();
         $this->user = new User($this->db);
     }
-    public function createUser($name, $nickname, $email, $password, $rank){
+    public function createUser($name, $nickname, $email, $password){
         $this->user->name = $name;
         $this->user->nickname = $nickname;
         $this->user->email = $email;
         $this->user->password = $password;
-        $this->user->rank = $rank;
+        $this->user->rank = 1;
         if ($this->user->createUser()){
             $_SESSION['response'] = '<p>Usuário criado com sucesso.</p>';
         } else {
