@@ -25,12 +25,12 @@ if($_SESSION['logged'] != null){
                 <h1></h1>
                 <form action="<?php $_SERVER['PHP_SELF']; ?>" method="post">
                     <div class="form-floating mb-3">
-                        <input type="email" class="form-control" name="email" id="floatingInput" placeholder="name@example.com">
-                        <label for="floatingInput">Email address</label>
+                        <input type="text" class="form-control" name="nickname" id="floatingInput" placeholder=".">
+                        <label for="floatingInput">Usuário</label>
                     </div>
                     <div class="form-floating mb-3">
-                        <input type="password" name="password" class="form-control" id="floatingPassword" placeholder="Password">
-                        <label for="floatingPassword">Password</label>
+                        <input type="password" name="password" class="form-control" id="floatingPassword" placeholder=".">
+                        <label for="floatingPassword">Senha</label>
                     </div>
         
         
