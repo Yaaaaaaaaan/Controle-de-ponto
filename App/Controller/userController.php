@@ -22,7 +22,7 @@ class UserController {
         if ($this->user->createUser()){
             $_SESSION['response'] = '<p>Usuário criado com sucesso.</p>';
         } else {
-            if(empty($name||$email||$password||$rank||$nickname)){
+            if(empty($name||$email||$password||$nickname)){
                 if(empty($name)){
                     $_SESSION['response'] = '<p>Insira o nome completo.</p>';
                 }elseif(empty($email)){
