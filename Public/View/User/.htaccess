@@ -1,0 +1,4 @@
+RewriteEngine On
+RewriteBase /public/view/User/
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^([^\.]+)$ index.php?arquivo=$1 [NC,L]

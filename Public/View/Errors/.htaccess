@@ -1,0 +1,4 @@
+RewriteEngine On
+RewriteBase /public/view/Errors/
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^([^\.]+)$ forbidden.php? [NC,L]

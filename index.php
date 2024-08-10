@@ -1,0 +1,1 @@
+<?php header("Location:Public/View/Index/Index.php"); ?>
