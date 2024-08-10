@@ -7,7 +7,7 @@ CREATE TABLE userdata(
     uemail VARCHAR(88) UNIQUE,
     upassword VARCHAR(50),
     urank int(2) null,
-    username varchar(50) UNIQUE NOT NULL,
+    username varchar(50) UNIQUE,
     udefaultTheme BOOLEAN NOT NULL
 );
 CREATE TABLE profilePictures(
