@@ -37,7 +37,7 @@ class UserController {
             echo '<p>Usuário ou senha incorreto. </p>';
             }
     }
-    public function updateUser($name, $id, $email, $nickname, $oldPassword, $newPassword, $confirmPassword,$defaultTheme){
+    public function updateUser($name, $id, $email, $nickname, $oldPassword, $newPassword, $confirmPassword, $defaultTheme){
         $this->user->name = $name;
         $this->user->id = $id;
         $this->user->email = $email;
