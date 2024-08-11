@@ -8,7 +8,7 @@ if ($_POST) {
       $_POST['name'], 
       $_SESSION['id'], 
       $_POST['email'], 
-      $_POST['uname'], 
+      $_POST['nickname'], 
       $_POST['oldPassword'], 
       $_POST['newPassword'], 
       $_POST['confirmPassword'],
@@ -17,9 +17,7 @@ if ($_POST) {
     if ($updateSuccess) {
       $_SESSION['name'] = $_POST['name'];
       $_SESSION['email'] = $_POST['email'];
-      $_SESSION['uname'] = $_POST['uname'];
-      $_SESSION['CPF'] = $_POST['cpf'];
-      $_SESSION['location'] = $_POST['location'];
+      $_SESSION['nickname'] = $_POST['nickname'];
       $_SESSION['defautTheme'] = $_POST['defautTheme'];
       
       header("Location: settings.php");
@@ -75,7 +73,7 @@ if ($_POST) {
             </div>
             <div class="col-sm-6">
                 <div class="form-floating mb-3">
-                    <input type="text" name="uname" class="form-control" id="floatingInput" value="<?php echo htmlspecialchars($_SESSION['nickname']); ?>" placeholder="Username">
+                    <input type="text" name="nickname" class="form-control" id="floatingInput" value="<?php echo htmlspecialchars($_SESSION['nickname']); ?>" placeholder="Username">
                     <label for="floatingInput">Username</label>
                 </div>
             </div>
