@@ -45,7 +45,7 @@ if($_SESSION['logged'] != null){
                             echo $_SESSION['response'];
                         }
                     ?>
-                    <div class="d-grid"><button class="" type="submit">Login</button></div> <a href="../Index/registro.php">Ainda não é cadastrado?! Clique aqui!</a>
+                    <div class="d-grid"><button class="" type="submit">Login</button></div> <a href="../Index/register.php">Ainda não é cadastrado?! Clique aqui!</a>
         
                 </form>
             </div>

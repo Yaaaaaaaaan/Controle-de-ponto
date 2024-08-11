@@ -43,7 +43,7 @@ class User {
     }
     public function authenticateUser() {
         if (!empty($this->nickname) && !empty($this->password)) {
-            $query = "SELECT u.uid, u.uname, u.username, u.urank, u.uemail, u.upassword, u.username,  d.uimage, u.udefaultTheme FROM " . $this->table_name . " u INNER JOIN ". $this->table_name2 ." d ON u.uid = d.uidUserFK WHERE u.username = :nickname AND u.upassword = :password";
+            $query = "SELECT u.uid, u.uname, u.username, u.urank, u.uemail, u.upassword, u.username, d.uimage, u.udefaultTheme FROM " . $this->table_name . " u INNER JOIN ". $this->table_name2 ." d ON u.uid = d.uidUserFK WHERE u.username = :nickname AND u.upassword = :password";
             try {
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam(':nickname', $this->nickname);
@@ -54,10 +54,10 @@ class User {
                     $_SESSION['name'] = $row['uname'];
                     $_SESSION['email'] = $row['uemail'];
                     $_SESSION['rank'] = $row['urank'];
-                    $_SESSION['nickname'] = $row['unickname'];
+                    $_SESSION['nickname'] = $row['username'];
                     $_SESSION['id'] = $row['uid'];
                     $_SESSION['lastImageProfileUser'] = $row['uimage'];
-                    $_SESSION['defaultTheme'] = $row['defaultTheme'];
+                    $_SESSION['defaultTheme'] = $row['udefaultTheme'];
                     $_SESSION['logged'] = true;
                     return true;
                 }

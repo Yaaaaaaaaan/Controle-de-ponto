@@ -9,8 +9,6 @@ if ($_POST) {
       $_SESSION['id'], 
       $_POST['email'], 
       $_POST['uname'], 
-      $_POST['cpf'], 
-      $_POST['location'], 
       $_POST['oldPassword'], 
       $_POST['newPassword'], 
       $_POST['confirmPassword'],
@@ -77,7 +75,7 @@ if ($_POST) {
             </div>
             <div class="col-sm-6">
                 <div class="form-floating mb-3">
-                    <input type="text" name="uname" class="form-control" id="floatingInput" value="<?php echo htmlspecialchars($_SESSION['uname']); ?>" placeholder="Username">
+                    <input type="text" name="uname" class="form-control" id="floatingInput" value="<?php echo htmlspecialchars($_SESSION['nickname']); ?>" placeholder="Username">
                     <label for="floatingInput">Username</label>
                 </div>
             </div>
@@ -86,21 +84,7 @@ if ($_POST) {
                     <input type="text" name="name" class="form-control" id="floatingInput" value="<?php echo htmlspecialchars($_SESSION['name']); ?>" placeholder="Name">
                     <label for="floatingInput">Name</label>
                 </div>
-            </div>
-            <div class="col-12">
-                <div class="form-floating mb-3">
-                    <input type="text" name="location" class="form-control" id="floatingInput" value="<?php echo htmlspecialchars($_SESSION['location']); ?>" placeholder="Location">
-                    <label for="floatingInput">Location</label>
-                </div>
-            </div>
-            <div class="col-12">
-                <div class="form-floating mb-3">
-                    <input type="text" name="cpf" class="form-control" id="floatingInput" value="<?php echo htmlspecialchars($_SESSION['CPF']); ?>" placeholder="CPF">
-                    <label for="floatingInput">CPF</label>
-                </div>
-            </div>
-            
-
+            </div>          
             <div class="accordion" id="scrollspyHeading2">
               <div class="accordion-item">
                 <h2 class="accordion-header">
