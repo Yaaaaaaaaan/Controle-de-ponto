@@ -32,20 +32,20 @@ if ($_POST) {
   <main>
   <div data-bs-spy="scroll" data-bs-target="#navbar-example2"  data-bs-smooth-scroll="true" tabindex="0">
     <div class="py-5 text-center mt-5 pt-5">
-      <h2>Settings</h2>
-      <p class="lead">User's information</p>
+      <h2>Configurações</h2>
+      <p class="lead">Informações de usuário</p>
     </div>
     <div class="row g-5">
       <div class="col-md-5 col-lg-4 order-md-last">
         <div class="row">
           <div class="col-md-12">
             <h4 class="d-flex justify-content-between align-items-center mb-3">
-              <span class="text-primary">Your profile</span>
+              <span class="text-primary">Seu perfil</span>
             </h4>
             <div class="text-center border rounded py-2 mb-3">
               <?php echo '<img src="../../../App' . $_SESSION['lastImageProfileUser'] . '" alt="Imagem do usuário" style="width:226px;" >'; ?>
               <small class="text-body-secondary"><a href="" class="nav-link" data-bs-toggle="modal" data-bs-target="#profilePhoto">
-                    Change your profile photo...
+                    Mude sua foto de perfil...
                   </a></small>
             </div>
           </div>
@@ -55,14 +55,14 @@ if ($_POST) {
           <div class="col-md-12">
             <form class="card p-2">
               <div class="input-group">
-                Recently visited places
+                 
               </div>
             </form>
           </div>
         </div>
       </div>
       <div class="col-md-7 col-lg-8">
-        <h4 class="mb-3">Your data</h4>
+        <h4 class="mb-3">Seus dados</h4>
         <form action="settings.php" method="post" class="needs-validation" novalidate>
           <div class="row g-3">
             <div class="col-sm-6">
