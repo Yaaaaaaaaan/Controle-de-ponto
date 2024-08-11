@@ -43,7 +43,7 @@ class User {
     }
     public function authenticateUser() {
         if (!empty($this->nickname) && !empty($this->password)) {
-            $query = "SELECT u.uid, u.uname, u.unickname, u.urank, u.uemail, u.upassword, u.username,  d.uimage, d.udefaultTheme FROM " . $this->table_name . " u INNER JOIN ". $this->table_name2 ." d ON u.uid = d.uidUserFK WHERE u.unickname = :nickname AND u.upassword = :password";
+            $query = "SELECT u.uid, u.uname, u.username, u.urank, u.uemail, u.upassword, u.username,  d.uimage, d.udefaultTheme FROM " . $this->table_name . " u INNER JOIN ". $this->table_name2 ." d ON u.uid = d.uidUserFK WHERE u.username = :nickname AND u.upassword = :password";
             try {
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam(':nickname', $this->nickname);
