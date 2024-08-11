@@ -40,7 +40,7 @@ if($_SESSION['logged'] != null){
                             include_once '../../../../Estudos/App/controller/UserController.php';
 
                             $controller = new UserController();
-                            $controller->AuthenticateUser($_POST['email'], $_POST['password']);
+                            $controller->AuthenticateUser($_POST['nickname'], $_POST['password']);
 
                             echo $_SESSION['response'];
                         }

@@ -32,7 +32,7 @@ class UserController {
         $this->user->nickname = $nickname;
         $this->user->password = $password;
         if($this->user->authenticateUser()){
-            header('Location:../');
+            header('Location: ../');
         }else{
             echo '<p>Usuário ou senha incorreto. </p>';
             }

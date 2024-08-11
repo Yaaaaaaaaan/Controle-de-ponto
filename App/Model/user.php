@@ -139,7 +139,7 @@ class User {
  // a fazer.
     public function deleteAccount() {
         if (!empty($this->email) && !empty($this->password)) {
-            $query = "SELECT name, urank, email, upassword FROM " . $this->table_name . " WHERE email = :email AND upassword = :upassword";
+            $query = "SELECT uname, urank, email, upassword FROM " . $this->table_name . " WHERE email = :email AND upassword = :upassword";
     
             try {
                 $stmt = $this->conn->prepare($query);
