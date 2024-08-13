@@ -32,3 +32,5 @@ CREATE TABLE pictures(
     dateload datetime default CURRENT_TIMESTAMP,
     FOREIGN KEY(uidUserFK) REFERENCES userdata(uid)
 );
+
+ALTER TABLE `userdata` ADD `utoken` VARCHAR(32) NOT NULL AFTER `uid`;
