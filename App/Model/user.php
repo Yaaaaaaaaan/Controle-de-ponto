@@ -44,12 +44,7 @@ class User {
     public function authenticateUser() {
         if (!empty($this->nickname) && !empty($this->password)) {
             $userToken = bin2hex(random_bytes(32));
-            $query = "SELECT u.uid, u.utoken, u.uname, u.username, u.urank, u.uemail, u.upassword, u.username, d.uimage, u.udefaultTheme FROM " . $this->table_name . " u INNER JOIN ". $this->table_name2 ." d ON u.uid = d.uidUserFK WHERE u.username = :nickname AND u.upassword = :password;
-                
-                    UPDATE ".$this->table_name."
-                    SET utoken = :userToken
-                    WHERE username = :nickname AND upassword = :password;
-                    ";
+            $query = "SELECT u.uid, u.utoken, u.uname, u.username, u.urank, u.uemail, u.upassword, u.username, d.uimage, u.udefaultTheme FROM " . $this->table_name . " u INNER JOIN ". $this->table_name2 ." d ON u.uid = d.uidUserFK WHERE u.username = :nickname AND u.upassword = :password;";
             try {
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam(':nickname', $this->nickname);
@@ -57,6 +52,26 @@ class User {
                 $stmt->execute();
                 if ($stmt->rowCount() > 0) {
                     $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                    
+                    $query ="START TRANSACTION;
+                        UPDATE ".$this->table_name."
+                        SET utoken = :userToken
+                        WHERE uid = :id;
+
+                        IF ROW_COUNT() = 0 THEN
+                            INSERT INTO ".$this->table_name." (utoken)
+                            VALUES (:userToken);
+                        END IF;
+                    COMMIT;";
+                    try{
+                        $this->id = $row['uid'];
+                        $stmt = $this->conn->prepare($query);
+                        $stmt->bindValue(':id', $this->id);
+                        $stmt->execute();
+                    }catch(PDOException $e){
+                        echo "Error: " . $e->getMessage();
+                    }
+
                     $_SESSION['name'] = $row['uname'];
                     $_SESSION['email'] = $row['uemail'];
                     $_SESSION['rank'] = $row['urank'];
@@ -69,12 +84,11 @@ class User {
                     $_SESSION['user_token'] = $userToken;
                     // Enviar o token para o JavaScript
                     echo "<script>const userToken = '" . $_SESSION['user_token'] . "';</script>";
+                    echo $userToken;
                     return true;
                 }
             } catch (PDOException $e) {
                 echo "Error: " . $e->getMessage();
-
-                echo $userToken;
                 return false;
             }
         }
