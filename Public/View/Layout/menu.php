@@ -24,28 +24,40 @@ if ($_POST) {
           let userData = <?php echo json_encode($userData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
                         
           // Armazenando os dados no localStorage
-          localStorage.setItem('userData', JSON.stringify(userData));
-  
-          // Verificando se os dados foram armazenados corretamente
-          console.log('Dados do usuário armazenados no localStorage:', localStorage.getItem('userData'));
-                  
-          if (userData) {
-              console.log(`Nome do usuário: ${userData.name}`);
+          if(userData != null){
+            localStorage.setItem('userData', JSON.stringify(userData));
+            // Verificando se os dados foram armazenados corretamente
+            console.log('Dados do usuário armazenados no localStorage:', localStorage.getItem('userData'));
+            if (userData) {
               // Se precisar salvar novamente, faça da seguinte forma:
               localStorage.setItem('userData', JSON.stringify(userData));
-          } else {
+              <?php unset($_SESSION['userData']); ?>
+            } else {
               console.error('Nenhum dado de usuário encontrado no localStorage.');
+            }
           }
+
+          // Recuperando a string do localStorage
+          let userDataString = localStorage.getItem("userData");
+
+          // Convertendo a string para um objeto JavaScript
+          UserData = JSON.parse(userDataString);
+
+          // Acessando o valor de "name" dentro do array
+          let userdata = UserData.split(",");
+          let name = (userdata[1]);
+          name = (userdata[1]).slice(8, -1);
         </script>
+        
         <nav class="navbar navbar-dark bg-dark fixed-top">
   <div class="container-fluid">
     <a class="navbar-brand" href="#">Controle de ponto</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasDarkNavbar" aria-controls="offcanvasDarkNavbar">
       <span class="navbar-toggler-icon"></span>
     </button>
-    <div class="offcanvas offcanvas-end text-bg-dark" tabindex="-1" id="offcanvasDarkNavbar" aria-labelledby="offcanvasDarkNavbarLabel">
+    <div class="offcanvas offcanvas-end text-bg-dark" tabindex="-1" id="offcanvasDarkNavbar" aria-labelledby="responseName">
       <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="offcanvasDarkNavbarLabel">Hello, <?php echo $_SESSION['name'];?></h5>
+        <h5 class="offcanvas-title" id=""><p id="responseName"></p></h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
       </div>
       <div class="offcanvas-body">
@@ -134,5 +146,12 @@ if ($_POST) {
   </div>
 </div>     
 
+        <script>
+          console.log(userdata[1]);
+                
+          //exibindo no html
+          document.getElementById("responseName").textContent = "Olá, " + name; 
+
+        </script>
       </body>
     </html>

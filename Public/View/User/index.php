@@ -6,7 +6,6 @@ include "../layout/menu.php";
 
 <html>
     <body>
-
     
       <script>
         document.body.dataset.bsTheme = <?php echo $_SESSION['defaultTheme'] == 1 ? "'dark'" : "'light'"; ?>;
