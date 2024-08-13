@@ -17,8 +17,4 @@
       }, false)
     })
   })()
-  
-//userData = JSON.parse(document.getElementById('userData').value);
-//console.log(userData); // Access user data here
-//localStorage.setItem('userData', JSON.stringify(userData));
                     

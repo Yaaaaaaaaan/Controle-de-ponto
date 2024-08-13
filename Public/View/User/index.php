@@ -6,11 +6,6 @@ include "../layout/menu.php";
 
 <html>
     <body>
-      <br><br><br><br><br><br>
-
-      Olá <?= $_SESSION['userData'] ?>
-
-
 
     
       <script>

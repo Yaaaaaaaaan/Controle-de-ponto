@@ -89,7 +89,7 @@ class User {
                     }catch(PDOException $e){
                         echo "Error: " . $e->getMessage();
                     }
-
+                        //Remover as sessions e passar a usar LocalStorage (via Javascript)
                     $_SESSION['name'] = $row['uname'];
                     $_SESSION['email'] = $row['uemail'];
                     $_SESSION['rank'] = $row['urank'];
