@@ -19,11 +19,18 @@ if ($_POST) {
         <script src="../../JS/script.js"></script>
       </head>
         <body>
-          <script>
-            const userData = JSON.parse(localStorage.getItem('userData'));
-            console.log(userData.name);
-            localStorage.setItem('userData', JSON.stringify(userData));
-          </script>
+        <script>
+          // Recuperar os dados armazenados no localStorage
+          const userData = JSON.parse(localStorage.getItem('userData'));
+
+          if (userData) {
+              console.log(`Nome do usuário: ${userData.name}`);
+              // Se precisar salvar novamente, faça da seguinte forma:
+              localStorage.setItem('userData', JSON.stringify(userData));
+          } else {
+              console.error('Nenhum dado de usuário encontrado no localStorage.');
+          }
+        </script>
         <nav class="navbar navbar-dark bg-dark fixed-top">
   <div class="container-fluid">
     <a class="navbar-brand" href="#">Controle de ponto</a>

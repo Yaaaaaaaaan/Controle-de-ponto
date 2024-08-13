@@ -104,17 +104,16 @@ class User {
                         'email' => $row['uemail'],
                         'rank' => $row['urank'],
                         'nickname' => $row['username'],
-                        'theme' => $row['udefautTheme'],
+                        'theme' => $row['udefaultTheme'],
                         'id' => $row['uid'],
                         'profileUser' => $row['uimage'],
                     ]);
                     
-                     
                     // Enviar o token para o JavaScript
-                    echo"
-                            <script>
-                               const userData = $userData;
-                            </script>";
+                    echo "<script>
+                        const userData = $userData;
+                        localStorage.setItem('userData', JSON.stringify(userData));
+                    </script>";
                     return true;
                 }
             } catch (PDOException $e) {
