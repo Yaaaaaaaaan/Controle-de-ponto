@@ -110,8 +110,10 @@ class User {
                     ]);
                     
                     // Enviar o token para o JavaScript
-                    echo "<script>
-                        const userData = $userData;
+                    echo "<div id='user-data' data-user='<?php echo json_encode($userData); ?>'></div>
+                    <script>
+                        let userDataElement = document.getElementById('user-data');
+                        let userData = JSON.parse(userDataElement.getAttribute('data-user'));
                         localStorage.setItem('userData', JSON.stringify(userData));
                     </script>";
                     return true;
