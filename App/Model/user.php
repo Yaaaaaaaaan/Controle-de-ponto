@@ -43,7 +43,8 @@ class User {
     }
     public function authenticateUser() {
         if (!empty($this->nickname) && !empty($this->password)) {
-            $query = "SELECT u.uid, u.uname, u.username, u.urank, u.uemail, u.upassword, u.username, d.uimage, u.udefaultTheme FROM " . $this->table_name . " u INNER JOIN ". $this->table_name2 ." d ON u.uid = d.uidUserFK WHERE u.username = :nickname AND u.upassword = :password";
+            $query = "SELECT u.uid, u.uname, u.username, u.urank, u.uemail, u.upassword, u.username, d.uimage, u.udefaultTheme FROM " . $this->table_name . " u INNER JOIN ". $this->table_name2 ." d ON u.uid = d.uidUserFK WHERE u.username = :nickname AND u.upassword = :password;
+                INSERT INTO ";
             try {
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam(':nickname', $this->nickname);
@@ -55,10 +56,14 @@ class User {
                     $_SESSION['email'] = $row['uemail'];
                     $_SESSION['rank'] = $row['urank'];
                     $_SESSION['nickname'] = $row['username'];
+                    $_SESSION['defaultTheme'] = $row['udefaultTheme'];
                     $_SESSION['id'] = $row['uid'];
                     $_SESSION['lastImageProfileUser'] = $row['uimage'];
-                    $_SESSION['defaultTheme'] = $row['udefaultTheme'];
                     $_SESSION['logged'] = true;
+                    // Gerar um token aleatório e armazenar na sessão
+                    $_SESSION['user_token'] = bin2hex(random_bytes(32));
+                    // Enviar o token para o JavaScript
+                    echo "<script>const userToken = '" . $_SESSION['user_token'] . "';</script>";
                     return true;
                 }
             } catch (PDOException $e) {
@@ -128,10 +133,10 @@ class User {
             }
         }
         //if($id == $_SESSION['id']){
-            if (isset($updatedFields['name'])) $_SESSION['name'] = $this->name;
-            if (isset($updatedFields['email'])) $_SESSION['email'] = $this->email;
+            if (isset($updatedFields['uname'])) $_SESSION['name'] = $this->name;
+            if (isset($updatedFields['uemail'])) $_SESSION['email'] = $this->email;
             if (isset($updatedFields['username'])) $_SESSION['nickname'] = $this->nickname;
-            if (isset($updatedFields['defaultTheme'])) $_SESSION['defaultTheme'] = $this->defaultTheme;
+            if (isset($updatedFields['udefaultTheme'])) $_SESSION['defaultTheme'] = $this->defaultTheme;
        // }
         return true;
     }
