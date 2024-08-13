@@ -8,6 +8,7 @@ class User {
     private $table_name2 = 'profilepictures';
 
     public $id;
+    public $userToken;
     public $name;
     public $email;
     public $password;
@@ -64,9 +65,11 @@ class User {
                         END IF;
                     COMMIT;";
                     try{
+                        $this->userToken = $userToken;
                         $this->id = $row['uid'];
                         $stmt = $this->conn->prepare($query2);
                         $stmt->bindValue(':id', $this->id);
+                        $stmt->bindValue(':userToken', $this->userToken);
                         $stmt->execute();
                     }catch(PDOException $e){
                         echo "Error: " . $e->getMessage();
