@@ -18,3 +18,5 @@
     })
   })()
   
+  console.log(userData); // Access the data here
+  localStorage.setItem('userData', JSON.stringify(userData));

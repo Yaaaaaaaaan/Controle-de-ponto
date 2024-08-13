@@ -98,11 +98,23 @@ class User {
                     $_SESSION['id'] = $row['uid'];
                     $_SESSION['lastImageProfileUser'] = $row['uimage'];
                     $_SESSION['logged'] = true;
-                    // Gerar um token aleatório e armazenar na sessão
-                    $_SESSION['user_token'] = $userToken;
+                    $userData = json_encode([
+                        'userToken' => $userToken,
+                        'name' => $row['uname'],
+                        'email' => $row['uemail'],
+                        'rank' => $row['urank'],
+                        'nickname' => $row['username'],
+                        'theme' => $row['udefautTheme'],
+                        'id' => $row['uid'],
+                        'profileUser' => $row['uimage'],
+                    ]);
+                    
+                     
                     // Enviar o token para o JavaScript
-                    echo "<script>const userToken = '" . $_SESSION['user_token'] . "';</script>";
-                    echo $userToken;
+                    echo"
+                            <script>
+                               const userData = $userData;
+                            </script>";
                     return true;
                 }
             } catch (PDOException $e) {
