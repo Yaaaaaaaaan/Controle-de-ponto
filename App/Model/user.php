@@ -43,8 +43,18 @@ class User {
     }
     public function authenticateUser() {
         if (!empty($this->nickname) && !empty($this->password)) {
+            $userToken =  bin2hex(random_bytes(32));
             $query = "SELECT u.uid, u.uname, u.username, u.urank, u.uemail, u.upassword, u.username, d.uimage, u.udefaultTheme FROM " . $this->table_name . " u INNER JOIN ". $this->table_name2 ." d ON u.uid = d.uidUserFK WHERE u.username = :nickname AND u.upassword = :password;
-                INSERT INTO ";
+                START TRANSACTION;
+                    UPDATE ".$this->table_name."
+                    SET utoken = :userToken
+                    WHERE username = :nickname AND upassword = :password;
+
+                    IF ROW_COUNT() = 0 THEN
+                        INSERT INTO ".$this->table_name." (utoken)
+                        VALUES (:userToken);
+                    END IF;
+                COMMIT;";
             try {
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam(':nickname', $this->nickname);
@@ -61,7 +71,7 @@ class User {
                     $_SESSION['lastImageProfileUser'] = $row['uimage'];
                     $_SESSION['logged'] = true;
                     // Gerar um token aleatório e armazenar na sessão
-                    $_SESSION['user_token'] = bin2hex(random_bytes(32));
+                    $_SESSION['user_token'] = $userToken;
                     // Enviar o token para o JavaScript
                     echo "<script>const userToken = '" . $_SESSION['user_token'] . "';</script>";
                     return true;
