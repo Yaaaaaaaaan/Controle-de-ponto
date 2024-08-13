@@ -53,7 +53,7 @@ class User {
                 if ($stmt->rowCount() > 0) {
                     $row = $stmt->fetch(PDO::FETCH_ASSOC);
                     
-                    $query ="START TRANSACTION;
+                    $query2 ="START TRANSACTION;
                         UPDATE ".$this->table_name."
                         SET utoken = :userToken
                         WHERE uid = :id;
@@ -65,7 +65,7 @@ class User {
                     COMMIT;";
                     try{
                         $this->id = $row['uid'];
-                        $stmt = $this->conn->prepare($query);
+                        $stmt = $this->conn->prepare($query2);
                         $stmt->bindValue(':id', $this->id);
                         $stmt->execute();
                     }catch(PDOException $e){
