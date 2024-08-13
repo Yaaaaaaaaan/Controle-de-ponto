@@ -89,7 +89,7 @@ class User {
             $params['userdata'][':email'] = $this->email;
         }
         if (isset($this->nickname) && $this->nickname != $_SESSION['nickname']) {
-            $updateFields['userdata'][] = "unickname = :nickname";
+            $updateFields['userdata'][] = "username = :nickname";
             $params['userdata'][':nickname'] = $this->nickname;
         }
         if (isset($this->defaultTheme) && $this->defaultTheme != $_SESSION['defaultTheme']) {
@@ -127,12 +127,12 @@ class User {
                 return false;
             }
         }
-        if($id == $_SESSION['id']){
+        //if($id == $_SESSION['id']){
             if (isset($updatedFields['name'])) $_SESSION['name'] = $this->name;
             if (isset($updatedFields['email'])) $_SESSION['email'] = $this->email;
             if (isset($updatedFields['username'])) $_SESSION['nickname'] = $this->nickname;
             if (isset($updatedFields['defaultTheme'])) $_SESSION['defaultTheme'] = $this->defaultTheme;
-        }
+       // }
         return true;
     }
     
