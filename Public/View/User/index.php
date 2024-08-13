@@ -1,21 +1,25 @@
 <?php
 include "../layout/menu.php";
+
+
 ?>
 
 <html>
     <body>
+      <br><br><br><br><br><br>
 
+      Olá <?= $_SESSION['userData'] ?>
 
 
 
     
-    <script>
-  document.body.dataset.bsTheme = <?php echo $_SESSION['defaultTheme'] == 1 ? "'dark'" : "'light'"; ?>;
-  const themeSwitch = document.getElementById('themeSwitch');
-  themeSwitch.addEventListener('change', () => {
-    const newTheme = themeSwitch.checked ? 'dark' : 'light';
-    document.body.dataset.bsTheme = newTheme;
-  });
-</script>
+      <script>
+        document.body.dataset.bsTheme = <?php echo $_SESSION['defaultTheme'] == 1 ? "'dark'" : "'light'"; ?>;
+        const themeSwitch = document.getElementById('themeSwitch');
+        themeSwitch.addEventListener('change', () => {
+          const newTheme = themeSwitch.checked ? 'dark' : 'light';
+          document.body.dataset.bsTheme = newTheme;
+        });
+      </script>
     </body>
 </html>

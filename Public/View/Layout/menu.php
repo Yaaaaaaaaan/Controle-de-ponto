@@ -6,7 +6,7 @@ if ($_POST) {
     if(isset($_POST['logout'])){$controller = new UserController();
     $controller->unAuthenticateUser($_POST['logout']);
 }}
-    
+    $userData = $_SESSION['userData'];  
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -20,9 +20,15 @@ if ($_POST) {
       </head>
         <body>
         <script>
-          // Recuperar os dados armazenados no localStorage
-          const userData = JSON.parse(localStorage.getItem('userData'));
-
+          // Passando os dados PHP para o JavaScript
+          let userData = <?php echo json_encode($userData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+                        
+          // Armazenando os dados no localStorage
+          localStorage.setItem('userData', JSON.stringify(userData));
+  
+          // Verificando se os dados foram armazenados corretamente
+          console.log('Dados do usuário armazenados no localStorage:', localStorage.getItem('userData'));
+                  
           if (userData) {
               console.log(`Nome do usuário: ${userData.name}`);
               // Se precisar salvar novamente, faça da seguinte forma:

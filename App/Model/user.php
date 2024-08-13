@@ -210,13 +210,3 @@ class User {
 
 }
 ?>
-
-
-                 
-                    <script>
-                        // Passando os dados PHP para o JavaScript
-                        let userData = <?php echo json_encode($_SESSION['userData'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
-                        
-                        // Armazenando os dados no localStorage
-                        localStorage.setItem('userData', JSON.stringify(userData));
-                    </script>
