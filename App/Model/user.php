@@ -98,7 +98,7 @@ class User {
                     $_SESSION['id'] = $row['uid'];
                     $_SESSION['lastImageProfileUser'] = $row['uimage'];
                     $_SESSION['logged'] = true;
-                    $userData = json_encode([
+                    $_SESSION['userData'] = json_encode([
                         'userToken' => $userToken,
                         'name' => $row['uname'],
                         'email' => $row['uemail'],
@@ -108,14 +108,7 @@ class User {
                         'id' => $row['uid'],
                         'profileUser' => $row['uimage'],
                     ]);
-                    
-                    // Enviar o token para o JavaScript
-                    echo "<div id='user-data' data-user='<?php echo json_encode($userData); ?>'></div>
-                    <script>
-                        let userDataElement = document.getElementById('user-data');
-                        let userData = JSON.parse(userDataElement.getAttribute('data-user'));
-                        localStorage.setItem('userData', JSON.stringify(userData));
-                    </script>";
+
                     return true;
                 }
             } catch (PDOException $e) {
@@ -217,3 +210,13 @@ class User {
 
 }
 ?>
+
+
+                 
+                    <script>
+                        // Passando os dados PHP para o JavaScript
+                        let userData = <?php echo json_encode($_SESSION['userData'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+                        
+                        // Armazenando os dados no localStorage
+                        localStorage.setItem('userData', JSON.stringify(userData));
+                    </script>
