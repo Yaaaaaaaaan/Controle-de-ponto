@@ -81,23 +81,23 @@ class User {
         $params = [];
         $queries = [];
         if (isset($this->name)) {
-            $updateFields['users'][] = "uname = :name";
-            $params['users'][':name'] = $this->name;
+            $updateFields['userdata'][] = "uname = :name";
+            $params['userdata'][':name'] = $this->name;
         }
         if (isset($this->email)) {
-            $updateFields['users'][] = "uemail = :email";
-            $params['users'][':email'] = $this->email;
+            $updateFields['userdata'][] = "uemail = :email";
+            $params['userdata'][':email'] = $this->email;
         }
         if (isset($this->nickname) && $this->nickname != $_SESSION['nickname']) {
             $updateFields['userdata'][] = "unickname = :nickname";
             $params['userdata'][':nickname'] = $this->nickname;
         }
         if (isset($this->defaultTheme) && $this->defaultTheme != $_SESSION['defaultTheme']) {
-            $updateFields['userdata'][] = "defaultTheme = :defaultTheme";
+            $updateFields['userdata'][] = "udefaultTheme = :defaultTheme";
             $params['userdata'][':defaultTheme'] = $this->defaultTheme;
         }
         foreach ($updateFields as $table => $fields) {
-            $column = ($table == 'users') ? 'uid' : 'uidUserFK';
+            $column = ($table == 'userdata') ? 'uid' : 'uidUserFK';
             $query = "UPDATE " . $table . " SET " . implode(", ", $fields) . " WHERE " . $column . " = :id";
             $params[$table][':id'] = $this->id;
             $queries[] = ['query' => $query, 'params' => $params[$table]];
@@ -107,7 +107,7 @@ class User {
             }
         }
         if (!empty($this->oldPassword) && !empty($this->newPassword) && !empty($this->confirmPassword) && $this->newPassword === $this->confirmPassword) {
-            $query = "UPDATE users SET upassword = :newPassword WHERE uid = :id";
+            $query = "UPDATE userdata SET upassword = :newPassword WHERE uid = :id";
             $paramsPassword = [
                 ':newPassword' => $this->newPassword,
                 ':id' => $this->id

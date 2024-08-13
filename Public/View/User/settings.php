@@ -1,7 +1,7 @@
 <?php
 include_once "../layout/menu.php";
 if ($_POST) {
-    include_once '../../../../Estudos/App/controller/UserController.php';
+    include_once '../../../App/controller/UserController.php';
     $controller = new UserController();
     $defaultTheme = isset($_POST['defaultTheme']) ? 1 : 0;
     $updateSuccess = $controller->updateUser(

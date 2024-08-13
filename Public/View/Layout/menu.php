@@ -2,7 +2,7 @@
 session_start();
 if ($_POST) {
     define('APP_RAN', true);
-    include_once '../../../../Estudos/App/controller/UserController.php';
+    include_once '../../../App/controller/UserController.php';
     if(isset($_POST['logout'])){$controller = new UserController();
     $controller->unAuthenticateUser($_POST['logout']);
 }}
