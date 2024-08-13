@@ -27,6 +27,7 @@ class User {
 
     public $profilePicture;
 
+    public $descricao;
 
     public function __construct($db) {
         $this->conn = $db;
@@ -50,7 +51,12 @@ class User {
     public function authenticateUser() {
         if (!empty($this->nickname) && !empty($this->password)) {
             $userToken = bin2hex(random_bytes(32));
-            $query = "SELECT u.uid, u.utoken, u.uname, u.username, u.urank, u.uemail, u.upassword, u.username, d.uimage, u.udefaultTheme FROM " . $this->tableNames[0] . " u INNER JOIN ". $this->tableNames[1] ." d ON u.uid = d.uidUserFK WHERE u.username = :nickname AND u.upassword = :password;";
+            if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+                $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+            } else {
+                $ip = $_SERVER['REMOTE_ADDR'];
+            }
+            $query = "SELECT u.uid, u.utoken, u.uname, u.username, u.urank, u.uemail, u.upassword, u.username, d.uimage, u.udefaultTheme FROM " . $this->tableNames['userdata'] . " u INNER JOIN ". $this->tableNames['profilepictures'] ." d ON u.uid = d.uidUserFK WHERE u.username = :nickname AND u.upassword = :password;";
             try {
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam(':nickname', $this->nickname);
@@ -60,23 +66,25 @@ class User {
                     $row = $stmt->fetch(PDO::FETCH_ASSOC);
                     
                     $query2 ="START TRANSACTION;
-                        UPDATE ".$this->tableNames[0]."
+                        UPDATE ".$this->tableNames['userdata']."
                         SET utoken = :userToken
                         WHERE uid = :id;
 
                         IF ROW_COUNT() = 0 THEN
-                            INSERT INTO ".$this->tableNames[0]." (utoken)
+                            INSERT INTO ".$this->tableNames['userdata']." (utoken)
                             VALUES (:userToken);
                         END IF;
                     COMMIT;
                     
-                    INSERT INTO ". $this->tableNames[2] . " SET =:name, username=:nickname, uemail=:email, upassword=:password, urank=:rank";
+                    INSERT INTO ". $this->tableNames['history'] . " SET description = :descricao, uidUserFK = :id";
                     try{
+                        $this->descricao = 'login a partir do ip:'.$ip.' E criação do Hash para autenticação temporário: '.$userToken;
                         $this->userToken = $userToken;
                         $this->id = $row['uid'];
                         $stmt = $this->conn->prepare($query2);
                         $stmt->bindValue(':id', $this->id);
                         $stmt->bindValue(':userToken', $this->userToken);
+                        $stmt->bindValue(':descricao', $this->descricao);
                         $stmt->execute();
                     }catch(PDOException $e){
                         echo "Error: " . $e->getMessage();
