@@ -47,6 +47,9 @@ if ($_POST) {
           let userdata = UserData.split(",");
           let name = (userdata[1]);
           name = (userdata[1]).slice(8, -1);
+          
+          //faz a manipulação detalhada da string
+          nameCurto = name.substring(0, name.indexOf(" "));
         </script>
         
         <nav class="navbar navbar-dark bg-dark fixed-top">
@@ -146,11 +149,9 @@ if ($_POST) {
   </div>
 </div>     
 
-        <script>
-          console.log(userdata[1]);
-                
+        <script>                
           //exibindo no html
-          document.getElementById("responseName").textContent = "Olá, " + name; 
+          document.getElementById("responseName").textContent = "Olá, " + nameCurto; 
 
         </script>
       </body>
