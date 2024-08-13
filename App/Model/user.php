@@ -4,8 +4,12 @@ if (!defined('APP_RAN')) {
 }
 class User {
     private $conn;
-    private $table_name = 'userdata';
-    private $table_name2 = 'profilepictures';
+    private $tableNames = [
+        'userdata' => 'userdata',
+        'profilepictures' => 'profilepictures',
+        'history' => 'history'
+    ];
+    
 
     public $id;
     public $userToken;
@@ -23,12 +27,13 @@ class User {
 
     public $profilePicture;
 
+
     public function __construct($db) {
         $this->conn = $db;
     }
     public function createUser() {
         if(!empty($this->name && $this->email && $this->password && $this->rank && $this->nickname)){
-            $query = 'INSERT INTO ' . $this->table_name . ' SET uname=:name, username=:nickname, uemail=:email, upassword=:password, urank=:rank';
+            $query = 'INSERT INTO ' . $this->tableNames[0] . ' SET uname=:name, username=:nickname, uemail=:email, upassword=:password, urank=:rank';
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':name', $this->name);
             $stmt->bindParam(':nickname', $this->nickname);
@@ -45,7 +50,7 @@ class User {
     public function authenticateUser() {
         if (!empty($this->nickname) && !empty($this->password)) {
             $userToken = bin2hex(random_bytes(32));
-            $query = "SELECT u.uid, u.utoken, u.uname, u.username, u.urank, u.uemail, u.upassword, u.username, d.uimage, u.udefaultTheme FROM " . $this->table_name . " u INNER JOIN ". $this->table_name2 ." d ON u.uid = d.uidUserFK WHERE u.username = :nickname AND u.upassword = :password;";
+            $query = "SELECT u.uid, u.utoken, u.uname, u.username, u.urank, u.uemail, u.upassword, u.username, d.uimage, u.udefaultTheme FROM " . $this->tableNames[0] . " u INNER JOIN ". $this->tableNames[1] ." d ON u.uid = d.uidUserFK WHERE u.username = :nickname AND u.upassword = :password;";
             try {
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam(':nickname', $this->nickname);
@@ -55,15 +60,17 @@ class User {
                     $row = $stmt->fetch(PDO::FETCH_ASSOC);
                     
                     $query2 ="START TRANSACTION;
-                        UPDATE ".$this->table_name."
+                        UPDATE ".$this->tableNames[0]."
                         SET utoken = :userToken
                         WHERE uid = :id;
 
                         IF ROW_COUNT() = 0 THEN
-                            INSERT INTO ".$this->table_name." (utoken)
+                            INSERT INTO ".$this->tableNames[0]." (utoken)
                             VALUES (:userToken);
                         END IF;
-                    COMMIT;";
+                    COMMIT;
+                    
+                    INSERT INTO ". $this->tableNames[2] . " SET =:name, username=:nickname, uemail=:email, upassword=:password, urank=:rank";
                     try{
                         $this->userToken = $userToken;
                         $this->id = $row['uid'];
@@ -168,7 +175,7 @@ class User {
  // a fazer.
     public function deleteAccount() {
         if (!empty($this->email) && !empty($this->password)) {
-            $query = "SELECT uname, urank, email, upassword FROM " . $this->table_name . " WHERE email = :email AND upassword = :upassword";
+            $query = "SELECT uname, urank, email, upassword FROM " . $this->tableNames[0] . " WHERE email = :email AND upassword = :upassword";
     
             try {
                 $stmt = $this->conn->prepare($query);
