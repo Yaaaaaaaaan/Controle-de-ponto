@@ -6,7 +6,7 @@ if ($_POST) {
     if(isset($_POST['logout'])){$controller = new UserController();
     $controller->unAuthenticateUser($_POST['logout']);
 }}
-    $userData = $_SESSION['userData'];  
+
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -20,23 +20,33 @@ if ($_POST) {
       </head>
         <body>
         <script>
-          // Passando os dados PHP para o JavaScript
-          let userData = <?php echo json_encode($userData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
-                        
-          // Armazenando os dados no localStorage
-          if(userData != null){
-            localStorage.setItem('userData', JSON.stringify(userData));
-            // Verificando se os dados foram armazenados corretamente
-            console.log('Dados do usuário armazenados no localStorage:', localStorage.getItem('userData'));
-            if (userData) {
-              // Se precisar salvar novamente, faça da seguinte forma:
-              localStorage.setItem('userData', JSON.stringify(userData));
-              <?php unset($_SESSION['userData']); ?>
-            } else {
-              console.error('Nenhum dado de usuário encontrado no localStorage.');
-            }
-          }
+           <?php 
+              if (isset($_SESSION['userData']) && $_SESSION['userData'] != null) {
+                $userData = $_SESSION['userData'];
+              } else {
+                $userData = false;
+              } 
+            ?>
 
+           // Verificando se os dados do usuário estão disponíveis
+          if (<?= json_encode($userData !== false); ?>) {
+              // Passando os dados PHP para o JavaScript
+              let userData = <?php echo json_encode($userData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+
+              if (userData != null) {
+                  // Armazenando os dados no localStorage
+                  localStorage.setItem('userData', JSON.stringify(userData));
+                  // Verificando se os dados foram armazenados corretamente
+                  console.log('Dados do usuário armazenados no localStorage:', localStorage.getItem('userData'));
+
+                  // Limpa os dados da sessão no servidor, se necessário
+                  <?php unset($_SESSION['userData']); ?>
+              } else {
+                  console.error('Nenhum dado de usuário encontrado no localStorage.');
+              }
+          } else {
+              console.error('Nenhum dado de usuário encontrado na sessão.');
+          }
           // Recuperando a string do localStorage
           let userDataString = localStorage.getItem("userData");
 
