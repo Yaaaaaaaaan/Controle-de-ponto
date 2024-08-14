@@ -7,7 +7,8 @@ class User {
     private $tableNames = [
         'userdata' => 'userdata',
         'profilepictures' => 'profilepictures',
-        'history' => 'history'
+        'history' => 'history',
+        'usertoken' => 'usertoken' 
     ];
     
 
@@ -34,7 +35,7 @@ class User {
     }
     public function createUser() {
         if(!empty($this->name && $this->email && $this->password && $this->rank && $this->nickname)){
-            $query = 'INSERT INTO ' . $this->tableNames[0] . ' SET uname=:name, username=:nickname, uemail=:email, upassword=:password, urank=:rank';
+            $query = 'INSERT INTO ' . $this->tableNames['userdata'] . ' SET uname=:name, username=:nickname, uemail=:email, upassword=:password, urank=:rank';
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':name', $this->name);
             $stmt->bindParam(':nickname', $this->nickname);
@@ -56,7 +57,7 @@ class User {
             } else {
                 $ip = $_SERVER['REMOTE_ADDR'];
             }
-            $query = "SELECT u.uid, u.utoken, u.uname, u.username, u.urank, u.uemail, u.upassword, u.username, d.uimage, u.udefaultTheme FROM " . $this->tableNames['userdata'] . " u INNER JOIN ". $this->tableNames['profilepictures'] ." d ON u.uid = d.uidUserFK WHERE u.username = :nickname AND u.upassword = :password;";
+            $query = "SELECT u.uid, t.token	, u.uname, u.username, u.urank, u.uemail, u.upassword, u.username, d.uimage, u.udefaultTheme FROM " . $this->tableNames['userdata'] . " u INNER JOIN ". $this->tableNames['profilepictures'] ." d ON u.uid = d.uidUserFK INNER JOIN ".$this->tableNames['usertoken']." t ON u.uid = t.uidUserFK WHERE u.username = :nickname AND u.upassword = :password;";
             try {
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam(':nickname', $this->nickname);
@@ -66,13 +67,13 @@ class User {
                     $row = $stmt->fetch(PDO::FETCH_ASSOC);
                     
                     $query2 ="START TRANSACTION;
-                        UPDATE ".$this->tableNames['userdata']."
-                        SET utoken = :userToken
-                        WHERE uid = :id;
+                        UPDATE ".$this->tableNames['usertoken']."
+                        SET token = :userToken
+                        WHERE uidUserFK = :id;
 
                         IF ROW_COUNT() = 0 THEN
-                            INSERT INTO ".$this->tableNames['userdata']." (utoken)
-                            VALUES (:userToken);
+                            INSERT INTO ".$this->tableNames['usertoken']." (token, uidUserFK)
+                            VALUES (:userToken, :id);
                         END IF;
                     COMMIT;
                     
