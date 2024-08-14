@@ -1,12 +1,17 @@
 <?php 
-session_start();
-if ($_POST) {
-    define('APP_RAN', true);
-    include_once '../../../App/controller/UserController.php';
-    if(isset($_POST['logout'])){$controller = new UserController();
-    $controller->unAuthenticateUser($_POST['logout']);
-}}
-
+  session_start();
+  if ($_POST) {
+      define('APP_RAN', true);
+      include_once '../../../App/controller/UserController.php';
+      if(isset($_POST['logout'])){$controller = new UserController();
+      $controller->unAuthenticateUser($_POST['logout']);
+  }}
+  //validação de token e dados comuns de usuário
+  if (isset($_SESSION['userData']) && $_SESSION['userData'] != null) {
+    $userData = $_SESSION['userData'];
+  } else {
+    $userData = false;
+  }          
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -20,13 +25,7 @@ if ($_POST) {
       </head>
         <body>
         <script>
-           <?php 
-              if (isset($_SESSION['userData']) && $_SESSION['userData'] != null) {
-                $userData = $_SESSION['userData'];
-              } else {
-                $userData = false;
-              } 
-            ?>
+           
 
            // Verificando se os dados do usuário estão disponíveis
           if (<?= json_encode($userData !== false); ?>) {
