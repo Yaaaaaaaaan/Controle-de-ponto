@@ -33,4 +33,8 @@ CREATE TABLE pictures(
     FOREIGN KEY(uidUserFK) REFERENCES userdata(uid)
 );
 
-ALTER TABLE `userdata` ADD `utoken` VARCHAR(255) NOT NULL AFTER `uid`;
+create table usertoken(
+    token VARCHAR(255) NOT NULL,
+    uidUserFK INT NULL,
+    FOREIGN KEY(uidUserFK) REFERENCES userdata(uid)
+);
