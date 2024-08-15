@@ -188,7 +188,7 @@ class User {
         
         return true;
     }
-    
+    //Ainda assim não está funcionando a parte 
     public static function updateSessionUserData($field, $value) {
         $_SESSION['userData'][$field] = $value;
     }
