@@ -66,6 +66,8 @@
           //faz a manipulação detalhada da string
           nameCurto = name.substring(0, name.indexOf(" "));
 
+          
+
           function alterarCheckbox() {
             
             var defaultTheme = (userdata[5]);

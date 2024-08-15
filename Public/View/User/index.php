@@ -7,7 +7,7 @@ include "../layout/menu.php";
 <html>
     <body>
       <br><br>
-
+      <p id="userData"></p>
 
 
       <script>
