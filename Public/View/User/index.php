@@ -8,9 +8,8 @@ include "../layout/menu.php";
     <body>
       <br><br>
 
-      <?= $_SESSION['userData'] ?>
 
-      
+
       <script>
         document.body.dataset.bsTheme = <?php echo $_SESSION['defaultTheme'] == 1 ? "'dark'" : "'light'"; ?>;
         const themeSwitch = document.getElementById('themeSwitch');
