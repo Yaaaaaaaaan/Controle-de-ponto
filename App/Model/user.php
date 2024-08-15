@@ -179,10 +179,14 @@ class User {
             }
         }
         //if($id == $_SESSION['id']){
-            if (isset($updatedFields['uname'])) $_SESSION['name'] = $this->name;
-            if (isset($updatedFields['uemail'])) $_SESSION['email'] = $this->email;
-            if (isset($updatedFields['username'])) $_SESSION['nickname'] = $this->nickname;
-            if (isset($updatedFields['udefaultTheme'])) $_SESSION['defaultTheme'] = $this->defaultTheme;
+            if (isset($updatedFields['uname']))  $_SESSION['userData'] = json_encode([
+                'name' => $this->name]);
+            if (isset($updatedFields['uemail'])) $_SESSION['userData'] = json_encode([
+                'email' => $this->email]);
+            if (isset($updatedFields['username'])) $_SESSION['userData'] = json_encode([
+                'nickname' => $this->nickname]);
+            if (isset($updatedFields['udefaultTheme'])) $_SESSION['userData'] = json_encode([
+                'theme' => $this->defaultTheme]);
        // }
         return true;
     }

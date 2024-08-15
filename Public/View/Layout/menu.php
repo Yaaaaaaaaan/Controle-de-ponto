@@ -35,6 +35,7 @@
               if (userData != null) {
                   // Armazenando os dados no localStorage
                   localStorage.setItem('userData', JSON.stringify(userData));
+
                   // Verificando se os dados foram armazenados corretamente
                   console.log('Dados do usuário armazenados no localStorage:', localStorage.getItem('userData'));
 
@@ -43,8 +44,6 @@
               } else {
                   console.error('Nenhum dado de usuário encontrado no localStorage.');
               }
-          } else {
-              console.error('Nenhum dado de usuário encontrado na sessão.');
           }
           // Recuperando a string do localStorage
           let userDataString = localStorage.getItem("userData");
@@ -59,6 +58,17 @@
           
           //faz a manipulação detalhada da string
           nameCurto = name.substring(0, name.indexOf(" "));
+
+          function alterarCheckbox() {
+            
+            var defaultTheme = (userdata[5]);
+
+            if(defaultTheme == 0){
+              var themeSwitchShow = document.getElementById("themeSwitchShow");
+              themeSwitchShow.checked = true;
+            }
+            
+        }
         </script>
         
         <nav class="navbar navbar-dark bg-dark fixed-top">
@@ -111,11 +121,7 @@
                <li> 
                    <div class="form-check form-switch ms-3">
                     
-                       <input class="form-check-input" type="checkbox" role="switch" id="themeSwitchShow" disabled
-                      <?php if ($_SESSION['defaultTheme'] == 1) {
-                           echo 'checked';
-                       }?>
-                       >
+                       <input class="form-check-input" type="checkbox" role="switch" id="themeSwitchShow" disabled>
                        <label class="form-check-label" for="themeSwitchShow">Dark mode</label>
                    </div>
                </li>
