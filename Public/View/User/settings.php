@@ -7,8 +7,6 @@ if ($_POST) {
     if($_POST['showHistory']){
       $userHistory = $controller->showUserHistory();
     }
-    
-
     $defaultTheme = isset($_POST['defaultTheme']) ? 1 : 0;
     $updateSuccess = $controller->updateUser(
       $_POST['name'], 
