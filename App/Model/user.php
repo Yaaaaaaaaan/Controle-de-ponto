@@ -179,16 +179,17 @@ class User {
             }
         }
         //if($id == $_SESSION['id']){
-            if (isset($updatedFields['uname']))  $_SESSION['userData'] = json_encode([
-                'name' => $this->name]);
-            if (isset($updatedFields['uemail'])) $_SESSION['userData'] = json_encode([
-                'email' => $this->email]);
-            if (isset($updatedFields['username'])) $_SESSION['userData'] = json_encode([
-                'nickname' => $this->nickname]);
-            if (isset($updatedFields['udefaultTheme'])) $_SESSION['userData'] = json_encode([
-                'theme' => $this->defaultTheme]);
+            if (isset($updatedFields['uname'])) User::updateSessionUserData('name', $this->name);
+            if (isset($updatedFields['uemail'])) User::updateSessionUserData('email', $this->email);
+            if (isset($updatedFields['username'])) User::updateSessionUserData('nickname', $this->nickname);
+            if (isset($updatedFields['udefaultTheme'])) User::updateSessionUserData('defaultTheme', $this->defaultTheme);
        // }
+        
         return true;
+    }
+    
+    public static function updateSessionUserData($field, $value) {
+        $_SESSION['userData'][$field] = $value;
     }
     
  // a fazer.

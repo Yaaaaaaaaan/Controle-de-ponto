@@ -30,8 +30,8 @@
            // Verificando se os dados do usuário estão disponíveis
           if (<?= json_encode($userData !== false); ?>) {
               // Passando os dados PHP para o JavaScript
-              let userData = <?php echo json_encode($userData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
-
+              let userData = <?= json_encode($userData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+             
               if (userData != null) {
                   // Armazenando os dados no localStorage
                   localStorage.setItem('userData', JSON.stringify(userData));
@@ -45,6 +45,13 @@
                   console.error('Nenhum dado de usuário encontrado no localStorage.');
               }
           }
+
+              let updatedUserData = <?php echo $userData; ?>;
+              let currentUserData = JSON.parse(localStorage.getItem('userData'));
+              let mergedData = { ...currentUserData, ...updatedUserData };
+              localStorage.setItem('userData', JSON.stringify(mergedData));
+         
+
           // Recuperando a string do localStorage
           let userDataString = localStorage.getItem("userData");
 
