@@ -81,5 +81,10 @@ class UserController {
             header('Location: ../');
         }
     }
+
+    public function showUserHistory() {
+        $userHistory = $this->user->getUserHistory($_SESSION['id']);
+        return $userHistory;
+    }
 }
 ?>

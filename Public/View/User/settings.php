@@ -1,7 +1,8 @@
 <?php
 include_once "../layout/menu.php";
+include_once '../../../App/controller/UserController.php';
 if ($_POST) {
-    include_once '../../../App/controller/UserController.php';
+    
     $controller = new UserController();
     $defaultTheme = isset($_POST['defaultTheme']) ? 1 : 0;
     $updateSuccess = $controller->updateUser(
@@ -23,10 +24,13 @@ if ($_POST) {
       header("Location: settings.php");
       exit();
     }
-
+    
     //$this->$controller->$updateUserProfilePicture();
-
 }
+
+$controller = new UserController();
+$userHistory = $controller->showUserHistory();
+
 ?>
 <script>
   // Recuperando a string do localStorage
@@ -157,12 +161,31 @@ nameCurto = name.substring(0, name.indexOf(" "));
               <div class="accordion-item">
                 <h2 class="accordion-header">
                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-                        Recent usage history
+                        Histórico de uso
                     </button>
                 </h2>
                 <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#scrollspyHeading2">
                   <div class="accordion-body">
-                    <strong>This is the third item's accordion body.</strong> It is hidden by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the <code>.accordion-body</code>, though the transition does limit overflow.
+                    <table class="table">
+                      <thead>
+                          <tr>
+                              <th>Nome</th>
+                              <th>Username</th>
+                              <th>Descrição</th>
+                              <th>Data</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          <?php foreach ($userHistory as $history) : ?>
+                              <tr>
+                                  <td><?php echo htmlspecialchars($history['uname']); ?></td>
+                                  <td><?php echo htmlspecialchars($history['username']); ?></td>
+                                  <td><?php echo htmlspecialchars($history['description']); ?></td>
+                                  <td><?php echo htmlspecialchars($history['dateIn']); ?></td>
+                              </tr>
+                          <?php endforeach; ?>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
