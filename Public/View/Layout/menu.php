@@ -1,5 +1,7 @@
 <?php 
   session_start();
+  error_reporting(0);
+  ini_set('display_errors', 'Off');
   if ($_POST) {
       define('APP_RAN', true);
       include_once '../../../App/controller/UserController.php';

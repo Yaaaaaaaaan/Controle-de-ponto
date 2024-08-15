@@ -1,9 +1,14 @@
 <?php
 include_once "../layout/menu.php";
-include_once '../../../App/controller/UserController.php';
+
 if ($_POST) {
-    
+    include_once '../../../App/controller/UserController.php';
     $controller = new UserController();
+    if($_POST['showHistory']){
+      $userHistory = $controller->showUserHistory();
+    }
+    
+
     $defaultTheme = isset($_POST['defaultTheme']) ? 1 : 0;
     $updateSuccess = $controller->updateUser(
       $_POST['name'], 
@@ -22,15 +27,10 @@ if ($_POST) {
       $_SESSION['defautTheme'] = $_POST['defautTheme'];
       
       header("Location: settings.php");
-      exit();
     }
     
     //$this->$controller->$updateUserProfilePicture();
 }
-
-$controller = new UserController();
-$userHistory = $controller->showUserHistory();
-
 ?>
 <script>
   // Recuperando a string do localStorage
@@ -101,7 +101,7 @@ nameCurto = name.substring(0, name.indexOf(" "));
             </div>
             <div class="col-12">
                 <div class="form-floating mb-3">
-                    <input type="text" name="name" class="form-control" id="responseNameCompleto" placeholder="Name">
+                    <input type="text" name="name" class="form-control" id="responseNameCompleto" placeholder="Name" value="<?php echo htmlspecialchars($_SESSION['name']); ?>">
                     <label for="responseNameCompleto">Name</label>
                 </div>
             </div>          
@@ -186,6 +186,11 @@ nameCurto = name.substring(0, name.indexOf(" "));
                           <?php endforeach; ?>
                       </tbody>
                     </table>
+                    <form action="<?php $_SERVER['PHP_SELF'] ?>" method="post">
+
+                      <input type="hidden" value="1" name="showHistory">
+                      <button type="submit">Atualizar</button>
+                    </form>
                   </div>
                 </div>
               </div>
