@@ -227,12 +227,14 @@ nameCurto = name.substring(0, name.indexOf(" "));
 
 <script>
 
+          //Nada disso ainda funciona.
           const input = document.getElementById('responseNameCompleto');
           input.value = name;
 
           $(document).ready(function() {
             $('#meuInput').val(localStorage.getItem('nomeUsuario'));
           });
+
   //document.getElementById("responseNameCompleto").textContent = name;
 
   document.body.dataset.bsTheme = <?php echo $_SESSION['defaultTheme'] == 1 ? "'dark'" : "'light'"; ?>;
