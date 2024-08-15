@@ -46,10 +46,12 @@
               }
           }
 
-              let updatedUserData = <?php echo $userData; ?>;
+          /*    let updatedUserData = <?php echo $userData; ?>;
               let currentUserData = JSON.parse(localStorage.getItem('userData'));
               let mergedData = { ...currentUserData, ...updatedUserData };
               localStorage.setItem('userData', JSON.stringify(mergedData));
+
+          */
          
 
           // Recuperando a string do localStorage
@@ -58,11 +60,14 @@
           // Convertendo a string para um objeto JavaScript
           UserData = JSON.parse(userDataString);
 
-          // Acessando o valor de "name" dentro do array
+          // Acessando o valor dentro do array
           let userdata = UserData.split(",");
           let name = (userdata[1]);
+
+
           name = (userdata[1]).slice(8, -1);
           
+
           //faz a manipulação detalhada da string
           nameCurto = name.substring(0, name.indexOf(" "));
 
@@ -88,7 +93,7 @@
     </button>
     <div class="offcanvas offcanvas-end text-bg-dark" tabindex="-1" id="offcanvasDarkNavbar" aria-labelledby="responseName">
       <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id=""><p id="responseName"></p></h5>
+        <h5 class="offcanvas-title" id=""><p id="responseNameCurto"></p></h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
       </div>
       <div class="offcanvas-body">
@@ -151,7 +156,8 @@
     </div>
   </div>
 </nav>
-
+<br><br><br>
+  <p id="responseNameCompleto"></p>
 <!-- Modal -->
 <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
   <div class="modal-dialog">
@@ -173,10 +179,11 @@
   </div>
 </div>     
 
+
+
         <script>                
           //exibindo no html
-          document.getElementById("responseName").textContent = "Olá, " + nameCurto; 
-
+          document.getElementById("responseNameCurto").textContent = "Olá, " + nameCurto; 
         </script>
       </body>
     </html>

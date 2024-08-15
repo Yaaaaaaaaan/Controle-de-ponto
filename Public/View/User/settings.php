@@ -28,6 +28,24 @@ if ($_POST) {
 
 }
 ?>
+<script>
+  // Recuperando a string do localStorage
+  let userDataString = localStorage.getItem("userData");
+
+// Convertendo a string para um objeto JavaScript
+UserData = JSON.parse(userDataString);
+
+// Acessando o valor dentro do array
+let userdata = UserData.split(",");
+let name = (userdata[1]);
+
+
+name = (userdata[1]).slice(8, -1);
+
+
+//faz a manipulação detalhada da string
+nameCurto = name.substring(0, name.indexOf(" "));
+</script>
 <div class="container">
   <main>
   <div data-bs-spy="scroll" data-bs-target="#navbar-example2"  data-bs-smooth-scroll="true" tabindex="0">
@@ -79,8 +97,8 @@ if ($_POST) {
             </div>
             <div class="col-12">
                 <div class="form-floating mb-3">
-                    <input type="text" name="name" class="form-control" id="floatingInput" value="<?php echo htmlspecialchars($_SESSION['name']); ?>" placeholder="Name">
-                    <label for="floatingInput">Name</label>
+                    <input type="text" name="name" class="form-control" id="responseNameCompleto" placeholder="Name">
+                    <label for="responseNameCompleto">Name</label>
                 </div>
             </div>          
             <div class="accordion" id="scrollspyHeading2">
@@ -208,6 +226,15 @@ if ($_POST) {
 
 
 <script>
+
+          const input = document.getElementById('responseNameCompleto');
+          input.value = name;
+
+          $(document).ready(function() {
+            $('#meuInput').val(localStorage.getItem('nomeUsuario'));
+          });
+  //document.getElementById("responseNameCompleto").textContent = name;
+
   document.body.dataset.bsTheme = <?php echo $_SESSION['defaultTheme'] == 1 ? "'dark'" : "'light'"; ?>;
   const themeSwitch = document.getElementById('themeSwitch');
   themeSwitch.addEventListener('change', () => {
