@@ -1,54 +1,95 @@
 <?php
 if (!defined('APP_RAN')) {
-    die('Direct access not permitted');
+  die('Direct access not permitted');
 }
+
 class User {
-    private $conn;
-    private $tableNames = [
-        'userdata' => 'userdata',
-        'profilepictures' => 'profilepictures',
-        'history' => 'history',
-        'usertoken' => 'usertoken' 
-    ];
-    
+  private $conn;
+  private $tableNames = [
+    'userdata' => 'userdata',
+    'profilepictures' => 'profilepictures',
+    'history' => 'history',
+    'usertoken' => 'usertoken'
+  ];
 
-    public $id;
-    public $userToken;
-    public $name;
-    public $email;
-    public $password;
-    public $rank;
-    public $nickname;
+  public $id;
+  public $userToken;
+  public $name;
+  public $email;
+  public $password;
+  public $rank;
+  public $nickname;
 
-    public $newPassword;
-    public $confirmPassword;
-    public $oldPassword;
- 
-    public $defaultTheme;
+  public $newPassword;
+  public $confirmPassword;
+  public $oldPassword;
 
-    public $profilePicture;
+  public $defaultTheme;
 
-    public $descricao;
+  public $profilePicture;
 
-    public function __construct($db) {
-        $this->conn = $db;
-    }
-    public function createUser() {
-        if(!empty($this->name && $this->email && $this->password && $this->rank && $this->nickname)){
-            $query = 'INSERT INTO ' . $this->tableNames['userdata'] . ' SET uname=:name, username=:nickname, uemail=:email, upassword=:password, urank=:rank';
-            $stmt = $this->conn->prepare($query);
-            $stmt->bindParam(':name', $this->name);
-            $stmt->bindParam(':nickname', $this->nickname);
-            $stmt->bindParam(':email', $this->email);
-            $stmt->bindParam(':password', $this->password);
-            $stmt->bindParam(':rank', $this->rank);
-            if ($stmt->execute()) {
-                return true;
-            }
-        }else{
-            return false;
+  public $descricao;
+
+  public function __construct($db) {
+    $this->conn = $db;
+  }
+
+  public function createUser() {
+    if (!empty($this->name && $this->email && $this->password && $this->rank && $this->nickname)) {
+      $userToken = bin2hex(random_bytes(32));
+
+      $query = "INSERT INTO " . $this->tableNames['userdata'] . " 
+                SET uname=:name, username=:nickname, uemail=:email, upassword=:password, urank=:rank;";
+
+      $stmt = $this->conn->prepare($query);
+      $stmt->bindParam(':name', $this->name);
+      $stmt->bindParam(':nickname', $this->nickname);
+      $stmt->bindParam(':email', $this->email);
+      $stmt->bindParam(':password', $this->password);
+      $stmt->bindParam(':rank', $this->rank);
+
+      if ($stmt->execute()) {
+        $this->id = $this->conn->lastInsertId();    
+        $triggerExists = $this->checkTriggerExists('tr_insert_token');
+        if (!$triggerExists) {
+          $triggerQuery = "CREATE TRIGGER tr_insert_token
+                           AFTER INSERT ON " . $this->tableNames['userdata'] . "
+                           FOR EACH ROW
+                           BEGIN
+                             INSERT INTO " . $this->tableNames['usertoken'] . " (token, uidUserFK)
+                             VALUES (:userToken, :id);
+                           END;";
+
+          $stmt = $this->conn->prepare($triggerQuery);
+          $stmt->bindParam(':id', $this->id);
+          $stmt->bindParam(':userToken', $userToken);
+          $stmt->execute();
         }
+        //$query= "INSERT INTO " . $this->tableNames['profilepictures'] . " SET uimage = :image, uidUserFK = :id;"; precisa estudar a implementação dessa query para criação de linha de imagem. para que o login funcione corretamente.
+        $query = "INSERT INTO " . $this->tableNames['usertoken'] . " (token, uidUserFK) 
+                  VALUES (:userToken, :id);";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':userToken', $userToken);
+        $stmt->bindParam(':id', $this->id);
+        $stmt->execute();
+
+        return true;
+      }
     }
+    return false;
+  }
+
+  // Função para checagem de gatilho
+  private function checkTriggerExists($triggerName) {
+    $query = "SELECT COUNT(*) AS trigger_exists
+              FROM information_schema.triggers
+              WHERE trigger_name = :triggerName;";
+    $stmt = $this->conn->prepare($query);
+    $stmt->bindParam(':triggerName', $triggerName);
+    $stmt->execute();
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    return (int)$result['trigger_exists'] === 1;
+  }
     public function authenticateUser() {
         if (!empty($this->nickname) && !empty($this->password)) {
             $userToken = bin2hex(random_bytes(32));
