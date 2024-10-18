@@ -257,7 +257,6 @@ class User {
         return false;
     }
     public function getUserHistory($userId, $registro) {
-        echo "<br><br><br><br> o valor é: ".$registro;
         $query = "SELECT u.uname, u.username, h.description, h.dateIn FROM " . $this->tableNames['userdata'] . " u inner join ".$this->tableNames['history']." h ON u.uid = h.uidUserFK WHERE u.uid = :id ORDER BY h.cod desc LIMIT " . $registro . ";";
         
         try {
