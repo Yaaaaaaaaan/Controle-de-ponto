@@ -28,8 +28,7 @@
       </head>
         <body>
         <script>
-          let userDataString;
-          if(userDataString == null){
+          
             // Verificando se os dados do usuário estão disponíveis
             if (<?= json_encode($userData !== false); ?>) {
                 // Passando os dados PHP para o JavaScript
@@ -48,7 +47,7 @@
                     console.error('Nenhum dado de usuário encontrado no localStorage.');
                 }
             }
-          }   
+            
 
           
 

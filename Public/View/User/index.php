@@ -34,12 +34,18 @@ require "../layout/menu.php";
          {UserData = JSON.parse(userDataString);}
 
           // Acessando o valor dentro do array
-           userdata = UserData.split(",");
+           userData = UserData.split(",");
            name = (userdata[1]).slice(8, -1);
            userToken = (userdata[0]).slice(14, -1);
+           email = (userdata[2]).slice(9, -1);
+           rank = (userData[3]).slice(7);
+           nickname = (userData[4]).slice(12, -1);
+           theme = (userData[5]).slice(8);
+           id = (userData[6]).slice(5);
+           profileUser = (userData[7]).slice(14, -1);
 
           //faz a manipulação detalhada da string
-          nameCurto = name.substring(0, name.indexOf(" "));
+          //nameCurto = name.substring(0, name.indexOf(" "));
 
        // document.body.dataset.bsTheme = <?php echo $_SESSION['defaultTheme'] == 1 ? "'dark'" : "'light'"; ?>;
        // const themeSwitch = document.getElementById('themeSwitch');
@@ -51,7 +57,12 @@ require "../layout/menu.php";
       <br><br>
       <p id="responseName"></p>
       <p id="responseUserToken"></p>
-      <text></text>
+      <p id="profileUser"></p>
+      <p id="id"></p>
+      <p id="theme"></p>
+      <p id="nickname"></p>
+      <p id="rank"></p>
+      <p id="email"></p>
 
 
 
