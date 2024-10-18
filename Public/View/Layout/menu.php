@@ -24,31 +24,35 @@
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
         <script src="../../JS/script.js"></script>
+        <script src="../../JS/localStorage.js"></script>
       </head>
         <body>
         <script>
-           
+          let userDataString;
+          if(userDataString == null){
+            // Verificando se os dados do usuário estão disponíveis
+            if (<?= json_encode($userData !== false); ?>) {
+                // Passando os dados PHP para o JavaScript
+                let userData = <?= json_encode($userData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+              
+                if (userData != null) {
+                    // Armazenando os dados no localStorage
+                    localStorage.setItem('userData', JSON.stringify(userData));
 
-           // Verificando se os dados do usuário estão disponíveis
-          if (<?= json_encode($userData !== false); ?>) {
-              // Passando os dados PHP para o JavaScript
-              let userData = <?= json_encode($userData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
-             
-              if (userData != null) {
-                  // Armazenando os dados no localStorage
-                  localStorage.setItem('userData', JSON.stringify(userData));
+                    // Verificando se os dados foram armazenados corretamente
+                    console.log('Dados do usuário armazenados no localStorage:', localStorage.getItem('userData'));
 
-                  // Verificando se os dados foram armazenados corretamente
-                  console.log('Dados do usuário armazenados no localStorage:', localStorage.getItem('userData'));
+                    // Limpa os dados da sessão no servidor, se necessário
+                    <?php unset($_SESSION['userData']); ?>
+                } else {
+                    console.error('Nenhum dado de usuário encontrado no localStorage.');
+                }
+            }
+          }   
 
-                  // Limpa os dados da sessão no servidor, se necessário
-                  <?php unset($_SESSION['userData']); ?>
-              } else {
-                  console.error('Nenhum dado de usuário encontrado no localStorage.');
-              }
-          }
+          
 
-          /*    let updatedUserData = <?php echo $userData; ?>;
+          /*    let updatedUserData = <?php //echo $userData; ?>;
               let currentUserData = JSON.parse(localStorage.getItem('userData'));
               let mergedData = { ...currentUserData, ...updatedUserData };
               localStorage.setItem('userData', JSON.stringify(mergedData));
@@ -57,7 +61,7 @@
          
 
           // Recuperando a string do localStorage
-          let userDataString = localStorage.getItem("userData");
+          userDataString = localStorage.getItem("userData");
 
           // Convertendo a string para um objeto JavaScript
           UserData = JSON.parse(userDataString);
@@ -66,9 +70,7 @@
           let userdata = UserData.split(",");
           let name = (userdata[1]);
 
-
           name = (userdata[1]).slice(8, -1);
-          
 
           //faz a manipulação detalhada da string
           nameCurto = name.substring(0, name.indexOf(" "));
@@ -180,8 +182,6 @@
     </div>
   </div>
 </div>     
-
-
 
         <script>                
           //exibindo no html

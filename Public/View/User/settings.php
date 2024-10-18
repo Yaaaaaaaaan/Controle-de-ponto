@@ -185,7 +185,7 @@ nameCurto = name.substring(0, name.indexOf(" "));
                       </tbody>
                     </table>
                     <form action="<?php $_SERVER['PHP_SELF'] ?>" method="post">
-
+                      <input type="number" name="value" placeholder ="quantidade de registros a serem exibidos">
                       <input type="hidden" value="1" name="showHistory">
                       <button type="submit">Atualizar</button>
                     </form>

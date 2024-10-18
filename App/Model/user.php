@@ -29,6 +29,7 @@ class User {
   public $profilePicture;
 
   public $descricao;
+  public $value;
 
   public function __construct($db) {
     $this->conn = $db;
@@ -255,12 +256,13 @@ class User {
     
         return false;
     }
-    public function getUserHistory($userId) {
-        $query = "SELECT u.uname, u.username, h.description, h.dateIn FROM " . $this->tableNames['userdata'] . " u inner join ".$this->tableNames['history']." h ON u.uid = h.uidUserFK WHERE u.uid = :id ORDER BY h.dateIn LIMIT 10;";
+    public function getUserHistory($userId, $value) {
+        $query = "SELECT u.uname, u.username, h.description, h.dateIn FROM " . $this->tableNames['userdata'] . " u inner join ".$this->tableNames['history']." h ON u.uid = h.uidUserFK WHERE u.uid = :id ORDER BY h.cod desc LIMIT :value;";
         
         try {
           $stmt = $this->conn->prepare($query);
           $stmt->bindParam(':id', $userId);
+          $stmt->bindParam(':value', $value);
           $stmt->execute();
           $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
           return $result;

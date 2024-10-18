@@ -82,9 +82,12 @@ class UserController {
         }
     }
 
-    public function showUserHistory() {
-        $userHistory = $this->user->getUserHistory($_SESSION['id']);
+    public function showUserHistory($value) {
+        $this->user->value = $value;
+        $userHistory = $this->user->getUserHistory($_SESSION['id'], $value);
         return $userHistory;
     }
+
+    
 }
 ?>
