@@ -1,0 +1,2 @@
+Necessário fazer a migração do módulo de alteração de senha e demais dados para localStorage via token,
+ ou seja, ao alterar a senha, deverá gerar um novo token para autenticação com a aplicação.
