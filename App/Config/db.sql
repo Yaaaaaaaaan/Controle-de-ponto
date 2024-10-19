@@ -108,7 +108,7 @@ CREATE TABLE `userdata` (
 --
 
 INSERT INTO `userdata` (`uid`, `uname`, `uemail`, `upassword`, `urank`, `username`, `udefaultTheme`) VALUES
-(1, 'Yan Fonseca', 'fonsecay@pge.rj.gov.br', '1234', 1, 'fonsecay', 0);
+(1, 'Yan Fonseca', 'fonsecay@a.a', '1234', 1, 'fonsecay', 0);
 
 -- --------------------------------------------------------
 
