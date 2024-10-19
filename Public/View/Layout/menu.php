@@ -181,7 +181,7 @@
     </div>
   </div>
 </div>     
-
+        
         <script>                
           //exibindo no html
           document.getElementById("responseNameCurto").textContent = "Olá, " + nameCurto; 
