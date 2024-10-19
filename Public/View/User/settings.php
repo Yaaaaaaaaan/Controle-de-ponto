@@ -48,7 +48,7 @@ name = (userdata[1]).slice(8, -1);
 //faz a manipulação detalhada da string
 nameCurto = name.substring(0, name.indexOf(" "));
 </script>
-<div class="container-fluid">
+<div class="container">
   <main>
   <div data-bs-spy="scroll" data-bs-target="#navbar-example2"  data-bs-smooth-scroll="true" tabindex="0">
     <div class="py-5 text-center mt-5 pt-5">
