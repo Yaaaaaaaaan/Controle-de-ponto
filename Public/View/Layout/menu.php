@@ -26,68 +26,7 @@
         <script src="../../JS/script.js"></script>
         <script src="../../JS/localStorage.js"></script>
       </head>
-        <body>
-        <script>
-          
-            // Verificando se os dados do usuário estão disponíveis
-          /*  if (<?= json_encode($userData !== false); ?>) {
-                // Passando os dados PHP para o JavaScript
-                let userData = <?= json_encode($userData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
-              
-                if (userData != null) {
-                    // Armazenando os dados no localStorage
-                    localStorage.setItem('userData', JSON.stringify(userData));
-
-                    // Verificando se os dados foram armazenados corretamente
-                    console.log('Dados do usuário armazenados no localStorage:', localStorage.getItem('userData'));
-
-                    // Limpa os dados da sessão no servidor, se necessário
-                    <?php //unset($_SESSION['userData']); ?>
-                } else {
-                    console.error('Nenhum dado de usuário encontrado no localStorage.');
-                }
-            }
-            
-
-          
-
-          /*    let updatedUserData = <?php //echo $userData; ?>;
-              let currentUserData = JSON.parse(localStorage.getItem('userData'));
-              let mergedData = { ...currentUserData, ...updatedUserData };
-              localStorage.setItem('userData', JSON.stringify(mergedData));
-
-          */
-         
-
-          // Recuperando a string do localStorage
-        /*  userDataString = localStorage.getItem("userData");
-
-          // Convertendo a string para um objeto JavaScript
-          UserData = JSON.parse(userDataString);
-
-          // Acessando o valor dentro do array
-          let userdata = UserData.split(",");
-          let name = (userdata[1]);
-
-          name = (userdata[1]).slice(8, -1);
-
-          //faz a manipulação detalhada da string
-          nameCurto = name.substring(0, name.indexOf(" "));
-
-          
-
-          function alterarCheckbox() {
-            
-            var defaultTheme = (userdata[5]);
-
-            if(defaultTheme == 0){
-              var themeSwitchShow = document.getElementById("themeSwitchShow");
-              themeSwitchShow.checked = true;
-            }
-            
-        }
-        </script>
-        
+        <body>       
         <nav class="navbar navbar-dark bg-dark fixed-top">
   <div class="container-fluid">
     <a class="navbar-brand" href="#">Controle de ponto</a>
