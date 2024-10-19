@@ -7,7 +7,7 @@ require "../layout/menu.php";
 <html>
 
 <script>
-  if(userDataString == null){
+/*  if(userDataString == null){
     // Verificando se os dados do usuário estão disponíveis
     if (<?= json_encode($userData !== false); ?>) {
             // Passando os dados PHP para o JavaScript
@@ -21,7 +21,7 @@ require "../layout/menu.php";
                 console.log('Dados do usuário armazenados no localStorage:', localStorage.getItem('userData'));
 
                 // Limpa os dados da sessão no servidor, se necessário
-                <?php unset($_SESSION['userData']); ?>
+                <?php //unset($_SESSION['userData']); ?>
             } else {
                 console.error('Nenhum dado de usuário encontrado no localStorage.');
             }

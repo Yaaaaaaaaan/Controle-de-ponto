@@ -99,7 +99,12 @@ class User {
             } else {
                 $ip = $_SERVER['REMOTE_ADDR'];
             }
-            $query = "SELECT u.uid, t.token	, u.uname, u.username, u.urank, u.uemail, u.upassword, u.username, d.uimage, u.udefaultTheme FROM " . $this->tableNames['userdata'] . " u INNER JOIN ". $this->tableNames['profilepictures'] ." d ON u.uid = d.uidUserFK INNER JOIN ".$this->tableNames['usertoken']." t ON u.uid = t.uidUserFK WHERE u.username = :nickname AND u.upassword = :password;";
+            $query = "SELECT u.uid, t.token	, u.uname, u.username, u.urank, u.uemail, u.upassword, u.username, d.uimage, u.udefaultTheme 
+            FROM " . $this->tableNames['userdata'] . " u 
+            INNER JOIN ". $this->tableNames['profilepictures'] ." d ON u.uid = d.uidUserFK 
+            INNER JOIN ".$this->tableNames['usertoken']." t ON u.uid = t.uidUserFK 
+            WHERE u.username = :nickname AND u.upassword = :password;";
+            
             try {
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam(':nickname', $this->nickname);
@@ -238,7 +243,8 @@ class User {
  // a fazer.
     public function deleteAccount() {
         if (!empty($this->email) && !empty($this->password)) {
-            $query = "SELECT uname, urank, email, upassword FROM " . $this->tableNames[0] . " WHERE email = :email AND upassword = :upassword";
+            $query = "SELECT uname, urank, email, upassword FROM " . $this->tableNames[0] . " 
+            WHERE email = :email AND upassword = :upassword";
     
             try {
                 $stmt = $this->conn->prepare($query);
@@ -257,7 +263,10 @@ class User {
         return false;
     }
     public function getUserHistory($userId, $registro) {
-        $query = "SELECT u.uname, u.username, h.description, h.dateIn FROM " . $this->tableNames['userdata'] . " u inner join ".$this->tableNames['history']." h ON u.uid = h.uidUserFK WHERE u.uid = :id ORDER BY h.cod desc LIMIT " . $registro . ";";
+        $query = "
+            SELECT u.uname, u.username, h.description, h.dateIn FROM " . $this->tableNames['userdata'] . " u 
+            INNER JOIN ".$this->tableNames['history']." h ON u.uid = h.uidUserFK 
+            WHERE u.uid = :id ORDER BY h.cod desc LIMIT " . $registro . ";";
         
         try {
           $stmt = $this->conn->prepare($query);

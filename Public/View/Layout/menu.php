@@ -30,7 +30,7 @@
         <script>
           
             // Verificando se os dados do usuário estão disponíveis
-            if (<?= json_encode($userData !== false); ?>) {
+          /*  if (<?= json_encode($userData !== false); ?>) {
                 // Passando os dados PHP para o JavaScript
                 let userData = <?= json_encode($userData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
               
@@ -42,7 +42,7 @@
                     console.log('Dados do usuário armazenados no localStorage:', localStorage.getItem('userData'));
 
                     // Limpa os dados da sessão no servidor, se necessário
-                    <?php unset($_SESSION['userData']); ?>
+                    <?php //unset($_SESSION['userData']); ?>
                 } else {
                     console.error('Nenhum dado de usuário encontrado no localStorage.');
                 }
@@ -60,7 +60,7 @@
          
 
           // Recuperando a string do localStorage
-          userDataString = localStorage.getItem("userData");
+        /*  userDataString = localStorage.getItem("userData");
 
           // Convertendo a string para um objeto JavaScript
           UserData = JSON.parse(userDataString);

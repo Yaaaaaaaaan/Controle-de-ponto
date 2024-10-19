@@ -1,4 +1,5 @@
 <?php
+
 session_start();
  //validação de token e dados comuns de usuário
  if (isset($_SESSION['userData']) && $_SESSION['userData'] != null) {
@@ -6,6 +7,7 @@ session_start();
  } else {
      $userData = false;
  }
+
 
 // Verifica se os dados do usuário estão disponíveis
 if ($userData !== false) {
@@ -16,5 +18,5 @@ if ($userData !== false) {
 }
 
 // Limpa a sessão, se necessário
-unset($_SESSION['userData']);
+//unset($_SESSION['userData']);
 ?>
