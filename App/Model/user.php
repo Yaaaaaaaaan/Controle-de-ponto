@@ -289,10 +289,11 @@ class User {
         $this->verifyUpload = $verifyUpload;
         $this->id = $_SESSION['id'];
         // Insere o nome da imagem no banco de dados
-        $sql = "INSERT INTO pictures (description, path, uidUserFK) VALUES (?, ?, ?)";
+        $sql = "INSERT INTO pictures (path, description, uidUserFK) VALUES (:directory, :profilePicture, :id)";
         $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("ss", $this->profilePicture, $this->directory, $this->id);
-
+        $stmt->bindValue(':id', $this->id);
+        $stmt->bindValue(':profilePicture', $this->profilePicture);
+        $stmt->bindValue(':directory', $this->directory);
         if ($stmt->execute()) {
             return true;
         } else {

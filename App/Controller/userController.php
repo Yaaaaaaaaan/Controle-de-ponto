@@ -72,10 +72,12 @@ class UserController {
     }
     public function updateUserProfilePicture($profilePicture) {
         $targetDirectory = __DIR__ . '/../Persistence/userProfileImages/';
-        $arch = $targetDirectory . basename($_FILES["profilepic"]["name"]);
+        $nameOld = $targetDirectory . basename($_FILES["profilepic"]["name"]);
         $uploadOk = 1;
-        $fileTypeImage = strtolower(pathinfo($arch, PATHINFO_EXTENSION));
-        
+        $fileTypeImage = strtolower(pathinfo($nameOld, PATHINFO_EXTENSION));
+         // Gera um novo nome de arquivo baseado na data e hora atual
+        $newFileName = date('YmdHis') .$_SESSION['id']. '.' . $fileTypeImage;
+        $arch = $targetDirectory . $newFileName;
         // Verifica se o arquivo é uma imagem
         $check = getimagesize($profilePicture['tmp_name']);
         if ($check === false) {
@@ -104,7 +106,9 @@ class UserController {
         // Se estiver tudo ok, tenta fazer o upload
         if ($uploadOk == 1) {
             if (move_uploaded_file($profilePicture['tmp_name'], $arch)) {
-                echo "A imagem foi enviada com sucesso.";
+                if($this->user->updateUserProfilePicture($newFileName, $arch,  $uploadOk)){
+                    echo "A imagem foi enviada com sucesso.";
+                }
             } else {
                 echo "Desculpe, houve um erro ao enviar sua imagem.";
             }
