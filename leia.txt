@@ -1,2 +1,5 @@
 Necessário fazer a migração do módulo de alteração de senha e demais dados para localStorage via token,
  ou seja, ao alterar a senha, deverá gerar um novo token para autenticação com a aplicação.
+
+ Alteração de foto de perfil quase 100% funcional, restando apenas a inserção de uma imagem padrão para o primeiro acesso funcionar corretamente.
+ 
