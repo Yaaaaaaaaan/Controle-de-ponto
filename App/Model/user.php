@@ -27,6 +27,8 @@ class User {
   public $defaultTheme;
 
   public $profilePicture;
+  public $directory;
+  public $verifyUpload;
 
   public $descricao;
   public $registro;
@@ -280,8 +282,22 @@ class User {
           return false;
         }
       }
-      
-    
-    
+
+      public function updateUserProfilePicture($profilePicture, $directory, $verifyUpload) {
+        $this->profilePicture = $profilePicture;
+        $this->directory = $directory;
+        $this->verifyUpload = $verifyUpload;
+        $this->id = $_SESSION['id'];
+        // Insere o nome da imagem no banco de dados
+        $sql = "INSERT INTO pictures (description, path, uidUserFK) VALUES (?, ?, ?)";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("ss", $this->profilePicture, $this->directory, $this->id);
+
+        if ($stmt->execute()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }
 ?>

@@ -70,9 +70,47 @@ class UserController {
             }
         }
     }
-    public function updateUserProfilePicture(){
+    public function updateUserProfilePicture($profilePicture) {
+        $targetDirectory = __DIR__ . '/../Persistence/userProfileImages/';
+        $arch = $targetDirectory . basename($_FILES["profilepic"]["name"]);
+        $uploadOk = 1;
+        $fileTypeImage = strtolower(pathinfo($arch, PATHINFO_EXTENSION));
         
+        // Verifica se o arquivo é uma imagem
+        $check = getimagesize($profilePicture['tmp_name']);
+        if ($check === false) {
+            echo "O arquivo não é uma imagem.";
+            $uploadOk = 0;
+        }
+        
+        // Verifica se o arquivo já existe
+        if (file_exists($arch)) {
+            echo "Desculpe, o arquivo já existe.";
+            $uploadOk = 0;
+        }
+        
+        // Verifica o tamanho do arquivo
+        if ($profilePicture['size'] > 500000) { // Limite de 500KB
+            echo "Desculpe, seu arquivo é muito grande.";
+            $uploadOk = 0;
+        }
+        
+        // Permite apenas certos formatos de arquivo
+        if (!in_array($fileTypeImage, ['jpg', 'png', 'jpeg', 'gif'])) {
+            echo "Desculpe, apenas arquivos JPG, JPEG, PNG e GIF são permitidos.";
+            $uploadOk = 0;
+        }
+        
+        // Se estiver tudo ok, tenta fazer o upload
+        if ($uploadOk == 1) {
+            if (move_uploaded_file($profilePicture['tmp_name'], $arch)) {
+                echo "A imagem foi enviada com sucesso.";
+            } else {
+                echo "Desculpe, houve um erro ao enviar sua imagem.";
+            }
+        }
     }
+    
     public function unAuthenticateUser($logout){
         $this->user->$logout = $logout;
         if($this->user->$logout != null){

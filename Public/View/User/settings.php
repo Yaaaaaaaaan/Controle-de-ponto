@@ -7,6 +7,11 @@ if ($_POST) {
     if($_POST['showHistory']){
       $userHistory = $controller->showUserHistory($_POST['registro']);
     }
+    // Verifica o upload da imagem de perfil
+    if(isset($_FILES['profilepic'])) {
+      $controller->updateUserProfilePicture($_FILES['profilepic']);
+    }
+
     $defaultTheme = isset($_POST['defaultTheme']) ? 1 : 0;
     $updateSuccess = $controller->updateUser(
       $_POST['name'], 
@@ -26,28 +31,9 @@ if ($_POST) {
       
       header("Location: settings.php");
     }
-    
-    //$this->$controller->$updateUserProfilePicture();
 }
 ?>
-<script>
-  // Recuperando a string do localStorage
-  let userDataString = localStorage.getItem("userData");
 
-// Convertendo a string para um objeto JavaScript
-UserData = JSON.parse(userDataString);
-
-// Acessando o valor dentro do array
-let userdata = UserData.split(",");
-let name = (userdata[1]);
-
-
-name = (userdata[1]).slice(8, -1);
-
-
-//faz a manipulação detalhada da string
-nameCurto = name.substring(0, name.indexOf(" "));
-</script>
 <div class="container">
   <main>
   <div data-bs-spy="scroll" data-bs-target="#navbar-example2"  data-bs-smooth-scroll="true" tabindex="0">
@@ -212,42 +198,38 @@ nameCurto = name.substring(0, name.indexOf(" "));
 
 <!-- Modal -->
 <div class="modal fade" id="profilePhoto" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h1 class="modal-title fs-5" id="profilePhotoLabel">Your Profile</h1>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <div class="row">
-          <div class="col-md-4"></div>
-          <div class="col-md-6">My recent photo</div>
-          <div class="col-md-2"></div>
-        </div>
-        <div class="row">
-        <div class="position-relative">
-          
-          <div class="text-center"><?php echo '<img src="../../../App' . $_SESSION['lastImageProfileUser'] . '" alt="Imagem do usuário" style="width:280px;" >'; ?></div>
-          
-        </div>
-        </div>
-        
-        
-        <div class="col-md-12 mt-1">
-          <form action="<?php $_SERVER['PHP_SELF'] ?>" method="post" class="needs-validation" enctype="multipart/form-data" novalidate>
-            <div class="input-group">
-              <input type="file" multiple name="pics[]" class="form-control" id="inputGroupFile04" aria-describedby="inputGroupFileAddon04" aria-label="Upload">
-              <button class="btn btn-outline-secondary" type="submit">Submit</button>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="profilePhotoLabel">Your Profile</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-          </form>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-4"></div>
+                    <div class="col-md-6">My recent photo</div>
+                    <div class="col-md-2"></div>
+                </div>
+                <div class="row">
+                    <div class="position-relative">
+                        <div class="text-center">
+                            <?php echo '<img src="../../../App' . $_SESSION['lastImageProfileUser'] . '" alt="Imagem do usuário" style="width:280px;" >'; ?>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-12 mt-1">
+                    <form action="settings.php" method="post" enctype="multipart/form-data">
+                        <div class="input-group">
+                            <input type="hidden" name="nome_imagem" value="<?= time().$_SESSION['id'] ?>">
+                            <input type="file" name="profilepic" class="form-control" id="inputGroupFile04" aria-describedby="inputGroupFileAddon04" aria-label="Upload">
+                            <button class="btn btn-outline-secondary" type="submit">Submit</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary">Understood</button>
-      </div>
     </div>
-  </div>
 </div>
 
 
