@@ -71,46 +71,48 @@ class UserController {
         }
     }
     public function updateUserProfilePicture($profilePicture) {
-        $targetDirectory = __DIR__ . '/../Persistence/userProfileImages/';
+        $targetDirectory = '/Controle-de-ponto/App/Persistence/userProfileImages/';
         $nameOld = $targetDirectory . basename($_FILES["profilepic"]["name"]);
         $uploadOk = 1;
         $fileTypeImage = strtolower(pathinfo($nameOld, PATHINFO_EXTENSION));
          // Gera um novo nome de arquivo baseado na data e hora atual
         $newFileName = date('YmdHis') .$_SESSION['id']. '.' . $fileTypeImage;
         $arch = $targetDirectory . $newFileName;
+        // Caminho completo no servidor
+        $targetFile = __DIR__ . '/../Persistence/userProfileImages/' . $newFileName;
         // Verifica se o arquivo é uma imagem
         $check = getimagesize($profilePicture['tmp_name']);
         if ($check === false) {
-            echo "O arquivo não é uma imagem.";
+            $_SESSION['response'] = "O arquivo não é uma imagem.";
             $uploadOk = 0;
         }
         
         // Verifica se o arquivo já existe
         if (file_exists($arch)) {
-            echo "Desculpe, o arquivo já existe.";
+            $_SESSION['response'] = "Arquivo já existente.";
             $uploadOk = 0;
         }
         
         // Verifica o tamanho do arquivo
         if ($profilePicture['size'] > 500000) { // Limite de 500KB
-            echo "Desculpe, seu arquivo é muito grande.";
+            $_SESSION['response'] = "Arquivo muito grande.";
             $uploadOk = 0;
         }
         
         // Permite apenas certos formatos de arquivo
         if (!in_array($fileTypeImage, ['jpg', 'png', 'jpeg', 'gif'])) {
-            echo "Desculpe, apenas arquivos JPG, JPEG, PNG e GIF são permitidos.";
+            $_SESSION['response'] = "Apenas arquivos JPG, JPEG, PNG e GIF são permitidos.";
             $uploadOk = 0;
         }
         
         // Se estiver tudo ok, tenta fazer o upload
         if ($uploadOk == 1) {
-            if (move_uploaded_file($profilePicture['tmp_name'], $arch)) {
+            if (move_uploaded_file($profilePicture['tmp_name'], $targetFile)) {
                 if($this->user->updateUserProfilePicture($newFileName, $arch,  $uploadOk)){
-                    echo "A imagem foi enviada com sucesso.";
+                    $_SESSION['response'] = '<p>Imagem alterada com sucesso!.</p>';
                 }
             } else {
-                echo "Desculpe, houve um erro ao enviar sua imagem.";
+                $_SESSION['response'] = '<p>Erro ao alterar imagem de perfil.</p>';
             }
         }
     }

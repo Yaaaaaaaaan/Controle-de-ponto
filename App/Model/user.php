@@ -8,6 +8,7 @@ class User {
   private $tableNames = [
     'userdata' => 'userdata',
     'profilepictures' => 'profilepictures',
+    'pictures' => 'pictures',
     'history' => 'history',
     'usertoken' => 'usertoken'
   ];
@@ -101,10 +102,11 @@ class User {
             } else {
                 $ip = $_SERVER['REMOTE_ADDR'];
             }
-            $query = "SELECT u.uid, t.token	, u.uname, u.username, u.urank, u.uemail, u.upassword, u.username, d.uimage, u.udefaultTheme 
+            $query = "SELECT u.uid, t.token	, u.uname, u.username, u.urank, u.uemail, u.upassword, u.username, d.path, p.dateload, u.udefaultTheme 
             FROM " . $this->tableNames['userdata'] . " u 
-            INNER JOIN ". $this->tableNames['profilepictures'] ." d ON u.uid = d.uidUserFK 
+            INNER JOIN ". $this->tableNames['pictures'] ." d ON u.uid = d.uidUserFK 
             INNER JOIN ".$this->tableNames['usertoken']." t ON u.uid = t.uidUserFK 
+            inner join ".$this->tableNames['profilepictures']." p ON p.uimageFK = d.cod
             WHERE u.username = :nickname AND u.upassword = :password;";
             
             try {
@@ -146,7 +148,7 @@ class User {
                     $_SESSION['nickname'] = $row['username'];
                     $_SESSION['defaultTheme'] = $row['udefaultTheme'];
                     $_SESSION['id'] = $row['uid'];
-                    $_SESSION['lastImageProfileUser'] = $row['uimage'];
+                    $_SESSION['lastImageProfileUser'] = $row['path'];
                     $_SESSION['logged'] = true;
                     
                     $_SESSION['userData'] = json_encode([
@@ -157,7 +159,7 @@ class User {
                         'nickname' => $row['username'],
                         'theme' => $row['udefaultTheme'],
                         'id' => $row['uid'],
-                        'profileUser' => $row['uimage'],
+                        'profileUser' => $row['path'],
                     ]);
 
                     return true;
@@ -288,13 +290,20 @@ class User {
         $this->directory = $directory;
         $this->verifyUpload = $verifyUpload;
         $this->id = $_SESSION['id'];
-        // Insere o nome da imagem no banco de dados
-        $sql = "INSERT INTO pictures (path, description, uidUserFK) VALUES (:directory, :profilePicture, :id)";
+        $sql = "INSERT INTO pictures (path, description, uidUserFK) 
+        VALUES (:directory, :profilePicture, :id);        
+        SET @newPictureId = LAST_INSERT_ID();
+        INSERT INTO profilepictures (uidUserFK, uimageFK) 
+        VALUES (:id, @newPictureId)
+        ON DUPLICATE KEY UPDATE
+            uimageFK = VALUES(uimageFK);";
         $stmt = $this->conn->prepare($sql);
         $stmt->bindValue(':id', $this->id);
         $stmt->bindValue(':profilePicture', $this->profilePicture);
         $stmt->bindValue(':directory', $this->directory);
+        
         if ($stmt->execute()) {
+            $_SESSION['lastImageProfileUser'] = $this->directory;
             return true;
         } else {
             return false;

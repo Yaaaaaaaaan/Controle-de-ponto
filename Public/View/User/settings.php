@@ -49,7 +49,7 @@ if ($_POST) {
               <span class="text-primary">Seu perfil</span>
             </h4>
             <div class="text-center border rounded py-2 mb-3">
-              <?php echo '<img src="../../../App' . $_SESSION['lastImageProfileUser'] . '" alt="Imagem do usuário" style="width:226px;" >'; ?>
+              <?php echo '<img src="' . $_SESSION['lastImageProfileUser'] . '" alt="Imagem do usuário" style="width:226px;" >'; ?>
               <small class="text-body-secondary"><a href="" class="nav-link" data-bs-toggle="modal" data-bs-target="#profilePhoto">
                     Mude sua foto de perfil...
                   </a></small>
@@ -213,7 +213,7 @@ if ($_POST) {
                 <div class="row">
                     <div class="position-relative">
                         <div class="text-center">
-                            <?php echo '<img src="../../../App' . $_SESSION['lastImageProfileUser'] . '" alt="Imagem do usuário" style="width:280px;" >'; ?>
+                        <?php echo '<img src="' . $_SESSION['lastImageProfileUser'] . '" alt="Imagem do usuário" style="width:280px;" >'; ?>
                         </div>
                     </div>
                 </div>
@@ -225,6 +225,8 @@ if ($_POST) {
                             <input type="file" name="profilepic" class="form-control" id="inputGroupFile04" aria-describedby="inputGroupFileAddon04" aria-label="Upload">
                             <button class="btn btn-outline-secondary" type="submit">Submit</button>
                         </div>
+
+                        <div class="btn btn-success mt-1">Ou, selecione imagens da sua galeria...</div>
                     </form>
                 </div>
             </div>

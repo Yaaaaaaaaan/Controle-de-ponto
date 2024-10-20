@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 17/10/2024 às 07:45
+-- Tempo de geração: 20/10/2024 às 14:49
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -75,17 +75,10 @@ CREATE TABLE `pictures` (
 
 CREATE TABLE `profilepictures` (
   `cod` int(11) NOT NULL,
-  `uimage` varchar(255) DEFAULT NULL,
+  `uimageFK` int(11) NOT NULL,
   `dateload` datetime DEFAULT current_timestamp(),
   `uidUserFK` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Despejando dados para a tabela `profilepictures`
---
-
-INSERT INTO `profilepictures` (`cod`, `uimage`, `dateload`, `uidUserFK`) VALUES
-(1, NULL, '2024-08-14 19:52:58', 1);
 
 -- --------------------------------------------------------
 
@@ -151,7 +144,8 @@ ALTER TABLE `pictures`
 --
 ALTER TABLE `profilepictures`
   ADD PRIMARY KEY (`cod`),
-  ADD KEY `uidUserFK` (`uidUserFK`);
+  ADD KEY `uidUserFK` (`uidUserFK`),
+  ADD KEY `uimageFK` (`uimageFK`);
 
 --
 -- Índices de tabela `userdata`
@@ -216,12 +210,6 @@ ALTER TABLE `pictures`
 --
 ALTER TABLE `profilepictures`
   ADD CONSTRAINT `profilepictures_ibfk_1` FOREIGN KEY (`uidUserFK`) REFERENCES `userdata` (`uid`);
-
---
--- Restrições para tabelas `usertoken`
---
-ALTER TABLE `usertoken`
-  ADD CONSTRAINT `usertoken_ibfk_1` FOREIGN KEY (`uidUserFK`) REFERENCES `userdata` (`uid`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
