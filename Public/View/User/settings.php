@@ -57,15 +57,7 @@ if ($_POST) {
           </div>
         </div>
         
-        <div class="row">
-          <div class="col-md-12">
-            <form class="card p-2">
-              <div class="input-group">
-                 
-              </div>
-            </form>
-          </div>
-        </div>
+       
       </div>
       <div class="col-md-7 col-lg-8">
         <h4 class="mb-3">Seus dados</h4>
