@@ -274,10 +274,8 @@ class User {
         return false;
     }
     public function getUserHistory($userId, $registro) {
-        $query = "
-            SELECT u.uname, u.username, h.description, h.dateIn FROM " . $this->tableNames['ud'] . " u 
-            INNER JOIN ".$this->tableNames['hs']." h ON u.uid = h.uidUserFK 
-            WHERE u.uid = :id ORDER BY h.cod desc LIMIT " . $registro . ";";
+        
+        $query = "SELECT u.uname, u.username, h.description, h.dateIn FROM " . $this->tableNames['ud'] . " u inner join ".$this->tableNames['hs']." h ON u.uid = h.uidUserFK WHERE u.uid = :id ORDER BY h.cod desc LIMIT " . $registro . ";";
         
         try {
           $stmt = $this->conn->prepare($query);

@@ -4,7 +4,7 @@ include_once "../layout/menu.php";
 if ($_POST) {
     include_once '../../../App/controller/UserController.php';
     $controller = new UserController();
-    if(isset($_POST['showHistory'])){
+    if(isset($_POST['registro'])){
       $userHistory = $controller->showUserHistory($_POST['registro']);
     }
     // Verifica o upload da imagem de perfil
@@ -162,9 +162,8 @@ if ($_POST) {
                           <?php endforeach; ?>
                       </tbody>
                     </table>
-                    <form action="<?php $_SERVER['PHP_SELF'] ?>" method="post">
+                    <form action="settings.php" method="post">
                       <input type="text" name="registro" placeholder ="quantidade de registros a serem exibidos">
-                      <input type="hidden" value="1" name="showHistory">
                       <button type="submit">Atualizar</button>
                     </form>
                   </div>

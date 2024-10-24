@@ -128,7 +128,7 @@ class UserController {
 
     public function showUserHistory($registro) {
         $this->user->registro = $registro;
-        $userHistory = $this->user->getUserHistory($_SESSION['id'], $registro);
+        $userHistory = $this->user->getUserHistory(userId: $_SESSION['id'], registro: $registro);
         return $userHistory;
     }
 

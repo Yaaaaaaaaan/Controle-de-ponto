@@ -8,11 +8,30 @@
 ?>
 
 <html>
+  <head>
+    <style>
+      body {
+          font-family: Arial, sans-serif;
+          margin: 50px;
+      }
+      #chartContainer {
+          width: 80%;
+          height: 60vh;
+          margin: auto;
+      }
+      canvas {
+          max-width: 100%;
+      }
+    </style>
+  </head>
+
   <body>
     <div class="container">
       <div class="row">
         <div class="col-md-12">
-          
+          <div id="chartContainer">
+            <canvas id="myChart"></canvas>
+          </div>
         </div>
       </div>
       <div class="row">
@@ -31,6 +50,7 @@
           <p id="responseName"></p>
           <p id="responseUserToken"></p>
           <p id="profileUser"></p>
+          <img id="profilePic">
           <p id="id"></p>
           <p id="theme"></p>
           <p id="nickname"></p>
@@ -47,14 +67,54 @@
 
 
       <script>
-        document.getElementById("responseName").textContent = name; 
-        document.getElementById("responseUserToken").textContent = userToken; 
-        document.getElementById("profileUser").textContent = profileUser;
-        document.getElementById("id").textContent = id;
-        document.getElementById("theme").textContent = theme;
-        document.getElementById("nickname").textContent = nickname;
-        document.getElementById("rank").textContent = rank;
-        document.getElementById("email").textContent = email;
+         const ctx = document.getElementById('myChart').getContext('2d');
+
+        // Dados do gráfico
+        const data = {
+            labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+            datasets: [{
+                label: 'Presença Mensal',
+                data: [15, 13, 18, 22, 3, 8, 6, 10, 9, 22, 22, 15],
+                borderColor: 'rgba(0, 123, 255, 1)',
+                backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                fill: true,
+                tension: 0.4,  // suavização da linha
+                pointRadius: 5,
+                pointHoverRadius: 7,
+            }]
+        };
+
+        // Configuração do gráfico
+        const config = {
+            type: 'line',
+            data: data,
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString();  // Formato dos valores do eixo Y
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let value = context.raw;
+                                return value.toLocaleString();  // Formato dos valores no tooltip
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        // Inicialização do gráfico
+        const myChart = new Chart(ctx, config);
       </script>
     </body>
 </html>
