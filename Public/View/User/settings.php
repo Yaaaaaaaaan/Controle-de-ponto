@@ -4,7 +4,7 @@ include_once "../layout/menu.php";
 if ($_POST) {
     include_once '../../../App/controller/UserController.php';
     $controller = new UserController();
-    if($_POST['showHistory']){
+    if(isset($_POST['showHistory'])){
       $userHistory = $controller->showUserHistory($_POST['registro']);
     }
     // Verifica o upload da imagem de perfil
