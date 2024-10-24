@@ -6,11 +6,11 @@ if (!defined('APP_RAN')) {
 class User {
   private $conn;
   private $tableNames = [
-    'userdata' => 'userdata',
-    'profilepictures' => 'profilepictures',
-    'pictures' => 'pictures',
-    'history' => 'history',
-    'usertoken' => 'usertoken'
+    'ud' => 'userdata',
+    'pps' => 'profilepictures',
+    'pic' => 'pictures',
+    'hs' => 'history',
+    'ut' => 'usertoken'
   ];
 
   public $id;
@@ -42,8 +42,15 @@ class User {
     if (!empty($this->name && $this->email && $this->password && $this->rank && $this->nickname)) {
       $userToken = bin2hex(random_bytes(32));
 
-      $query = "INSERT INTO " . $this->tableNames['userdata'] . " 
-                SET uname=:name, username=:nickname, uemail=:email, upassword=:password, urank=:rank;";
+      $query = "INSERT INTO " . $this->tableNames['ud'] . " 
+                SET uname=:name, username=:nickname, uemail=:email, upassword=:password, urank=:rank;
+                INSERT INTO" . $this->tableNames['pic'] . "(path, description, uidUserFK) 
+                VALUES (:directory, :profilePicture, :id);        
+                SET @newPictureId = LAST_INSERT_ID();
+                INSERT INTO" . $this->tableNames['pps'] . "(uidUserFK, uimageFK) 
+                VALUES (:id, @newPictureId)
+                ON DUPLICATE KEY UPDATE
+                    uimageFK = VALUES(uimageFK);";
 
       $stmt = $this->conn->prepare($query);
       $stmt->bindParam(':name', $this->name);
@@ -57,10 +64,10 @@ class User {
         $triggerExists = $this->checkTriggerExists('tr_insert_token');
         if (!$triggerExists) {
           $triggerQuery = "CREATE TRIGGER tr_insert_token
-                           AFTER INSERT ON " . $this->tableNames['userdata'] . "
+                           AFTER INSERT ON " . $this->tableNames['ud'] . "
                            FOR EACH ROW
                            BEGIN
-                             INSERT INTO " . $this->tableNames['usertoken'] . " (token, uidUserFK)
+                             INSERT INTO " . $this->tableNames['ut'] . " (token, uidUserFK)
                              VALUES (:userToken, :id);
                            END;";
 
@@ -70,7 +77,7 @@ class User {
           $stmt->execute();
         }
         //$query= "INSERT INTO " . $this->tableNames['profilepictures'] . " SET uimage = :image, uidUserFK = :id;"; precisa estudar a implementação dessa query para criação de linha de imagem. para que o login funcione corretamente.
-        $query = "INSERT INTO " . $this->tableNames['usertoken'] . " (token, uidUserFK) 
+        $query = "INSERT INTO " . $this->tableNames['ut'] . " (token, uidUserFK) 
                   VALUES (:userToken, :id);";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':userToken', $userToken);
@@ -103,10 +110,10 @@ class User {
                 $ip = $_SERVER['REMOTE_ADDR'];
             }
             $query = "SELECT u.uid, t.token	, u.uname, u.username, u.urank, u.uemail, u.upassword, u.username, d.path, p.dateload, u.udefaultTheme 
-            FROM " . $this->tableNames['userdata'] . " u 
-            INNER JOIN ". $this->tableNames['pictures'] ." d ON u.uid = d.uidUserFK 
-            INNER JOIN ".$this->tableNames['usertoken']." t ON u.uid = t.uidUserFK 
-            inner join ".$this->tableNames['profilepictures']." p ON p.uimageFK = d.cod
+            FROM " . $this->tableNames['ud'] . " u 
+            INNER JOIN ". $this->tableNames['pic'] ." d ON u.uid = d.uidUserFK 
+            INNER JOIN ".$this->tableNames['ut']." t ON u.uid = t.uidUserFK 
+            inner join ".$this->tableNames['pps']." p ON p.uimageFK = d.cod
             WHERE u.username = :nickname AND u.upassword = :password;";
             
             try {
@@ -118,12 +125,12 @@ class User {
                     $row = $stmt->fetch(PDO::FETCH_ASSOC);
                     
                     $query2 ="START TRANSACTION;
-                        UPDATE ".$this->tableNames['usertoken']."
+                        UPDATE ".$this->tableNames['ut']."
                         SET token = :userToken
                         WHERE uidUserFK = :id;
 
                         IF ROW_COUNT() = 0 THEN
-                            INSERT INTO ".$this->tableNames['usertoken']." (token, uidUserFK)
+                            INSERT INTO ".$this->tableNames['ut']." (token, uidUserFK)
                             VALUES (:userToken, :id);
                         END IF;
                     COMMIT;
@@ -210,7 +217,7 @@ class User {
             }
         }
         if (!empty($this->oldPassword) && !empty($this->newPassword) && !empty($this->confirmPassword) && $this->newPassword === $this->confirmPassword) {
-            $query = "UPDATE userdata SET upassword = :newPassword WHERE uid = :id";
+            $query = "UPDATE" . $this->tableNames['ud'] . "SET upassword = :newPassword WHERE uid = :id";
             $paramsPassword = [
                 ':newPassword' => $this->newPassword,
                 ':id' => $this->id
@@ -268,8 +275,8 @@ class User {
     }
     public function getUserHistory($userId, $registro) {
         $query = "
-            SELECT u.uname, u.username, h.description, h.dateIn FROM " . $this->tableNames['userdata'] . " u 
-            INNER JOIN ".$this->tableNames['history']." h ON u.uid = h.uidUserFK 
+            SELECT u.uname, u.username, h.description, h.dateIn FROM " . $this->tableNames['ud'] . " u 
+            INNER JOIN ".$this->tableNames['hs']." h ON u.uid = h.uidUserFK 
             WHERE u.uid = :id ORDER BY h.cod desc LIMIT " . $registro . ";";
         
         try {
@@ -290,10 +297,10 @@ class User {
         $this->directory = $directory;
         $this->verifyUpload = $verifyUpload;
         $this->id = $_SESSION['id'];
-        $sql = "INSERT INTO pictures (path, description, uidUserFK) 
+        $sql = "INSERT INTO" . $this->tableNames['pic'] . "(path, description, uidUserFK) 
         VALUES (:directory, :profilePicture, :id);        
         SET @newPictureId = LAST_INSERT_ID();
-        INSERT INTO profilepictures (uidUserFK, uimageFK) 
+        INSERT INTO ". $this->tableNames['pps'] ." (uidUserFK, uimageFK) 
         VALUES (:id, @newPictureId)
         ON DUPLICATE KEY UPDATE
             uimageFK = VALUES(uimageFK);";
