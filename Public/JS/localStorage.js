@@ -33,7 +33,6 @@ async function processUserData() {
 
      document.getElementById("responseName").textContent = name; 
      document.getElementById("responseUserToken").textContent = userToken; 
-     //document.getElementById("profileUser").textContent = profileUser;
      document.getElementById("id").textContent = id;
      document.getElementById("theme").textContent = theme;
      document.getElementById("nickname").textContent = nickname;
@@ -43,13 +42,12 @@ async function processUserData() {
 
       
         
-        // Utilizando expressão regular
-const novoCaminho = profileUser.replace(/\\/g,"");
-const novoCaminho2 = novoCaminho.substring(1, novoCaminho.length - 1);
+  
+const profilePicDirOld = profileUser.replace(/\\/g,"");
+const profilePicDir = profilePicDirOld.substring(1, profilePicDirOld.length - 1);
 // Verificando se o caminho é válido antes de atribuir ao src
-if (novoCaminho2) {
-  document.getElementById('profilePic').src = novoCaminho2;
-  console.log(novoCaminho2)
+if (profilePicDir) {
+  document.getElementById('profilePic').src = profilePicDir;
 } else {
   console.error("Caminho da imagem inválido.");
 }
