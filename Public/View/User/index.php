@@ -73,8 +73,8 @@
         const data = {
             labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
             datasets: [{
-                label: 'Presença Mensal',
-                data: [15, 13, 18, 22, 3, 8, 6, 10, 9, 22, 22, 15],
+                label: 'Presença 2024',
+                data: [15, 13, 18, 22, 3, 8, 6, 10, 9, 1, 3, 15],
                 borderColor: 'rgba(0, 123, 255, 1)',
                 backgroundColor: 'rgba(0, 123, 255, 0.2)',
                 fill: true,
