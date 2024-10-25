@@ -3,8 +3,12 @@
   if ($_POST) {
     include_once '../../../App/controller/UserController.php';
     $controller = new UserController();
+    if(isset($_POST['insertPointControl'])){
+      $insertPointControl = $controller->insertPointControl($_POST['id'], $_POST['description']);
+    }
 
   }
+    
 ?>
 
 <html>
@@ -36,9 +40,12 @@
       </div>
       <div class="row">
         <div class="col-md-12">
-          <form action="<?php $_SERVER['PHP_SELF'] ?>" method="post">
+          <form action="index.php" method="post" name="insertPointControl">
             <div class="row g-3">
               <div class="col-sm-6">
+                <input hidden value="1" name="insertPointControl" >
+                <input hidden value="<?=$_SESSION['id']?>"  name="id">
+                <input hidden value="Verificação pendente"  name="description">
               <button class="w-100 btn-lg btn btn-success" type="submit">Estou aqui!</button>
               </div>    
             </div>

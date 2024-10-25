@@ -226,22 +226,3 @@ if ($_POST) {
 </div>
 
 
-<script>
-
-          //Nada disso ainda funciona.
-          const input = document.getElementById('responseNameCompleto');
-          input.value = name;
-
-          $(document).ready(function() {
-            $('#meuInput').val(localStorage.getItem('nomeUsuario'));
-          });
-
-  //document.getElementById("responseNameCompleto").textContent = name;
-
-  document.body.dataset.bsTheme = <?php echo $_SESSION['defaultTheme'] == 1 ? "'dark'" : "'light'"; ?>;
-  const themeSwitch = document.getElementById('themeSwitch');
-  themeSwitch.addEventListener('change', () => {
-    const newTheme = themeSwitch.checked ? 'dark' : 'light';
-    document.body.dataset.bsTheme = newTheme;
-  });
-</script>

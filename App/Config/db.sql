@@ -216,7 +216,7 @@ CREATE TABLE `pointControl`(
   cod INT PRIMARY KEY AUTO_INCREMENT,
   description longtext,
   uidUserFK INT NOT NULL,
-  dateIn datetime default CURRENT_TIMESTAMP,
+  dateIn date default CURRENT_DATE,
   FOREIGN KEY(uidUserFK) REFERENCES userdata(uid),
   UNIQUE INDEX idx_usuario_data (uidUserFK, dateIn)
 );

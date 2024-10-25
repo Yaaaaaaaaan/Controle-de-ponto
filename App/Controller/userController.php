@@ -132,6 +132,11 @@ class UserController {
         return $userHistory;
     }
 
-    
+   public function insertPointControl($id, $descricao){
+    $this->user->descricao = $descricao;
+    $this->user->id = $id;
+    $insertPointControl = $this->user->insertPointControl( $id, $descricao);
+    return $insertPointControl;
+   }
 }
 ?>

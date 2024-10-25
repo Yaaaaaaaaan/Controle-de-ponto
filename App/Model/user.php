@@ -10,7 +10,8 @@ class User {
     'pps' => 'profilepictures',
     'pic' => 'pictures',
     'hs' => 'history',
-    'ut' => 'usertoken'
+    'ut' => 'usertoken',
+    'pc'=> 'pointControl'
   ];
 
   public $id;
@@ -40,27 +41,42 @@ class User {
 
   public function createUser() {
     if (!empty($this->name && $this->email && $this->password && $this->rank && $this->nickname)) {
-      $userToken = bin2hex(random_bytes(32));
+        $userToken = bin2hex(random_bytes(32));
+        $this->profilePicture = 'Profile.png';
+        $this->directory = '/Controle-de-ponto/App/Persistence/userProfileImages/Profile.png';
 
-      $query = "INSERT INTO " . $this->tableNames['ud'] . " 
-                SET uname=:name, username=:nickname, uemail=:email, upassword=:password, urank=:rank;
-                INSERT INTO" . $this->tableNames['pic'] . "(path, description, uidUserFK) 
-                VALUES (:directory, :profilePicture, :id);        
-                SET @newPictureId = LAST_INSERT_ID();
-                INSERT INTO" . $this->tableNames['pps'] . "(uidUserFK, uimageFK) 
-                VALUES (:id, @newPictureId)
-                ON DUPLICATE KEY UPDATE
-                    uimageFK = VALUES(uimageFK);";
+        $query1 = "INSERT INTO " . $this->tableNames['ud'] . " 
+            SET uname=:name, username=:nickname, uemail=:email, upassword=:password, urank=:rank;
+            SET @newUserId = LAST_INSERT_ID();";
 
-      $stmt = $this->conn->prepare($query);
-      $stmt->bindParam(':name', $this->name);
-      $stmt->bindParam(':nickname', $this->nickname);
-      $stmt->bindParam(':email', $this->email);
-      $stmt->bindParam(':password', $this->password);
-      $stmt->bindParam(':rank', $this->rank);
+        $stmt1 = $this->conn->prepare($query1);
+        $stmt1->bindParam(':name', $this->name);
+        $stmt1->bindParam(':nickname', $this->nickname);
+        $stmt1->bindParam(':email', $this->email);
+        $stmt1->bindParam(':password', $this->password);
+        $stmt1->bindParam(':rank', $this->rank);
+        $stmt1->execute();
+        $stmt1->closeCursor();
 
-      if ($stmt->execute()) {
-        $this->id = $this->conn->lastInsertId();    
+        $query2 = "INSERT INTO " . $this->tableNames['pic'] . "(path, description, uidUserFK) 
+                VALUES (:directory, :profilePicture, @newUserId);
+                SET @newPictureId = LAST_INSERT_ID();";
+
+        $stmt2 = $this->conn->prepare($query2);
+        $stmt2->bindParam(':directory', $this->directory);
+        $stmt2->bindParam(':profilePicture', $this->profilePicture);
+        $stmt2->execute();
+        $stmt2->closeCursor();
+
+        $query3 = "INSERT INTO " . $this->tableNames['pps'] . "(uidUserFK, uimageFK) 
+                VALUES (@newUserId, @newPictureId)";
+
+        $stmt3 = $this->conn->prepare($query3);
+        $stmt3->execute();
+        $stmt3->closeCursor();
+
+
+      if ($stmt1->execute()) {   
         $triggerExists = $this->checkTriggerExists('tr_insert_token');
         if (!$triggerExists) {
           $triggerQuery = "CREATE TRIGGER tr_insert_token
@@ -68,20 +84,18 @@ class User {
                            FOR EACH ROW
                            BEGIN
                              INSERT INTO " . $this->tableNames['ut'] . " (token, uidUserFK)
-                             VALUES (:userToken, :id);
+                             VALUES (:userToken, @newUserId);
                            END;";
 
           $stmt = $this->conn->prepare($triggerQuery);
-          $stmt->bindParam(':id', $this->id);
           $stmt->bindParam(':userToken', $userToken);
           $stmt->execute();
         }
         //$query= "INSERT INTO " . $this->tableNames['profilepictures'] . " SET uimage = :image, uidUserFK = :id;"; precisa estudar a implementação dessa query para criação de linha de imagem. para que o login funcione corretamente.
         $query = "INSERT INTO " . $this->tableNames['ut'] . " (token, uidUserFK) 
-                  VALUES (:userToken, :id);";
+                  VALUES (:userToken, @newUserId);";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':userToken', $userToken);
-        $stmt->bindParam(':id', $this->id);
         $stmt->execute();
 
         return true;
@@ -314,5 +328,27 @@ class User {
             return false;
         }
     }
+     public function insertPointControl($id, $descricao) {
+        $this->descricao = $descricao;
+        $this->id = $id;
+
+        $query = "INSERT INTO pointControl (description, uidUserFK) VALUES (:description, :id)";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':description', $this->descricao);
+        $stmt->bindParam(':id', $this->id);
+
+        try {
+            $stmt->execute();
+            return true;
+        } catch (PDOException $e) {
+            if ($e->getCode() == 23000) { 
+                return false; 
+            } else {
+                throw $e; 
+            }
+        }   
+    }
 }
+
+
 ?>
