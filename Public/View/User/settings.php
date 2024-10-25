@@ -1,5 +1,5 @@
 <?php
-include_once "../layout/menu.php";
+require "../layout/menu.php";
 
 if ($_POST) {
     include_once '../../../App/controller/UserController.php';

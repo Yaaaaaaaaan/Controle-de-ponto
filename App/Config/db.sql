@@ -213,6 +213,9 @@ COMMIT;
 
 
 CREATE TABLE `pointControl`(
-  cod int(50) PRIMARY KEY AUTO_INCREMENT
-
+  cod INT PRIMARY KEY AUTO_INCREMENT,
+  description longtext,
+  uidUserFK INT NOT NULL,
+  dateIn datetime default CURRENT_TIMESTAMP,
+  FOREIGN KEY(uidUserFK) REFERENCES userdata(uid)
 );
