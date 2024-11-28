@@ -47,26 +47,26 @@ class UserController {
         $this->user->confirmPassword = $confirmPassword;
         $this->user->defaultTheme = $defaultTheme ? 1 : 0;
         if ($this->user->updateUser($name,$id,$email,$nickname,$oldPassword,$newPassword,$confirmPassword,$defaultTheme)){
-            $_SESSION['response'] = '<p>Changes made successfully.</p>';
+            $_SESSION['response'] = '<p>Alterações feitas com sucesso!.</p>';
         } else {
                 if(empty($name)){
-                    $_SESSION['response'] = '<p>User could not be updated. Please insert your name.</p>';
+                    $_SESSION['response'] = '<p>Usuário não pôde ser atualizado. Favor insira seu nome.</p>';
             }elseif(empty($email)){
-                $_SESSION['response'] = '<p>User could not be updated. Please insert a valid email.</p>';
+                $_SESSION['response'] = '<p>Usuário não pôde ser atualizado. Favor insira um e-mail válido.</p>';
             }elseif(empty($newPassword) || empty($confirmPassword)){
-                $_SESSION['response'] = '<p>User could not be updated. Please confirm your new password.</p>';
+                $_SESSION['response'] = '<p>Usuário não pôde ser atualizado. Favor insira confirme sua nova senha.</p>';
             }elseif(empty($oldPassword)){
-                $_SESSION['response'] = '<p>User could not be updated. Please insert your actual password.</p>';
+                $_SESSION['response'] = '<p>Usuário não pôde ser atualizado. Favor insira sua senha atual.</p>';
             }elseif(empty($uname)){
-                $_SESSION['response'] = '<p>User could not be updated. Please insert your username.</p>';
+                $_SESSION['response'] = '<p>Usuário não pôde ser atualizado. Favor insira seu username.</p>';
             }elseif(empty($CPF)){
-                $_SESSION['response'] = '<p>User could not be updated. Please insert your CPF.</p>';
+                $_SESSION['response'] = '<p>Usuário não pôde ser atualizado. Favor insira seu CPF.</p>';
             }elseif(empty($location)){
-                $_SESSION['response'] = '<p>User could not be updated. Please insert your location.</p>';
+                $_SESSION['response'] = '<p>Usuário não pôde ser atualizado. Favor insira sua localização.</p>';
             }elseif(empty($location) && empty($name) && empty($email) && empty($newPassword) && empty($confirmPassword) && empty($oldPassword) && empty($uname) && empty($CPF)){
-                $_SESSION['response'] = '<p>User could not be updated. You need to enter at least one field to change.</p>';
+                $_SESSION['response'] = '<p>Usuário não pôde ser atualizado. Você precisa inserir um ou mais campos para prosseguir com a atualização.</p>';
             }else{
-                $_SESSION['response'] = '<p>User could not be updated. Please contact a admin.</p>';
+                $_SESSION['response'] = '<p>Usuário não pôde ser atualizado. Favor entre em contato com a administração.</p>';
             }
         }
     }
