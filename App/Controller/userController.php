@@ -2,7 +2,7 @@
 include_once '../../../App/Config/db.php';
 include_once '../../../App/Model/user.php';
 if (!defined('APP_RAN')) {
-    die('Direct access not permitted');
+    die('Acesso não permitido.');
 }
 class UserController {
     private $db;

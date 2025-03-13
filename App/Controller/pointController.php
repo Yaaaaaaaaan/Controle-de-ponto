@@ -2,7 +2,7 @@
 include_once '../../../App/Config/db.php';
 include_once '../../../App/Model/user.php';
 if (!defined('APP_RAN')) {
-    die('Direct access not permitted');
+    die('Acesso não permitido.');
 }
 class PointController {
     private $db;
@@ -21,6 +21,39 @@ class PointController {
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+    
+
+    /*
+         public function getAllAvailableMonths($id) {
+        return $this->user->getAllAvailableMonths($id);
+    }
+
+    public function getPointControlData($id, $months) {
+        return $this->user->getPointControlData($id, $months);
+    }
+
+    public function converterMonthFromName($monthYear) {
+        $parts = explode('-', $monthYear);
+        $year = $parts[0];
+        $month = $parts[1];
+        $MonthNames = [
+            '01' => 'Jan',
+            '02' => 'Fev',
+            '03' => 'Mar',
+            '04' => 'Abr',
+            '05' => 'Mai',
+            '06' => 'Jun',
+            '07' => 'Jul',
+            '08' => 'Ago',
+            '09' => 'Set',
+            '10' => 'Out',
+            '11' => 'Nov',
+            '12' => 'Dez',
+        ];
+        return $MonthNames[$month] . ' - ' . $year;
+    }
+
+    */
 
 }
 

@@ -18,6 +18,24 @@ if ($_POST) {
     $id = $_SESSION['id'];
     $pointControlData = $pointController->getPointControlData($id);
 
+    /*
+    // Buscar dados para o gráfico apenas se o controlador estiver inicializado
+    $id = $_SESSION['id'];
+    $pointControlData = $pointController->getPointControlData($id);
+
+    // Preparar dados para o gráfico
+    $allMonths = $pointController->getAllAvailableMonths($id);
+    $selectedMonths = isset($_GET['months']) ? $_GET['months'] : $allMonths;
+    $pointControlData = $pointController->getPointControlData($id, $selectedMonths);
+
+    $labels = [];
+    $dataPoints = [];
+    foreach ($pointControlData as $row) {
+        $labels[] = $pointController->converterMonthFromName($row['month']);
+        $dataPoints[] = $row['count'];
+    }
+    */
+
     // Preparar dados para o gráfico
     $labels = [];
     $dataPoints = [];
