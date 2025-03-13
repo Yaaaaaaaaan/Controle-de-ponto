@@ -131,12 +131,11 @@ class UserController {
         $userHistory = $this->user->getUserHistory(userId: $_SESSION['id'], registro: $registro);
         return $userHistory;
     }
-
-   public function insertPointControl($id, $descricao){
-    $this->user->descricao = $descricao;
-    $this->user->id = $id;
-    $insertPointControl = $this->user->insertPointControl( $id, $descricao);
-    return $insertPointControl;
-   }
+    public function insertPointControl($id, $descricao){
+        $this->user->descricao = $descricao;
+        $this->user->id = $id;
+        $insertPointControl = $this->user->insertPointControl( $id, $descricao);
+        return $insertPointControl;
+       }
 }
 ?>

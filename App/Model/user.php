@@ -1,6 +1,6 @@
 <?php
 if (!defined('APP_RAN')) {
-  die('Direct access not permitted');
+  die('Acesso não permitido');
 }
 
 class User {
@@ -347,6 +347,22 @@ class User {
                 throw $e; 
             }
         }   
+    }
+
+     public function getPointControl($id, $ano) {
+        $sql = "SELECT DATE_FORMAT(data, '%Y-%m') AS mes, COUNT(*) AS presenca FROM presenca WHERE id_usuario = $id AND YEAR(data) = $ano GROUP BY mes ORDER BY mes";
+        $result = $this->conn->query($sql);
+        $data = [];
+        if ($result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+                $data[] = $row;
+            }
+        }
+        return $data;
+    }
+
+    public function __destruct() {
+        $this->conn->close();
     }
 }
 
