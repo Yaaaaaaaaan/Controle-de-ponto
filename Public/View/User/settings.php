@@ -1,9 +1,9 @@
 <?php
 require '../layout/menu.php';
 
-if ($_POST) {
-    include_once '../../../App/controller/UserController.php';
-    $userController = new UserController();
+if ($_POST) {    
+      include_once '../../../App/controller/UserController.php';
+      $userController = new UserController();
     if(isset($_POST['registro'])){
       $userHistory = $controller->showUserHistory($_POST['registro']);
     }
