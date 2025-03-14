@@ -72,24 +72,30 @@ if ($_POST) {
             </div>
         </div>
         <div class="col-md-4">
-        <div class="card">
-         <img id="profilePic" style="height: 35vh; object-fit: scale-down;" class="card-img-top" alt="...">
-          <div class="card-body">
-            <h5 class="card-title">Olá, <text id="responseName"></text>!</h5>
-            Seu email: <text id="email"></text>
+        <div class="col-md-12">
+            
+            <div class="text-center border rounded py-2 mb-3">
+            <h4 class="d-flex justify-content-between align-items-center mb-3 ms-2">
+              <span class="text-primary">Olá, <text id="responseName"></text>!</span>
+            </h4>
+              <?php echo '<img src="' . $_SESSION['lastImageProfileUser'] . '" alt="Imagem do usuário" style="width:226px;" >'; ?>
+              <small class="text-body-secondary"><span class="nav-link">
+              Seu email: <text id="email"></text>
             <p>Seu nickname: <text id="nickname"></text></p>
             <p hidden id="responseUserToken"></p>
             <p hidden id="id"></p>
             <p hidden id="theme"></p>
             <p hidden id="rank"></p>
-            <form action="index.php" method="post" name="insertPointControl">
+    </span></small>
+                  <form action="index.php" method="post" name="insertPointControl">
             <input hidden value="1" name="insertPointControl">
             <input hidden value="<?= $_SESSION['id'] ?>" name="id">
             <input hidden value="Verificação pendente" name="description">
             <button class="w-100 btn-lg btn btn-success" type="submit">Estou aqui!</button>
           </form>
+            </div>
           </div>
-        </div>
+        
       </div>
     </div>
 </div>

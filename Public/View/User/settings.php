@@ -1,7 +1,5 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+define('APP_RAN', true);
 require '../layout/menu.php';
 
 if ($_POST) {    
@@ -14,6 +12,10 @@ if ($_POST) {
     /*if(isset($_FILES['profilepic'])) {
       $userController->updateUserProfilePicture($_FILES['profilepic']);
     }*/
+     if(isset($_POST['selectedPicture'])) {
+      $userController->updateProfilePicture($_POST['selectedPicture']);
+    }
+    
 
     $defaultTheme = isset($_POST['defaultTheme']) ? 1 : 0;
     $updateSuccess = $userController->updateUser(
@@ -35,6 +37,9 @@ if ($_POST) {
       header("Location: settings.php");
     }
 }
+include_once '../../../App/controller/pictureController.php';
+$controller = new pictureController();
+$pictures = $controller->getUserPictures();
 ?>
 
 <div class="container">
@@ -207,7 +212,7 @@ if ($_POST) {
                 <div class="row">
                     <div class="position-relative">
                         <div class="text-center">
-                        <?php echo '<img src="' . $_SESSION['lastImageProfileUser'] . '" alt="Imagem do usuário" style="width:280px;" >'; ?>
+                       <?php //echo '<img src="' . $_SESSION['lastImageProfileUser'] . '" alt="Imagem do usuário" style="width:280px;" >'; ?>
                         </div>
                     </div>
                 </div>
@@ -221,16 +226,36 @@ if ($_POST) {
                         </div>
                     </form>-->
 
-                  <form method="post" action="settings.php">
-                    <?php foreach ($pictures as $picture): ?>
-                        <label>
-                            <img src="<?php echo $picture['path']; ?>" width="100">
-                            <input type="radio" name="selected_picture" value="<?php echo $picture['cod']; ?>">
-                        </label>
-                    <?php endforeach; ?>
-                    <br>
-                    <button type="submit" name="update_profile_picture">Atualizar Foto de Perfil</button>
-                  </form>  
+                    <form method="post" action="settings.php">
+                      <div id="profilePictureCarousel" class="carousel slide" data-bs-ride="carousel">
+                          <div class="carousel-inner">
+                              <?php
+                              $active = true; // Flag para o primeiro item ativo
+                              foreach ($pictures as $picture) :
+                              ?>
+                                  <div class="carousel-item <?php echo $active ? 'active' : ''; ?>">
+                                      <label class="d-block text-center">
+                                          <img src="<?php echo $picture['path']; ?>" class="d-block w-100" alt="Foto de Perfil">
+                                          <input type="radio" name="selectedPicture" value="<?php echo $picture['cod']; ?>" class="mt-2">
+                                      </label>
+                                  </div>
+                              <?php
+                                  $active = false; // Desativa a flag após o primeiro item
+                              endforeach;
+                              ?>
+                          </div>
+                          <button class="carousel-control-prev" type="button" data-bs-target="#profilePictureCarousel" data-bs-slide="prev">
+                              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                              <span class="visually-hidden">Previous</span>
+                          </button>
+                          <button class="carousel-control-next" type="button" data-bs-target="#profilePictureCarousel" data-bs-slide="next">
+                              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                              <span class="visually-hidden">Next</span>
+                          </button>
+                      </div>
+                      <br>
+                      <button type="submit" name="update_profile_picture" class="btn btn-primary mt-3">Atualizar Foto de Perfil</button>
+                    </form>
                 </div>
 
                 

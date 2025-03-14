@@ -71,12 +71,7 @@ class UserController {
         }
     }
 
-    public function getUserPictures() {
-        if (isset($_SESSION['id'])) {
-            return $this->user->getUserPictures($_SESSION['id']);
-        }
-        return [];
-    }
+    
 
     public function updateProfilePicture($pictureId) {
         if (isset($_SESSION['id'])) {
@@ -89,6 +84,7 @@ class UserController {
             $_SESSION['response'] = '<p>Usuário não autenticado.</p>';
         }
     }
+    
     public function insertUserProfilePicture($profilePicture) {
         if (isset($profilePicture) && $profilePicture['error'] == 0) {
             $targetDirectory = __DIR__ . '/../../App/Persistence/userProfileImages/'; // Caminho absoluto

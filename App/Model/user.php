@@ -324,7 +324,7 @@ class User {
       }*/
 
       public function getUserPictures($userId) {
-        $sql = "SELECT cod, path FROM " . $this->tableNames['pictures'] . " WHERE uidUserFK = :userId";
+        $sql = "SELECT cod, path, description FROM " . $this->tableNames['pic'] . " WHERE uidUserFK = :userId";
         $stmt = $this->conn->prepare($sql);
         $stmt->bindParam(':userId', $userId);
         $stmt->execute();
@@ -333,11 +333,15 @@ class User {
 
     public function updateProfilePicture($userId, $pictureId) {
         try {
-            $sql = "UPDATE " . $this->tableNames['profilepictures'] . " SET uimageFK = :pictureId WHERE uidUserFK = :userId";
+            $sql = "UPDATE " . $this->tableNames['pps'] . " SET uimageFK = :pictureId WHERE uidUserFK = :userId;
+            SELECT path FROM " . $this->tableNames['pic'] . " WHERE cod = :pictureId;";
             $stmt = $this->conn->prepare($sql);
             $stmt->bindParam(':userId', $userId);
             $stmt->bindParam(':pictureId', $pictureId);
-            return $stmt->execute();
+            $stmt->execute();
+            $row = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $_SESSION['lastImageProfileUser'] = $row['path'];
+            return;
         } catch(PDOException $e) {
             return false;
         }
