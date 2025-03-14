@@ -309,13 +309,11 @@ class User {
         $this->directory = $directory;
         $this->verifyUpload = $verifyUpload;
         $this->id = $_SESSION['id'];
-        $sql = "INSERT INTO" . $this->tableNames['pic'] . "(path, description, uidUserFK) 
-        VALUES (:directory, :profilePicture, :id);        
-        SET @newPictureId = LAST_INSERT_ID();
-        INSERT INTO ". $this->tableNames['pps'] ." (uidUserFK, uimageFK) 
-        VALUES (:id, @newPictureId)
-        ON DUPLICATE KEY UPDATE
-            uimageFK = VALUES(uimageFK);";
+        $sql = "SELECT u.uid, t.token	, u.uname, u.username, u.urank, u.uemail, u.upassword, u.username, d.uimage, u.udefaultTheme 
+        FROM " . $this->tableNames['userdata'] . " u 
+        INNER JOIN ". $this->tableNames['profilepictures'] ." d ON u.uid = d.uidUserFK 
+        INNER JOIN ".$this->tableNames['usertoken']." t ON u.uid = t.uidUserFK 
+        WHERE u.username = :nickname AND u.upassword = :password;";
         $stmt = $this->conn->prepare($sql);
         $stmt->bindValue(':id', $this->id);
         $stmt->bindValue(':profilePicture', $this->profilePicture);
