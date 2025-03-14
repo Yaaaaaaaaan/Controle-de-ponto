@@ -1,4 +1,7 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 require '../layout/menu.php';
 
 if ($_POST) {    
@@ -8,9 +11,9 @@ if ($_POST) {
       $userHistory = $controller->showUserHistory($_POST['registro']);
     }
     // Verifica o upload da imagem de perfil
-    if(isset($_FILES['profilepic'])) {
+    /*if(isset($_FILES['profilepic'])) {
       $userController->updateUserProfilePicture($_FILES['profilepic']);
-    }
+    }*/
 
     $defaultTheme = isset($_POST['defaultTheme']) ? 1 : 0;
     $updateSuccess = $userController->updateUser(
@@ -210,14 +213,28 @@ if ($_POST) {
                 </div>
 
                 <div class="col-md-12 mt-1">
-                    <form action="settings.php" method="post" enctype="multipart/form-data">
+                    <!--<form action="settings.php" method="post" enctype="multipart/form-data">
                         <div class="input-group">
-                            <input type="hidden" name="nome_imagem" value="<?= time().$_SESSION['id'] ?>">
+                            <input type="hidden" name="namePic" value="">
                             <input type="file" name="profilepic" class="form-control" id="inputGroupFile04" aria-describedby="inputGroupFileAddon04" aria-label="Upload">
                             <button class="btn btn-outline-secondary" type="submit">Salvar</button>
                         </div>
-                    </form>
+                    </form>-->
+
+                  <form method="post" action="settings.php">
+                    <?php foreach ($pictures as $picture): ?>
+                        <label>
+                            <img src="<?php echo $picture['path']; ?>" width="100">
+                            <input type="radio" name="selected_picture" value="<?php echo $picture['cod']; ?>">
+                        </label>
+                    <?php endforeach; ?>
+                    <br>
+                    <button type="submit" name="update_profile_picture">Atualizar Foto de Perfil</button>
+                  </form>  
                 </div>
+
+                
+
             </div>
         </div>
     </div>

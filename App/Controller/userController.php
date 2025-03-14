@@ -70,9 +70,28 @@ class UserController {
             }
         }
     }
-    public function updateUserProfilePicture($profilePicture) {
+
+    public function getUserPictures() {
+        if (isset($_SESSION['id'])) {
+            return $this->user->getUserPictures($_SESSION['id']);
+        }
+        return [];
+    }
+
+    public function updateProfilePicture($pictureId) {
+        if (isset($_SESSION['id'])) {
+            if ($this->user->updateProfilePicture($_SESSION['id'], $pictureId)) {
+                $_SESSION['response'] = '<p>Foto de perfil atualizada com sucesso.</p>';
+            } else {
+                $_SESSION['response'] = '<p>Erro ao atualizar a foto de perfil.</p>';
+            }
+        } else {
+            $_SESSION['response'] = '<p>Usuário não autenticado.</p>';
+        }
+    }
+    public function insertUserProfilePicture($profilePicture) {
         if (isset($profilePicture) && $profilePicture['error'] == 0) {
-            $targetDirectory = '../../../App/Persistence/userProfileImages/';
+            $targetDirectory = __DIR__ . '/../../App/Persistence/userProfileImages/'; // Caminho absoluto
             $imageFileType = strtolower(pathinfo($profilePicture['name'], PATHINFO_EXTENSION));
             $newFileName = time() . $_SESSION['id'] . '.' . $imageFileType;
             $targetFile = $targetDirectory . $newFileName;
@@ -87,10 +106,9 @@ class UserController {
             // Mover o arquivo
             if (move_uploaded_file($profilePicture['tmp_name'], $targetFile)) {
                 $this->user->profilePicture = $newFileName;
-                $this->user->directory = '/Controle-de-ponto/App/Persistence/userProfileImages/' . $newFileName; // Caminho para o banco de dados
-                $this->user->verifyUpload = true;
+                $this->user->directory = '/App/Persistence/userProfileImages/' . $newFileName; // Caminho relativo ao root do site
     
-                if ($this->user->updateUserProfilePicture($this->user->profilePicture, $this->user->directory, $this->user->verifyUpload)) {
+                if ($this->user->insertUserProfilePicture($this->user->profilePicture, $this->user->directory)) {
                     $_SESSION['response'] = '<p>Foto de perfil atualizada com sucesso.</p>';
                 } else {
                     $_SESSION['response'] = '<p>Erro ao atualizar a foto de perfil no banco de dados.</p>';

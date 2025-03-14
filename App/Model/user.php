@@ -304,28 +304,62 @@ class User {
         }
       }
 
-      public function updateUserProfilePicture($profilePicture, $directory, $verifyUpload) {
-        $this->profilePicture = $profilePicture;
+      
+      /*public function setPictures($picture, $directory){ //insere imagens no banco de dados.
+        $this->picture = $picture;
         $this->directory = $directory;
-        $this->verifyUpload = $verifyUpload;
         $this->id = $_SESSION['id'];
-        $sql = "SELECT u.uid, t.token	, u.uname, u.username, u.urank, u.uemail, u.upassword, u.username, d.uimage, u.udefaultTheme 
-        FROM " . $this->tableNames['userdata'] . " u 
-        INNER JOIN ". $this->tableNames['profilepictures'] ." d ON u.uid = d.uidUserFK 
-        INNER JOIN ".$this->tableNames['usertoken']." t ON u.uid = t.uidUserFK 
-        WHERE u.username = :nickname AND u.upassword = :password;";
+        $sql = "INSERT INTO" . $this->tableNames['pic'] . " SET path=:directory, description=:picture, idUserFK = :id ";
         $stmt = $this->conn->prepare($sql);
         $stmt->bindValue(':id', $this->id);
-        $stmt->bindValue(':profilePicture', $this->profilePicture);
         $stmt->bindValue(':directory', $this->directory);
-        
+        $stmt->bindValue(':picture', $this->picture);
+    
         if ($stmt->execute()) {
             $_SESSION['lastImageProfileUser'] = $this->directory;
             return true;
         } else {
             return false;
         }
+      }*/
+
+      public function getUserPictures($userId) {
+        $sql = "SELECT cod, path FROM " . $this->tableNames['pictures'] . " WHERE uidUserFK = :userId";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':userId', $userId);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function updateProfilePicture($userId, $pictureId) {
+        try {
+            $sql = "UPDATE " . $this->tableNames['profilepictures'] . " SET uimageFK = :pictureId WHERE uidUserFK = :userId";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindParam(':userId', $userId);
+            $stmt->bindParam(':pictureId', $pictureId);
+            return $stmt->execute();
+        } catch(PDOException $e) {
+            return false;
+        }
+    }
+      
+      /*public function insertUserProfilePicture($profilePicture, $directory) {
+        $this->profilePicture = $profilePicture;
+        $this->directory = $directory;
+        $this->id = $_SESSION['id'];
+    
+        $sql = "UPDATE " . $this->tableNames['pps'] . " SET uimage = :profilePicture WHERE uidUserFK = :id";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue(':id', $this->id);
+        $stmt->bindValue(':profilePicture', $this->directory);
+    
+        if ($stmt->execute()) {
+            $_SESSION['lastImageProfileUser'] = $this->directory;
+            return true;
+        } else {
+            return false;
+        }
+    }*/
      public function insertPointControl($id, $descricao) {
         $this->descricao = $descricao;
         $this->id = $id;

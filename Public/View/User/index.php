@@ -40,6 +40,7 @@ if ($_POST) {
      $labels[] = $pointController->converterMonthFromName($row['month']);
      $dataPoints[] = $row['count'];
  }*/
+
 ?>
 
 <html>
