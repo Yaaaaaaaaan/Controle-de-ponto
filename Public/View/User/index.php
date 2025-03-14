@@ -18,24 +18,6 @@ if ($_POST) {
     $id = $_SESSION['id'];
     $pointControlData = $pointController->getPointControlData($id);
 
-    /*
-    // Buscar dados para o gráfico apenas se o controlador estiver inicializado
-    $id = $_SESSION['id'];
-    $pointControlData = $pointController->getPointControlData($id);
-
-    // Preparar dados para o gráfico
-    $allMonths = $pointController->getAllAvailableMonths($id);
-    $selectedMonths = isset($_GET['months']) ? $_GET['months'] : $allMonths;
-    $pointControlData = $pointController->getPointControlData($id, $selectedMonths);
-
-    $labels = [];
-    $dataPoints = [];
-    foreach ($pointControlData as $row) {
-        $labels[] = $pointController->converterMonthFromName($row['month']);
-        $dataPoints[] = $row['count'];
-    }
-    */
-
     // Preparar dados para o gráfico
     $labels = [];
     $dataPoints = [];
@@ -43,7 +25,21 @@ if ($_POST) {
         $labels[] = $row['month'];
         $dataPoints[] = $row['count'];
     }
+/* // Buscar dados para o gráfico apenas se o controlador estiver inicializado
+ $id = $_SESSION['id'];
+ $pointControlData = $pointController->getPointControlData($id, $months);
 
+ // Preparar dados para o gráfico
+ $allMonths = $pointController->getAllAvailableMonths($id);
+ $selectedMonths = isset($_GET['months']) ? $_GET['months'] : $allMonths;
+ $pointControlData = $pointController->getPointControlData($id, $selectedMonths);
+
+ $labels = [];
+ $dataPoints = [];
+ foreach ($pointControlData as $row) {
+     $labels[] = $pointController->converterMonthFromName($row['month']);
+     $dataPoints[] = $row['count'];
+ }*/
 ?>
 
 <html>
@@ -55,7 +51,7 @@ if ($_POST) {
         }
 
         #chartContainer {
-            width: 80%;
+            width: 100%;
             height: 60vh;
             margin: auto;
         }
@@ -67,46 +63,52 @@ if ($_POST) {
 </head>
 
 <body>
-<div class="container">
+<div class="container-fluid">
     <div class="row">
-        <div class="col-md-12">
+        <div class="col-md-8">
             <div id="chartContainer">
-                <canvas id="myChart"></canvas>
+                <canvas id="attendance"></canvas>
             </div>
         </div>
-    </div>
-    <div class="row">
-        <div class="col-md-12">
+        <div class="col-md-4">
+        <div class="card">
+         <img id="profilePic" style="height: 35vh; object-fit: scale-down;" class="card-img-top" alt="...">
+          <div class="card-body">
+            <h5 class="card-title">Olá, <text id="responseName"></text>!</h5>
+            Seu email: <text id="email"></text>
+            <p>Seu nickname: <text id="nickname"></text></p>
             <form action="index.php" method="post" name="insertPointControl">
-                <div class="row g-3">
-                    <div class="col-sm-6">
-                        <input hidden value="1" name="insertPointControl">
-                        <input hidden value="<?= $_SESSION['id'] ?>" name="id">
-                        <input hidden value="Verificação pendente" name="description">
-                        <button class="w-100 btn-lg btn btn-success" type="submit">Estou aqui!</button>
-                    </div>
-                </div>
-            </form>
+            <input hidden value="1" name="insertPointControl">
+            <input hidden value="<?= $_SESSION['id'] ?>" name="id">
+            <input hidden value="Verificação pendente" name="description">
+            <button class="w-100 btn-lg btn btn-success" type="submit">Estou aqui!</button>
+          </form>
+          </div>
         </div>
+
+          
+      </div>
+    </div>
+    <div class="row">
+        
     </div>
     <div class="row">
         <div class="col-md-12">
-            <p id="responseName"></p>
+          
             <p id="responseUserToken"></p>
             <p id="profileUser"></p>
-            <img id="profilePic">
             <p id="id"></p>
             <p id="theme"></p>
             <p id="nickname"></p>
             <p id="rank"></p>
-            <p id="email"></p>
+            
         </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    const ctx = document.getElementById('myChart').getContext('2d');
+    const ctx = document.getElementById('attendance').getContext('2d');
 
     // Dados do gráfico obtidos do PHP
     const labels = <?php echo json_encode($labels); ?>;
@@ -154,7 +156,7 @@ if ($_POST) {
         }
     };
 
-    const myChart = new Chart(ctx, config);
+    const attendance = new Chart(ctx, config);
 </script>
 </body>
 </html>

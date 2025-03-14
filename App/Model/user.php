@@ -361,27 +361,36 @@ class User {
         return $data;
     }
 
-    /*
+    
     public function getAllAvailableMonths($id) {
-        $query = "SELECT DISTINCT DATE_FORMAT(dateIn, '%Y-%m') as month FROM pointControl WHERE uidUserFK = :id ORDER BY month";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id', $id);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+        try {
+            $query = "SELECT DISTINCT DATE_FORMAT(dateIn, '%Y-%m') as month FROM ".$this->tableNames['pc']." WHERE uidUserFK = :id ORDER BY month";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':id', $id);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_COLUMN);
+        } catch (PDOException $e) {
+            error_log("Erro em getAllAvailableMonths: " . $e->getMessage());
+            return []; // Retorna um array vazio em caso de erro
+        }
     }
 
     public function getPointControlData($id, $months) {
-        $placeholders = implode(',', array_fill(0, count($months), '?'));
-        $query = "SELECT DATE_FORMAT(dateIn, '%Y-%m') as month, COUNT(*) as count FROM pointControl WHERE uidUserFK = :id AND DATE_FORMAT(dateIn, '%Y-%m') IN ($placeholders) GROUP BY month ORDER BY month";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id', $id);
-        foreach ($months as $index => $month) {
-            $stmt->bindValue($index + 1, $month);
+        try {
+            $placeholders = implode(',', array_fill(0, count($months), '?'));
+            $query = "SELECT DATE_FORMAT(dateIn, '%Y-%m') as month, COUNT(*) as count FROM ".$this->tableNames['pc']." WHERE uidUserFK = :id AND DATE_FORMAT(dateIn, '%Y-%m') IN ($placeholders) GROUP BY month ORDER BY month";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':id', $id);
+            foreach ($months as $index => $month) {
+                $stmt->bindValue($index + 1, $month);
+            }
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Erro em getPointControlData: " . $e->getMessage());
+            return []; // Retorna um array vazio em caso de erro
         }
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-*/
     public function __destruct() {
         $this->conn->close();
     }

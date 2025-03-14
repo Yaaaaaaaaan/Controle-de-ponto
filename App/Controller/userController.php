@@ -71,49 +71,35 @@ class UserController {
         }
     }
     public function updateUserProfilePicture($profilePicture) {
-        $targetDirectory = '/Controle-de-ponto/App/Persistence/userProfileImages/';
-        $nameOld = $targetDirectory . basename($_FILES["profilepic"]["name"]);
-        $uploadOk = 1;
-        $fileTypeImage = strtolower(pathinfo($nameOld, PATHINFO_EXTENSION));
-         // Gera um novo nome de arquivo baseado na data e hora atual
-        $newFileName = date('YmdHis') .$_SESSION['id']. '.' . $fileTypeImage;
-        $arch = $targetDirectory . $newFileName;
-        // Caminho completo no servidor
-        $targetFile = __DIR__ . '/../Persistence/userProfileImages/' . $newFileName;
-        // Verifica se o arquivo é uma imagem
-        $check = getimagesize($profilePicture['tmp_name']);
-        if ($check === false) {
-            $_SESSION['response'] = "O arquivo não é uma imagem.";
-            $uploadOk = 0;
-        }
-        
-        // Verifica se o arquivo já existe
-        if (file_exists($arch)) {
-            $_SESSION['response'] = "Arquivo já existente.";
-            $uploadOk = 0;
-        }
-        
-        // Verifica o tamanho do arquivo
-        if ($profilePicture['size'] > 500000) { // Limite de 500KB
-            $_SESSION['response'] = "Arquivo muito grande.";
-            $uploadOk = 0;
-        }
-        
-        // Permite apenas certos formatos de arquivo
-        if (!in_array($fileTypeImage, ['jpg', 'png', 'jpeg', 'gif'])) {
-            $_SESSION['response'] = "Apenas arquivos JPG, JPEG, PNG e GIF são permitidos.";
-            $uploadOk = 0;
-        }
-        
-        // Se estiver tudo ok, tenta fazer o upload
-        if ($uploadOk == 1) {
+        if (isset($profilePicture) && $profilePicture['error'] == 0) {
+            $targetDirectory = '../../../App/Persistence/userProfileImages/';
+            $imageFileType = strtolower(pathinfo($profilePicture['name'], PATHINFO_EXTENSION));
+            $newFileName = time() . $_SESSION['id'] . '.' . $imageFileType;
+            $targetFile = $targetDirectory . $newFileName;
+    
+            // Validar tipo de arquivo
+            $allowedTypes = array('jpg', 'jpeg', 'png', 'gif');
+            if (!in_array($imageFileType, $allowedTypes)) {
+                $_SESSION['response'] = '<p>Tipo de arquivo inválido. Apenas imagens são permitidas.</p>';
+                return;
+            }
+    
+            // Mover o arquivo
             if (move_uploaded_file($profilePicture['tmp_name'], $targetFile)) {
-                if($this->user->updateUserProfilePicture($newFileName, $arch,  $uploadOk)){
-                    $_SESSION['response'] = '<p>Imagem alterada com sucesso!.</p>';
+                $this->user->profilePicture = $newFileName;
+                $this->user->directory = '/Controle-de-ponto/App/Persistence/userProfileImages/' . $newFileName; // Caminho para o banco de dados
+                $this->user->verifyUpload = true;
+    
+                if ($this->user->updateUserProfilePicture($this->user->profilePicture, $this->user->directory, $this->user->verifyUpload)) {
+                    $_SESSION['response'] = '<p>Foto de perfil atualizada com sucesso.</p>';
+                } else {
+                    $_SESSION['response'] = '<p>Erro ao atualizar a foto de perfil no banco de dados.</p>';
                 }
             } else {
-                $_SESSION['response'] = '<p>Erro ao alterar imagem de perfil.</p>';
+                $_SESSION['response'] = '<p>Erro ao fazer upload do arquivo.</p>';
             }
+        } else {
+            $_SESSION['response'] = '<p>Nenhum arquivo enviado ou erro no upload.</p>';
         }
     }
     

@@ -1,19 +1,19 @@
 <?php
-require "../layout/menu.php";
+require '../layout/menu.php';
 
 if ($_POST) {
     include_once '../../../App/controller/UserController.php';
-    $controller = new UserController();
+    $userController = new UserController();
     if(isset($_POST['registro'])){
       $userHistory = $controller->showUserHistory($_POST['registro']);
     }
     // Verifica o upload da imagem de perfil
     if(isset($_FILES['profilepic'])) {
-      $controller->updateUserProfilePicture($_FILES['profilepic']);
+      $userController->updateUserProfilePicture($_FILES['profilepic']);
     }
 
     $defaultTheme = isset($_POST['defaultTheme']) ? 1 : 0;
-    $updateSuccess = $controller->updateUser(
+    $updateSuccess = $userController->updateUser(
       $_POST['name'], 
       $_SESSION['id'], 
       $_POST['email'], 
@@ -192,13 +192,13 @@ if ($_POST) {
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h1 class="modal-title fs-5" id="profilePhotoLabel">Your Profile</h1>
+                <h1 class="modal-title fs-5" id="profilePhotoLabel">Seu perfil</h1>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="row">
                     <div class="col-md-4"></div>
-                    <div class="col-md-6">My recent photo</div>
+                    <div class="col-md-6">Sua foto atual</div>
                     <div class="col-md-2"></div>
                 </div>
                 <div class="row">
@@ -214,10 +214,8 @@ if ($_POST) {
                         <div class="input-group">
                             <input type="hidden" name="nome_imagem" value="<?= time().$_SESSION['id'] ?>">
                             <input type="file" name="profilepic" class="form-control" id="inputGroupFile04" aria-describedby="inputGroupFileAddon04" aria-label="Upload">
-                            <button class="btn btn-outline-secondary" type="submit">Submit</button>
+                            <button class="btn btn-outline-secondary" type="submit">Salvar</button>
                         </div>
-
-                        <div class="btn btn-success mt-1">Ou, selecione imagens da sua galeria...</div>
                     </form>
                 </div>
             </div>
