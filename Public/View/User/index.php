@@ -77,6 +77,10 @@ if ($_POST) {
             <h5 class="card-title">Olá, <text id="responseName"></text>!</h5>
             Seu email: <text id="email"></text>
             <p>Seu nickname: <text id="nickname"></text></p>
+            <p hidden id="responseUserToken"></p>
+            <p hidden id="id"></p>
+            <p hidden id="theme"></p>
+            <p hidden id="rank"></p>
             <form action="index.php" method="post" name="insertPointControl">
             <input hidden value="1" name="insertPointControl">
             <input hidden value="<?= $_SESSION['id'] ?>" name="id">
@@ -85,24 +89,7 @@ if ($_POST) {
           </form>
           </div>
         </div>
-
-          
       </div>
-    </div>
-    <div class="row">
-        
-    </div>
-    <div class="row">
-        <div class="col-md-12">
-          
-            <p id="responseUserToken"></p>
-            <p id="profileUser"></p>
-            <p id="id"></p>
-            <p id="theme"></p>
-            <p id="nickname"></p>
-            <p id="rank"></p>
-            
-        </div>
     </div>
 </div>
 
