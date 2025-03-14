@@ -51,8 +51,8 @@ if ($_POST) {
         }
 
         #chartContainer {
-            width: 100%;
-            height: 60vh;
+            width: auto;
+            height: auto;
             margin: auto;
         }
 
