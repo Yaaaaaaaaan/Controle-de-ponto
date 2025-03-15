@@ -42,6 +42,35 @@ $controller = new pictureController();
 $pictures = $controller->getUserPictures();
 ?>
 
+
+<style>
+    .image-radio-container {
+        position: relative;
+        display: inline-block;
+        margin: 5px;
+    }
+
+    .image-radio-container img {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+        cursor: pointer;
+        border: 2px solid transparent; /* Borda transparente padrão */
+    }
+
+    .image-radio-container input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+    }
+
+    .image-radio-container input[type="radio"]:checked + img {
+        border-color: #007bff; /* Borda azul quando selecionado */
+    }
+
+</style>
 <div class="container">
   <main>
   <div data-bs-spy="scroll" data-bs-target="#navbar-example2"  data-bs-smooth-scroll="true" tabindex="0">
@@ -227,32 +256,19 @@ $pictures = $controller->getUserPictures();
                     </form>-->
 
                     <form method="post" action="settings.php">
-                      <div id="profilePictureCarousel" class="carousel slide" data-bs-ride="carousel">
-                          <div class="carousel-inner">
-                              <?php
-                              $active = true; // Flag para o primeiro item ativo
-                              foreach ($pictures as $picture) :
-                              ?>
-                                  <div class="carousel-item <?php echo $active ? 'active' : ''; ?>">
-                                      <label class="d-block text-center">
-                                          <img src="<?php echo $picture['path']; ?>" class="d-block w-100" alt="Foto de Perfil">
-                                          <input type="radio" name="selectedPicture" value="<?php echo $picture['cod']; ?>" class="mt-2">
-                                      </label>
-                                  </div>
-                              <?php
-                                  $active = false; // Desativa a flag após o primeiro item
-                              endforeach;
-                              ?>
+                      
+                          <div class="image-container">
+                            <?php foreach ($pictures as $picture) : ?>
+                              <label class="image-radio-container">
+                                <input type="radio" name="selectedPicture" value="<?php echo $picture['cod']; ?>">
+                                <img src="<?php echo $picture['path']; ?>" class="d-block w-100" alt="Foto de Perfil">
+                              </label>
+                                <?= $picture['cod']; ?>
+                              <?php endforeach; ?>
+
                           </div>
-                          <button class="carousel-control-prev" type="button" data-bs-target="#profilePictureCarousel" data-bs-slide="prev">
-                              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                              <span class="visually-hidden">Previous</span>
-                          </button>
-                          <button class="carousel-control-next" type="button" data-bs-target="#profilePictureCarousel" data-bs-slide="next">
-                              <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                              <span class="visually-hidden">Next</span>
-                          </button>
-                      </div>
+                              
+                         
                       <br>
                       <button type="submit" name="update_profile_picture" class="btn btn-primary mt-3">Atualizar Foto de Perfil</button>
                     </form>
