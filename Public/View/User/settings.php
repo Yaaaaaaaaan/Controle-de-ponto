@@ -45,31 +45,45 @@ $pictures = $controller->getUserPictures();
 
 <style>
     .image-radio-container {
-        position: relative;
-        display: inline-block;
+        position: relative; /* Adicionado para posicionamento relativo */
+        display: flex;
+        justify-content: center;
+        align-items: center;
         margin: 5px;
     }
 
     .image-radio-container img {
-        width: 100px;
-        height: 100px;
-        object-fit: cover;
+        max-width: 100%;
+        max-height: 125px;
+        object-fit: contain;
         cursor: pointer;
-        border: 2px solid transparent; /* Borda transparente padrão */
+        border: 2px solid transparent;
     }
 
     .image-radio-container input[type="radio"] {
         position: absolute;
-        opacity: 0;
+        top: 0;
+        left: 0;
         width: 100%;
         height: 100%;
+        opacity: 0;
         cursor: pointer;
+        z-index: 1; /* Garante que o input esteja no topo */
     }
 
     .image-radio-container input[type="radio"]:checked + img {
-        border-color: #007bff; /* Borda azul quando selecionado */
+        border-color: #007bff;
     }
 
+    .image-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .d-flex.justify-content-center.mt-3 button {
+        z-index: 1; /* Garante que o botão esteja no topo */
+    }
 </style>
 <div class="container">
   <main>
@@ -234,51 +248,43 @@ $pictures = $controller->getUserPictures();
             </div>
             <div class="modal-body">
                 <div class="row">
-                    <div class="col-md-4"></div>
-                    <div class="col-md-6">Sua foto atual</div>
-                    <div class="col-md-2"></div>
-                </div>
-                <div class="row">
                     <div class="position-relative">
                         <div class="text-center">
-                       <?php //echo '<img src="' . $_SESSION['lastImageProfileUser'] . '" alt="Imagem do usuário" style="width:280px;" >'; ?>
+                            <?php echo '<img src="' . $_SESSION['lastImageProfileUser'] . '" class="me-1" alt="Imagem do usuário" style="object-fit: cover; width:125px; height:125px; "'; ?>
                         </div>
+                        <text class="text-body-secondary">Essa é sua foto atual</text>
+                    </div>
+                    <center><hr style="width:50%;"></center>
+                    
+                </div>
+                <div class="row" style="margin-left:auto;">
+                    <div class="col-md-12">
+                        <form method="post" action="settings.php">
+                            <div class="image-container">
+                                <?php foreach ($pictures as $picture) : ?>
+                                    <label class="image-radio-container">
+                                        <input type="radio" name="selectedPicture" value="<?php echo $picture['cod']; ?>">
+                                        <img src="<?php echo $picture['path']; ?>" class="d-block w-100" alt="Foto de Perfil">
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+                            <text class="text-body-secondary">Essas são suas últimas três fotos adicionadas, Selecione uma.</text>
+                            <div class="d-flex justify-content-center mt-3">
+                                <button type="submit" style="text-align: center; display: block; margin: 0 auto;" name="updateProfilePic" class="btn btn-outline-primary w-100">Atualizar Foto de Perfil</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
-
-                <div class="col-md-12 mt-1">
-                    <!--<form action="settings.php" method="post" enctype="multipart/form-data">
-                        <div class="input-group">
-                            <input type="hidden" name="namePic" value="">
-                            <input type="file" name="profilepic" class="form-control" id="inputGroupFile04" aria-describedby="inputGroupFileAddon04" aria-label="Upload">
-                            <button class="btn btn-outline-secondary" type="submit">Salvar</button>
-                        </div>
-                    </form>-->
-
-                    <form method="post" action="settings.php">
-                      
-                          <div class="image-container">
-                            <?php foreach ($pictures as $picture) : ?>
-                              <label class="image-radio-container">
-                                <input type="radio" name="selectedPicture" value="<?php echo $picture['cod']; ?>">
-                                <img src="<?php echo $picture['path']; ?>" class="d-block w-100" alt="Foto de Perfil">
-                              </label>
-                                <?= $picture['cod']; ?>
-                              <?php endforeach; ?>
-
-                          </div>
-                              
-                         
-                      <br>
-                      <button type="submit" name="update_profile_picture" class="btn btn-primary mt-3">Atualizar Foto de Perfil</button>
-                    </form>
-                </div>
-
-                
-
             </div>
         </div>
     </div>
 </div>
 
 
+ <!--<form action="settings.php" method="post" enctype="multipart/form-data">
+                    <div class="input-group">
+                        <input type="hidden" name="namePic" value="">
+                        <input type="file" name="profilepic" class="form-control" id="inputGroupFile04" aria-describedby="inputGroupFileAddon04" aria-label="Upload">
+                        <button class="btn btn-outline-secondary" type="submit">Salvar</button>
+                    </div>
+                </form>-->

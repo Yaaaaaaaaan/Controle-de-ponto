@@ -341,6 +341,8 @@ class User {
             $stmt->execute();
             $row = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $_SESSION['lastImageProfileUser'] = $row['path'];
+
+            
             return;
         } catch(PDOException $e) {
             return false;
