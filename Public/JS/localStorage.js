@@ -40,22 +40,17 @@ async function processUserData() {
      document.getElementById("email").textContent = email;
      document.getElementById("responseNameCurto").textContent = "Olá, " + nameCurto; 
 
-      
-        
-  
-const profilePicDirOld = profileUser.replace(/\\/g,"");
-const profilePicDir = profilePicDirOld.substring(1, profilePicDirOld.length - 1);
-// Verificando se o caminho é válido antes de atribuir ao src
-if (profilePicDir) {
-  document.getElementById('profilePic').src = profilePicDir;
-} else {
-  console.error("Caminho da imagem inválido.");
-}
-        profilePic = document.getElementById('profilePic')
-        profilePic.src = profilePicDir;
+     const profileUserOk = profileUser.replace(/\\\\/g, "/");
+     const caminhoImagem = localStorage.getItem("profileUserOk");
 
+    if (caminhoImagem) {
+      const img = document.createElement("img");
+      img.src = caminhoImagem;
+      document.body.appendChild(img); // Ou adicione a imagem a um elemento específico
     } else {
-      console.error('Nenhum dado de usuário encontrado');
+      console.log("Caminho da imagem não encontrado no localStorage.");
+    }
+    console.log(profileUserOk);
     }
   } catch (error) {
     console.error('Erro ao processar dados:', error);
