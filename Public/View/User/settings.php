@@ -45,11 +45,12 @@ $pictures = $controller->getUserPictures();
 
 <style>
     .image-radio-container {
-        position: relative; /* Adicionado para posicionamento relativo */
+        position: relative;
         display: flex;
         justify-content: center;
         align-items: center;
         margin: 5px;
+        width: 48%; /* Largura inicial para telas maiores */
     }
 
     .image-radio-container img {
@@ -68,7 +69,7 @@ $pictures = $controller->getUserPictures();
         height: 100%;
         opacity: 0;
         cursor: pointer;
-        z-index: 1; /* Garante que o input esteja no topo */
+        z-index: 1;
     }
 
     .image-radio-container input[type="radio"]:checked + img {
@@ -82,7 +83,18 @@ $pictures = $controller->getUserPictures();
     }
 
     .d-flex.justify-content-center.mt-3 button {
-        z-index: 1; /* Garante que o botão esteja no topo */
+        z-index: 1;
+    }
+
+    @media (max-width: 576px) {
+        .image-radio-container {
+            width: 95%; /* Ajuste a largura para telas menores */
+        }
+    }
+    @media (max-width: 375px) {
+        .image-radio-container {
+            width: 30%; /* Ajuste para telas de 375px */
+        }
     }
 </style>
 <div class="container">
@@ -92,7 +104,7 @@ $pictures = $controller->getUserPictures();
       <h2>Configurações</h2>
       <p class="lead">Informações de usuário</p>
     </div>
-    <div class="row g-5">
+    <div class="row">
       <div class="col-md-5 col-lg-4 order-md-last">
         <div class="row">
           <div class="col-md-12">
@@ -257,7 +269,7 @@ $pictures = $controller->getUserPictures();
                     <center><hr style="width:50%;"></center>
                     
                 </div>
-                <div class="row" style="margin-left:auto;">
+                <div class="row" style="margin-left:0px;">
                     <div class="col-md-12">
                         <form method="post" action="settings.php">
                             <div class="image-container">
