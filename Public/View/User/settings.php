@@ -42,6 +42,61 @@ $controller = new pictureController();
 $pictures = $controller->getUserPictures();
 ?>
 
+
+<style>
+    .image-radio-container {
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 5px;
+        width: 48%; /* Largura inicial para telas maiores */
+    }
+
+    .image-radio-container img {
+        max-width: 100%;
+        max-height: 125px;
+        object-fit: contain;
+        cursor: pointer;
+        border: 2px solid transparent;
+    }
+
+    .image-radio-container input[type="radio"] {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+        z-index: 1;
+    }
+
+    .image-radio-container input[type="radio"]:checked + img {
+        border-color: #007bff;
+    }
+
+    .image-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .d-flex.justify-content-center.mt-3 button {
+        z-index: 1;
+    }
+
+    @media (max-width: 576px) {
+        .image-radio-container {
+            width: 95%; /* Ajuste a largura para telas menores */
+        }
+    }
+    @media (max-width: 375px) {
+        .image-radio-container {
+            width: 30%; /* Ajuste para telas de 375px */
+        }
+    }
+</style>
 <div class="container">
   <main>
   <div data-bs-spy="scroll" data-bs-target="#navbar-example2"  data-bs-smooth-scroll="true" tabindex="0">
@@ -49,7 +104,7 @@ $pictures = $controller->getUserPictures();
       <h2>Configurações</h2>
       <p class="lead">Informações de usuário</p>
     </div>
-    <div class="row g-5">
+    <div class="row">
       <div class="col-md-5 col-lg-4 order-md-last">
         <div class="row">
           <div class="col-md-12">
@@ -205,64 +260,43 @@ $pictures = $controller->getUserPictures();
             </div>
             <div class="modal-body">
                 <div class="row">
-                    <div class="col-md-4"></div>
-                    <div class="col-md-6">Sua foto atual</div>
-                    <div class="col-md-2"></div>
-                </div>
-                <div class="row">
                     <div class="position-relative">
                         <div class="text-center">
-                       <?php //echo '<img src="' . $_SESSION['lastImageProfileUser'] . '" alt="Imagem do usuário" style="width:280px;" >'; ?>
+                            <?php echo '<img src="' . $_SESSION['lastImageProfileUser'] . '" class="me-1" alt="Imagem do usuário" style="object-fit: cover; width:125px; height:125px; "'; ?>
                         </div>
+                        <text class="text-body-secondary">Essa é sua foto atual</text>
+                    </div>
+                    <center><hr style="width:50%;"></center>
+                    
+                </div>
+                <div class="row" style="margin-left:0px;">
+                    <div class="col-md-12">
+                        <form method="post" action="settings.php">
+                            <div class="image-container">
+                                <?php foreach ($pictures as $picture) : ?>
+                                    <label class="image-radio-container">
+                                        <input type="radio" name="selectedPicture" value="<?php echo $picture['cod']; ?>">
+                                        <img src="<?php echo $picture['path']; ?>" class="d-block w-100" alt="Foto de Perfil">
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+                            <text class="text-body-secondary">Essas são suas últimas três fotos adicionadas, Selecione uma.</text>
+                            <div class="d-flex justify-content-center mt-3">
+                                <button type="submit" style="text-align: center; display: block; margin: 0 auto;" name="updateProfilePic" class="btn btn-outline-primary w-100">Atualizar Foto de Perfil</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
-
-                <div class="col-md-12 mt-1">
-                    <!--<form action="settings.php" method="post" enctype="multipart/form-data">
-                        <div class="input-group">
-                            <input type="hidden" name="namePic" value="">
-                            <input type="file" name="profilepic" class="form-control" id="inputGroupFile04" aria-describedby="inputGroupFileAddon04" aria-label="Upload">
-                            <button class="btn btn-outline-secondary" type="submit">Salvar</button>
-                        </div>
-                    </form>-->
-
-                    <form method="post" action="settings.php">
-                      <div id="profilePictureCarousel" class="carousel slide" data-bs-ride="carousel">
-                          <div class="carousel-inner">
-                              <?php
-                              $active = true; // Flag para o primeiro item ativo
-                              foreach ($pictures as $picture) :
-                              ?>
-                                  <div class="carousel-item <?php echo $active ? 'active' : ''; ?>">
-                                      <label class="d-block text-center">
-                                          <img src="<?php echo $picture['path']; ?>" class="d-block w-100" alt="Foto de Perfil">
-                                          <input type="radio" name="selectedPicture" value="<?php echo $picture['cod']; ?>" class="mt-2">
-                                      </label>
-                                  </div>
-                              <?php
-                                  $active = false; // Desativa a flag após o primeiro item
-                              endforeach;
-                              ?>
-                          </div>
-                          <button class="carousel-control-prev" type="button" data-bs-target="#profilePictureCarousel" data-bs-slide="prev">
-                              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                              <span class="visually-hidden">Previous</span>
-                          </button>
-                          <button class="carousel-control-next" type="button" data-bs-target="#profilePictureCarousel" data-bs-slide="next">
-                              <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                              <span class="visually-hidden">Next</span>
-                          </button>
-                      </div>
-                      <br>
-                      <button type="submit" name="update_profile_picture" class="btn btn-primary mt-3">Atualizar Foto de Perfil</button>
-                    </form>
-                </div>
-
-                
-
             </div>
         </div>
     </div>
 </div>
 
 
+ <!--<form action="settings.php" method="post" enctype="multipart/form-data">
+                    <div class="input-group">
+                        <input type="hidden" name="namePic" value="">
+                        <input type="file" name="profilepic" class="form-control" id="inputGroupFile04" aria-describedby="inputGroupFileAddon04" aria-label="Upload">
+                        <button class="btn btn-outline-secondary" type="submit">Salvar</button>
+                    </div>
+                </form>-->

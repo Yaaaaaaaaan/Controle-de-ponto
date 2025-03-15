@@ -45,58 +45,67 @@ if ($_POST) {
 
 <html>
 <head>
-    <style>
+<style>
+
+
         body {
             font-family: Arial, sans-serif;
             margin: 50px;
         }
 
         #chartContainer {
-            width: auto;
-            height: auto;
+            width: auto; /* Garante que o contêiner ocupe toda a largura */
+            height: 60vh;
             margin: auto;
         }
 
         canvas {
             max-width: 100%;
         }
+
+        @media (max-width: 375px) {
+        #chartContainer {
+            width: 100%;
+            height: 75vh; 
+            padding: 0;  /* Ajuste para telas de 375px */
+        }
+        .mt-6{margin-top:2rem;}
+    }
     </style>
 </head>
 
 <body>
 <div class="container-fluid">
     <div class="row">
-        <div class="col-md-8">
+        <div class="col-12 col-md-8">
             <div id="chartContainer">
                 <canvas id="attendance"></canvas>
             </div>
         </div>
-        <div class="col-md-4">
-        <div class="col-md-12">
-            
-            <div class="text-center border rounded py-2 mb-3">
-            <h4 class="d-flex justify-content-between align-items-center mb-3 ms-2">
-              <span class="text-primary">Olá, <text id="responseName"></text>!</span>
-            </h4>
-              <?php echo '<img src="' . $_SESSION['lastImageProfileUser'] . '" alt="Imagem do usuário" style="width:226px;" >'; ?>
-              <small class="text-body-secondary"><span class="nav-link">
-              Seu email: <text id="email"></text>
-            <p>Seu nickname: <text id="nickname"></text></p>
-            <p hidden id="responseUserToken"></p>
-            <p hidden id="id"></p>
-            <p hidden id="theme"></p>
-            <p hidden id="rank"></p>
-    </span></small>
-                  <form action="index.php" method="post" name="insertPointControl">
-            <input hidden value="1" name="insertPointControl">
-            <input hidden value="<?= $_SESSION['id'] ?>" name="id">
-            <input hidden value="Verificação pendente" name="description">
-            <button class="w-100 btn-lg btn btn-success" type="submit">Estou aqui!</button>
-          </form>
+        <div class="mt-6 col-12 col-md-4">
+            <div class="col-12">
+                <div class="text-center border rounded py-2 mb-3">
+                    <h4 class="d-flex justify-content-between align-items-center mb-3 ms-2">
+                        <span class="text-primary">Olá, <text id="responseName"></text>!</span>
+                    </h4>
+                    <?php echo '<img src="' . $_SESSION['lastImageProfileUser'] . '" alt="Imagem do usuário" style="width:226px;" >'; ?>
+                    <small class="text-body-secondary"><span class="nav-link">
+                        Seu email: <text id="email"></text>
+                        <p>Seu nickname: <text id="nickname"></text></p>
+                        <p hidden id="responseUserToken"></p>
+                        <p hidden id="id"></p>
+                        <p hidden id="theme"></p>
+                        <p hidden id="rank"></p>
+                    </span></small>
+                    <form action="index.php" method="post" name="insertPointControl">
+                        <input hidden value="1" name="insertPointControl">
+                        <input hidden value="<?= $_SESSION['id'] ?>" name="id">
+                        <input hidden value="Verificação pendente" name="description">
+                        <button class="w-100 btn-lg btn btn-success" type="submit">Estou aqui!</button>
+                    </form>
+                </div>
             </div>
-          </div>
-        
-      </div>
+        </div>
     </div>
 </div>
 
@@ -104,7 +113,6 @@ if ($_POST) {
 <script>
     const ctx = document.getElementById('attendance').getContext('2d');
 
-    // Dados do gráfico obtidos do PHP
     const labels = <?php echo json_encode($labels); ?>;
     const dataPoints = <?php echo json_encode($dataPoints); ?>;
 
@@ -127,6 +135,7 @@ if ($_POST) {
         data: data,
         options: {
             responsive: true,
+            maintainAspectRatio: false, // Permite ajustar a altura do gráfico
             scales: {
                 y: {
                     beginAtZero: true,
