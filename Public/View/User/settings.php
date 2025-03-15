@@ -44,13 +44,10 @@ $pictures = $controller->getUserPictures();
 
 
 <style>
-    .image-radio-container {
+   .image-radio-container {
         position: relative;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin: 5px;
-        width: 48%; /* Largura inicial para telas maiores */
+        width: 30%;
+        margin: 5px; /* Adiciona margem para espaçamento */
     }
 
     .image-radio-container img {
@@ -78,7 +75,7 @@ $pictures = $controller->getUserPictures();
 
     .image-container {
         display: flex;
-        flex-wrap: wrap;
+        flex-wrap: nowrap; /* Impede a quebra de linha */
         justify-content: center;
     }
 
@@ -88,12 +85,17 @@ $pictures = $controller->getUserPictures();
 
     @media (max-width: 576px) {
         .image-radio-container {
-            width: 95%; /* Ajuste a largura para telas menores */
+            width: 95%;
         }
     }
+
     @media (max-width: 375px) {
+        .image-container {
+            flex-direction: row; /* Alinha as imagens em linha */
+        }
+
         .image-radio-container {
-            width: 30%; /* Ajuste para telas de 375px */
+            width: 30%;
         }
     }
 </style>

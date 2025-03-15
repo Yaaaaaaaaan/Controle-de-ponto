@@ -324,7 +324,7 @@ class User {
       }*/
 
       public function getUserPictures($userId) {
-        $sql = "SELECT cod, path, description FROM " . $this->tableNames['pic'] . " WHERE uidUserFK = :userId";
+        $sql = "SELECT cod, path, description FROM " . $this->tableNames['pic'] . " WHERE uidUserFK = :userId ORDER BY dateload DESC LIMIT 3";
         $stmt = $this->conn->prepare($sql);
         $stmt->bindParam(':userId', $userId);
         $stmt->execute();
@@ -334,16 +334,20 @@ class User {
     public function updateProfilePicture($userId, $pictureId) {
         try {
             $sql = "UPDATE " . $this->tableNames['pps'] . " SET uimageFK = :pictureId WHERE uidUserFK = :userId;
-            SELECT path FROM " . $this->tableNames['pic'] . " WHERE cod = :pictureId;";
+                    SELECT path FROM " . $this->tableNames['pic'] . " WHERE cod = :pictureId;";
             $stmt = $this->conn->prepare($sql);
             $stmt->bindParam(':userId', $userId);
             $stmt->bindParam(':pictureId', $pictureId);
             $stmt->execute();
-            $row = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            $_SESSION['lastImageProfileUser'] = $row['path'];
-
-            
-            return;
+            $stmt->nextRowset(); // Move para o segundo resultado da consulta
+            $profileImagePath = $stmt->fetchColumn(); // Pega apenas o valor da coluna 'path'
+    
+            if ($profileImagePath) {
+                $_SESSION['profileImagePath'] = $profileImagePath; // Armazena apenas o caminho na sessão
+                return $profileImagePath; // Retorna o caminho da imagem
+            } else {
+                return false; // Retorna false se não encontrar o caminho
+            }
         } catch(PDOException $e) {
             return false;
         }
