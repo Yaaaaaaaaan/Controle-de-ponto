@@ -1,56 +1,64 @@
-const USER_DATA_EXPIRATION_TIME = 3600000; // 1 hora (em milissegundos)
-
 async function processUserData() {
   try {
     const response = await fetch('../../Persistence/userData.php');
-    const latestUserData = await response.json();
+    const userData = await response.json();
 
-    if (latestUserData && Object.keys(latestUserData).length > 0) {
-      const storedUserDataString = localStorage.getItem('userData');
-      let storedUserData = storedUserDataString ? JSON.parse(storedUserDataString) : null;
+    if (userData.length > 0) {
+      // Armazenando os dados no localStorage
+      localStorage.setItem('userData', JSON.stringify(userData));
+      console.log('Dados armazenados no localStorage:', localStorage.getItem('userData'));
 
-      if (!storedUserData || !isUserDataValid(storedUserData) || JSON.stringify(storedUserData.data) !== JSON.stringify(latestUserData)) {
-        // Atualiza o localStorage com os dados mais recentes
-        const userDataToStore = {
-          data: latestUserData,
-          timestamp: Date.now()
-        };
-        localStorage.setItem('userData', JSON.stringify(userDataToStore));
-        console.log('Dados do usuário atualizados no localStorage:', userDataToStore);
-        storedUserData = userDataToStore;
-      } else {
-        console.log('Dados do usuário no localStorage estão atualizados.');
-      }
+     // Recuperando a string do localStorage
+     userDataString = localStorage.getItem("userData");
 
-      // Processa os dados do usuário
-      processUserDataDetails(storedUserData.data);
+     // Convertendo a string para um objeto JavaScript
+     let UserData = JSON.parse(userDataString);
+
+     // Acessando os valores dentro do array
+     let userdata = UserData.split(",");
+     let name = (userdata[1]);
+     name = (userdata[1]).slice(8, -1);
+     userToken = (userdata[0]).slice(14, -1);
+     email = (userdata[2]).slice(9, -1);
+     rank = (userdata[3]).slice(7);
+     nickname = (userdata[4]).slice(12, -1);
+     theme = (userdata[5]).slice(8);
+     id = (userdata[6]).slice(5);
+     profileUser = (userdata[7]).slice(14, -1);
+
+     //faz a manipulação detalhada da string
+     nameCurto = name.substring(0, name.indexOf(" "));
+
+     // define valores ao html (provisório, futuramente retrabalhar com return, e inserir tudo dentro de array.)
+
+     document.getElementById("responseName").textContent = name; 
+     document.getElementById("responseUserToken").textContent = userToken; 
+     document.getElementById("id").textContent = id;
+     document.getElementById("theme").textContent = theme;
+     document.getElementById("nickname").textContent = nickname;
+     document.getElementById("rank").textContent = rank;
+     document.getElementById("email").textContent = email;
+     document.getElementById("responseNameCurto").textContent = "Olá, " + nameCurto; 
+
+      
+        
+  
+const profilePicDirOld = profileUser.replace(/\\/g,"");
+const profilePicDir = profilePicDirOld.substring(1, profilePicDirOld.length - 1);
+// Verificando se o caminho é válido antes de atribuir ao src
+if (profilePicDir) {
+  document.getElementById('profilePic').src = profilePicDir;
+} else {
+  console.error("Caminho da imagem inválido.");
+}
+        profilePic = document.getElementById('profilePic')
+        profilePic.src = profilePicDir;
+
     } else {
-      console.error('Nenhum dado de usuário encontrado no servidor.');
+      console.error('Nenhum dado de usuário encontrado');
     }
   } catch (error) {
-    console.error('Erro ao processar dados do usuário:', error);
-  }
-}
-
-function isUserDataValid(userData) {
-  return userData && userData.data && userData.timestamp && (Date.now() - userData.timestamp < USER_DATA_EXPIRATION_TIME);
-}
-
-function processUserDataDetails(userData) {
-  document.getElementById("responseName").textContent = userData.name;
-  document.getElementById("responseUserToken").textContent = userData.userToken;
-  document.getElementById("id").textContent = userData.id;
-  document.getElementById("theme").textContent = userData.theme;
-  document.getElementById("nickname").textContent = userData.nickname;
-  document.getElementById("rank").textContent = userData.rank;
-  document.getElementById("email").textContent = userData.email;
-  document.getElementById("responseNameCurto").textContent = "Olá, " + userData.name.split(" ")[0];
-
-  const profilePicDir = userData.profileUser.replace(/\\/g, "").slice(1, -1);
-  if (profilePicDir) {
-    document.getElementById('profilePic').src = profilePicDir;
-  } else {
-    console.error("Caminho da imagem de perfil inválido.");
+    console.error('Erro ao processar dados:', error);
   }
 }
 
