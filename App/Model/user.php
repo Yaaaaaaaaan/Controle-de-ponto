@@ -344,6 +344,14 @@ class User {
     
             if ($profileImagePath) {
                 $_SESSION['profileImagePath'] = $profileImagePath; // Armazena apenas o caminho na sessão
+                
+                 // Atualiza apenas a parte 'profileUser' do $_SESSION['userData']
+                if (isset($_SESSION['userData'])) {
+                    $userData = json_decode($_SESSION['userData'], true);
+                    $userData['profileUser'] = $profileImagePath;
+                    $_SESSION['userData'] = json_encode($userData);
+                }
+                
                 return $profileImagePath; // Retorna o caminho da imagem
             } else {
                 return false; // Retorna false se não encontrar o caminho
