@@ -1,0 +1,15 @@
+ .index #pPicture{
+    width:226px;
+    height: 226px;
+}
+
+.settings #pPicture{
+    width:226px;
+    height: 226px;
+}
+
+.modal-body #pPicture{
+    object-fit: cover;
+    width:125px;
+    height:125px; 
+}

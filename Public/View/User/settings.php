@@ -114,7 +114,8 @@ $pictures = $controller->getUserPictures();
               <span class="text-primary">Seu perfil</span>
             </h4>
             <div class="text-center border rounded py-2 mb-3">
-              <?php echo '<img src="' . $_SESSION['lastImageProfileUser'] . '" alt="Imagem do usuário" style="width:226px;" >'; ?>
+            <div class="settings"><img id="pPicture"></div>
+              <?php //echo '<img src="' . $_SESSION['lastImageProfileUser'] . '" alt="Imagem do usuário" style="width:226px;" >'; ?>
               <small class="text-body-secondary"><a href="" class="nav-link" data-bs-toggle="modal" data-bs-target="#profilePhoto">
                     Mude sua foto de perfil...
                   </a></small>
@@ -264,7 +265,8 @@ $pictures = $controller->getUserPictures();
                 <div class="row">
                     <div class="position-relative">
                         <div class="text-center">
-                            <?php echo '<img src="' . $_SESSION['lastImageProfileUser'] . '" class="me-1" alt="Imagem do usuário" style="object-fit: cover; width:125px; height:125px; "'; ?>
+                        <img id="pPicture">
+                            <?php// echo '<img src="' . $_SESSION['lastImageProfileUser'] . '" class="me-1" alt="Imagem do usuário" style="object-fit: cover; width:125px; height:125px; "'; ?>
                         </div>
                         <text class="text-body-secondary">Essa é sua foto atual</text>
                     </div>

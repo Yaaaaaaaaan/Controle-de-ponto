@@ -88,7 +88,8 @@ if ($_POST) {
                     <h4 class="d-flex justify-content-between align-items-center mb-3 ms-2">
                         <span class="text-primary">Olá, <text id="responseName"></text>!</span>
                     </h4>
-                    <?php echo '<img src="' . $_SESSION['lastImageProfileUser'] . '" alt="Imagem do usuário" style="width:226px;" >'; ?>
+                    <?php // echo '<img src="' . $_SESSION['lastImageProfileUser'] . '" alt="Imagem do usuário" style="width:226px;" >'; ?>
+                    <div class="index"><img id="pPicture"></div>
                     <small class="text-body-secondary"><span class="nav-link">
                         Seu email: <text id="email"></text>
                         <p>Seu nickname: <text id="nickname"></text></p>

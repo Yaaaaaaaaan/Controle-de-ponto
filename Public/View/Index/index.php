@@ -9,7 +9,7 @@ if($_SESSION['logged'] != null){
 ?>
 
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
     <head>
         <link rel="stylesheet" href="../../CSS/style.css">
         <meta charset="UTF-8">

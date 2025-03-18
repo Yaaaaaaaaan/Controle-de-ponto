@@ -29,32 +29,69 @@ async function processUserData() {
      //faz a manipulação detalhada da string
      nameCurto = name.substring(0, name.indexOf(" "));
 
-     // define valores ao html (provisório, futuramente retrabalhar com return, e inserir tudo dentro de array.)
+      // Atualiza elementos em outras páginas
+      const responseName = document.getElementById("responseName");
+      if (responseName) {
+          responseName.textContent = name;
+      }
+      const responseUserToken = document.getElementById("responseUserToken");
+      if (responseUserToken) {
+          responseUserToken.textContent = userToken;
+      }
+      const idElement = document.getElementById("id");
+      if (idElement) {
+          idElement.textContent = id;
+      }
+      const themeElement = document.getElementById("theme");
+      if (themeElement) {
+          themeElement.textContent = theme;
+      }
+      const nicknameElement = document.getElementById("nickname");
+      if (nicknameElement) {
+          nicknameElement.textContent = nickname;
+      }
+      const rankElement = document.getElementById("rank");
+      if (rankElement) {
+          rankElement.textContent = rank;
+      }
+      const emailElement = document.getElementById("email");
+      if (emailElement) {
+          emailElement.textContent = email;
+      }
 
-     document.getElementById("responseName").textContent = name; 
-     document.getElementById("responseUserToken").textContent = userToken; 
-     document.getElementById("id").textContent = id;
-     document.getElementById("theme").textContent = theme;
-     document.getElementById("nickname").textContent = nickname;
-     document.getElementById("rank").textContent = rank;
-     document.getElementById("email").textContent = email;
-     document.getElementById("responseNameCurto").textContent = "Olá, " + nameCurto; 
+      // Atualiza o menu
+      atualizarMenu(nameCurto);
 
-     const profileUserOk = profileUser.replace(/\\\\/g, "/");
-     const caminhoImagem = localStorage.getItem("profileUserOk");
-
-    if (caminhoImagem) {
-      const img = document.createElement("img");
-      img.src = caminhoImagem;
-      document.body.appendChild(img); // Ou adicione a imagem a um elemento específico
-    } else {
-      console.log("Caminho da imagem não encontrado no localStorage.");
-    }
-    console.log(profileUserOk);
-    }
-  } catch (error) {
-    console.error('Erro ao processar dados:', error);
+      const imageBasePath = '/controle-de-ponto/App/Persistence/userProfileImages/';
+      if (profileUser) {
+          const srcImage = imageBasePath + profileUser.replace(/"/g, '');
+          const pPicture = document.getElementById("pPicture");
+          if (pPicture) {
+              pPicture.src = srcImage;
+              console.log("link:", srcImage);
+          } else {
+              console.error("Elemento pPicture não encontrado.");
+          }
+      } else {
+          console.error("profileUser não encontrado no localStorage.");
+      }
+  } else {
+      console.error("Dados do usuário inválidos ou vazios.");
   }
+} catch (error) {
+  console.error('Erro ao processar dados:', error);
+}
 }
 
+function atualizarMenu(nameCurto) {
+const responseNameCurto = document.getElementById("responseNameCurto");
+if (responseNameCurto) {
+  responseNameCurto.textContent = "Olá, " + nameCurto;
+} else {
+  console.log("Elemento responseNameCurto não encontrado em menu.php.");
+}
+}
+
+document.addEventListener('DOMContentLoaded', function() {
 processUserData();
+});

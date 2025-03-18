@@ -123,7 +123,7 @@ class User {
             } else {
                 $ip = $_SERVER['REMOTE_ADDR'];
             }
-            $query = "SELECT u.uid, t.token	, u.uname, u.username, u.urank, u.uemail, u.upassword, u.username, d.path, p.dateload, u.udefaultTheme 
+            $query = "SELECT u.uid, t.token	, u.uname, u.username, u.urank, u.uemail, u.upassword, u.username, d.description, p.dateload, u.udefaultTheme 
             FROM " . $this->tableNames['ud'] . " u 
             INNER JOIN ". $this->tableNames['pic'] ." d ON u.uid = d.uidUserFK 
             INNER JOIN ".$this->tableNames['ut']." t ON u.uid = t.uidUserFK 
@@ -169,7 +169,7 @@ class User {
                     $_SESSION['nickname'] = $row['username'];
                     $_SESSION['defaultTheme'] = $row['udefaultTheme'];
                     $_SESSION['id'] = $row['uid'];
-                    $_SESSION['lastImageProfileUser'] = $row['path'];
+                    $_SESSION['lastImageProfileUser'] = $row['description'];
                     $_SESSION['logged'] = true;
                     
                     $_SESSION['userData'] = json_encode([
@@ -180,7 +180,7 @@ class User {
                         'nickname' => $row['username'],
                         'theme' => $row['udefaultTheme'],
                         'id' => $row['uid'],
-                        'profileUser' => $row['path'],
+                        'profileUser' => $row['description'],
                     ]);
 
                     return true;
