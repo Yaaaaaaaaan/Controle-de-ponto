@@ -43,10 +43,10 @@
       <div class="offcanvas-body">
         <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
           <li class="nav-item">
-            <a class="nav-link <?php if($_SERVER['REQUEST_URI'] == '/Estudos/Public/View/User/index.php'){echo 'active';} ?>" aria-current="page" href="../User/index.php">Home</a>
+            <a class="nav-link <?php if($_SERVER['REQUEST_URI'] == '/Estudos/Public/View/User/index.php'){echo 'active';} ?>" aria-current="page" href="../User/index.php">Inicial</a>
           </li>
           <li class="nav-item">
-          <a class="nav-link <?php if($_SERVER['REQUEST_URI'] == '/Estudos/Public/View/User/settings.php'){echo 'active';} ?>" aria-current="page" href="../User/settings.php">Settings</a>
+          <a class="nav-link <?php if($_SERVER['REQUEST_URI'] == '/Estudos/Public/View/User/settings.php'){echo 'active';} ?>" aria-current="page" href="../User/settings.php">Configurações</a>
           </li>
           <?php if($_SESSION['rank']=1){
             echo'<li class="nav-item">
@@ -73,7 +73,7 @@
               }
           ?>">
            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-               Other settings
+               Outras configurações
            </a>
            <ul class="dropdown-menu dropdown-menu-dark">
                <li> 

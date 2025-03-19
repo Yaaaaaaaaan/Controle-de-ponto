@@ -66,8 +66,10 @@ async function processUserData() {
       if (profileUser) {
           const srcImage = imageBasePath + profileUser.replace(/"/g, '');
           const pPicture = document.getElementById("pPicture");
+          const pPictureModal = document.getElementById("pPictureModal");
           if (pPicture) {
               pPicture.src = srcImage;
+              pPictureModal.src = srcImage;
               console.log("link:", srcImage);
           } else {
               console.error("Elemento pPicture não encontrado.");

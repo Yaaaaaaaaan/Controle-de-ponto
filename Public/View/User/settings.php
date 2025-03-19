@@ -265,7 +265,7 @@ $pictures = $controller->getUserPictures();
                 <div class="row">
                     <div class="position-relative">
                         <div class="text-center">
-                        <img id="pPicture">
+                        <img id="pPictureModal">
                             <?php// echo '<img src="' . $_SESSION['lastImageProfileUser'] . '" class="me-1" alt="Imagem do usuário" style="object-fit: cover; width:125px; height:125px; "'; ?>
                         </div>
                         <text class="text-body-secondary">Essa é sua foto atual</text>
@@ -275,7 +275,7 @@ $pictures = $controller->getUserPictures();
                 </div>
                 <div class="row" style="margin-left:0px;">
                     <div class="col-md-12">
-                        <form method="post" action="settings.php">
+                        <!--<form method="post" action="settings.php">
                             <div class="image-container">
                                 <?php foreach ($pictures as $picture) : ?>
                                     <label class="image-radio-container">
@@ -287,6 +287,21 @@ $pictures = $controller->getUserPictures();
                             <text class="text-body-secondary">Essas são suas últimas três fotos adicionadas, Selecione uma.</text>
                             <div class="d-flex justify-content-center mt-3">
                                 <button type="submit" style="text-align: center; display: block; margin: 0 auto;" name="updateProfilePic" class="btn btn-outline-primary w-100">Atualizar Foto de Perfil</button>
+                            </div>
+                        </form>-->
+
+                        <form method="post" id="profilePicForm">
+                            <div class="image-container">
+                                <?php foreach ($pictures as $picture) : ?>
+                                    <label class="image-radio-container">
+                                        <input type="radio" name="selectedPicture" value="<?php echo $picture['cod']; ?>">
+                                        <img src="<?php echo $picture['path']; ?>" class="d-block w-100" alt="Foto de Perfil">
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+                            <text class="text-body-secondary">Essas são suas últimas três fotos adicionadas, Selecione uma.</text>
+                            <div class="d-flex justify-content-center mt-3">
+                                <button type="button" id="updateProfilePicBtn" class="btn btn-outline-primary w-100">Atualizar Foto de Perfil</button>
                             </div>
                         </form>
                     </div>
@@ -304,3 +319,33 @@ $pictures = $controller->getUserPictures();
                         <button class="btn btn-outline-secondary" type="submit">Salvar</button>
                     </div>
                 </form>-->
+
+<script>
+    document.getElementById('updateProfilePicBtn').addEventListener('click', function() {
+        const form = document.getElementById('profilePicForm');
+        const formData = new FormData(form);
+
+        fetch('settings.php', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.text())
+            .then(data => {
+                // Atualize a imagem do perfil na página sem recarregar
+                const profilePicContainer = document.querySelectorAll('.settings img, .modal-body .row .text-center img');
+                const selectedPicture = document.querySelector('input[name="selectedPicture"]:checked');
+                if (selectedPicture) {
+                    const newSrc = selectedPicture.nextElementSibling.src;
+                    profilePicContainer.forEach(image => {
+                        image.src = newSrc;
+                    });
+                }
+                // Exiba alguma mensagem de sucesso ou erro
+                console.log(data); // Você pode analisar a resposta do servidor aqui.
+            })
+            .catch(error => {
+                console.error('Erro ao atualizar a foto de perfil:', error);
+                // Exiba alguma mensagem de erro para o usuário
+            });
+    });
+</script>

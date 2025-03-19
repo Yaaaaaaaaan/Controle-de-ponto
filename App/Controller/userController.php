@@ -71,20 +71,47 @@ class UserController {
         }
     }
 
-    
 
-    public function updateProfilePicture($pictureId) {
-        if (isset($_SESSION['id'])) {
-            if ($this->user->updateProfilePicture($_SESSION['id'], $pictureId)) {
-                $_SESSION['response'] = '<p>Foto de perfil atualizada com sucesso.</p>';
+
+    public function updateProfilePicture(Request $request) {
+
+        if ($request->ajax()) {
+            if (Auth::check() && $request->has('selectedPicture')) {  // Usando Auth::check para verificar autenticação
+
+                $selectedPictureId = $request->input('selectedPicture');
+
+                if ($this->user->updateProfilePicture($_SESSION['id'], $selectedPictureId)) {
+                    // Recupere o caminho da nova imagem de perfil
+                    $picturePath = $this->user->getPathById($selectedPictureId);
+
+
+                    return response()->json(['success' => true, 'message' => 'Foto de perfil atualizada com sucesso.', 'newSrc' => $picturePath]);
+
+                } else {
+                    return response()->json(['success' => false, 'message' => 'Erro ao atualizar a foto de perfil.'], 500);
+                }
             } else {
-                $_SESSION['response'] = '<p>Erro ao atualizar a foto de perfil.</p>';
+                return response()->json(['success' => false, 'message' => 'Usuário não autenticado ou imagem não selecionada.'], 403); // Erro 403 - Acesso Negado
             }
+
         } else {
-            $_SESSION['response'] = '<p>Usuário não autenticado.</p>';
+
+            // Se não for requisição AJAX, mantém o comportamento original (ou adapte conforme necessário)
+            if (isset($_SESSION['id'])) {
+                if ($this->user->updateProfilePicture($_SESSION['id'], $request->input('selectedPicture'))) { // Adaptado para usar Request
+                    $_SESSION['response'] = '<p>Foto de perfil atualizada com sucesso.</p>';
+                } else {
+                    $_SESSION['response'] = '<p>Erro ao atualizar a foto de perfil.</p>';
+                }
+            } else {
+                $_SESSION['response'] = '<p>Usuário não autenticado.</p>';
+            }
+
+            return redirect()->back(); // Redireciona de volta após o processamento não-AJAX
         }
     }
-    
+
+
     public function insertUserProfilePicture($profilePicture) {
         if (isset($profilePicture) && $profilePicture['error'] == 0) {
             $targetDirectory = __DIR__ . '/../../App/Persistence/userProfileImages/'; // Caminho absoluto

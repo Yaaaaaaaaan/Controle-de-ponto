@@ -8,7 +8,7 @@
     height: 226px;
 }
 
-.modal-body #pPicture{
+.modal-body #pPictureModal{
     object-fit: cover;
     width:125px;
     height:125px; 
