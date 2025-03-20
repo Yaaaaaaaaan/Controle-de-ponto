@@ -73,43 +73,54 @@ class UserController {
 
 
 
-    public function updateProfilePicture(Request $request) {
+    public function updateProfilePicture() {
+        // Verifica se a requisição é AJAX
+        if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
 
-        if ($request->ajax()) {
-            if (Auth::check() && $request->has('selectedPicture')) {  // Usando Auth::check para verificar autenticação
 
-                $selectedPictureId = $request->input('selectedPicture');
+            if(isset($_POST['selectedPicture'])) {
+                $selectedPictureId = $_POST['selectedPicture'];
 
+
+                // Atualiza a imagem no banco de dados
                 if ($this->user->updateProfilePicture($_SESSION['id'], $selectedPictureId)) {
-                    // Recupere o caminho da nova imagem de perfil
-                    $picturePath = $this->user->getPathById($selectedPictureId);
 
 
-                    return response()->json(['success' => true, 'message' => 'Foto de perfil atualizada com sucesso.', 'newSrc' => $picturePath]);
+                    // Retorna um JSON com sucesso e o nome da nova imagem
+                    $picturePath = $this->user->getLastInsertedPicturePath($_SESSION['id']);
+                    $response = [
+                        'success' => true,
+                        'newProfilePicture' => $picturePath
+                    ];
+
+                    header('Content-Type: application/json'); // Define o header para JSON
+
+                    echo json_encode($response); // Retorna JSON
 
                 } else {
-                    return response()->json(['success' => false, 'message' => 'Erro ao atualizar a foto de perfil.'], 500);
+                    $response = [
+                        'success' => false,
+                        'message' => 'Erro ao atualizar imagem no banco de dados.'
+                    ];
+                    echo json_encode($response);
                 }
+
             } else {
-                return response()->json(['success' => false, 'message' => 'Usuário não autenticado ou imagem não selecionada.'], 403); // Erro 403 - Acesso Negado
+                $response = [
+                    'success' => false,
+                    'message' => 'selectedPicture não definido.'
+                ];
+                echo json_encode($response);
             }
 
         } else {
-
-            // Se não for requisição AJAX, mantém o comportamento original (ou adapte conforme necessário)
-            if (isset($_SESSION['id'])) {
-                if ($this->user->updateProfilePicture($_SESSION['id'], $request->input('selectedPicture'))) { // Adaptado para usar Request
-                    $_SESSION['response'] = '<p>Foto de perfil atualizada com sucesso.</p>';
-                } else {
-                    $_SESSION['response'] = '<p>Erro ao atualizar a foto de perfil.</p>';
-                }
-            } else {
-                $_SESSION['response'] = '<p>Usuário não autenticado.</p>';
-            }
-
-            return redirect()->back(); // Redireciona de volta após o processamento não-AJAX
+            // Retornar um erro ou redirecionar se não for AJAX
+            http_response_code(403); // Forbidden (Proibido)
+            echo "Acesso não permitido.";
+            exit(); // Encerra o script
         }
     }
+
 
 
     public function insertUserProfilePicture($profilePicture) {
