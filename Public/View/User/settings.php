@@ -12,8 +12,7 @@ if ($_POST) {
     /*if(isset($_FILES['profilepic'])) {
       $userController->updateUserProfilePicture($_FILES['profilepic']);
     }*/
-
-    if(isset($_POST['selectedPicture'])){
+     if(isset($_POST['selectedPicture'])) {
       $userController->updateProfilePicture($_POST['selectedPicture']);
     }
     

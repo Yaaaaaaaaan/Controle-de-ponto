@@ -143,15 +143,14 @@ class UserController {
             $_SESSION['response'] = '<p>Nenhum arquivo enviado ou erro no upload.</p>';
         }
     }
-    
-    public function unAuthenticateUser($logout){
-        $this->user->$logout = $logout;
-        if($this->user->$logout != null){
-            session_start();
-            session_destroy();
-            header('Location: ../');
-        }
+
+    public function unAuthenticateUser() {
+        session_start(); // Inicia a sessão se ainda não estiver iniciada
+        session_destroy(); // Destrói a sessão
+        header('Location: ../'); // Redireciona para a página inicial (ajuste o caminho se necessário)
+        exit; // Importante: encerra a execução do script após o redirecionamento
     }
+
 
     public function showUserHistory($registro) {
         $this->user->registro = $registro;

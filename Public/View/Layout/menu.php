@@ -6,7 +6,7 @@
       define('APP_RAN', true);
       include_once '../../../App/controller/UserController.php';
       if(isset($_POST['logout'])){$controller = new UserController();
-      $controller->unAuthenticateUser($_POST['logout']);
+      $controller->unAuthenticateUser();
   }}
   //validação de token e dados comuns de usuário
   if (isset($_SESSION['userData']) && $_SESSION['userData'] != null) {
@@ -107,16 +107,16 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h1 class="modal-title fs-5" id="staticBackdropLabel">Really want exit?</h1>
+        <h1 class="modal-title fs-5" id="staticBackdropLabel">Tem certeza que desejas sair?</h1>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        Do you really want to leave? If you are, you will need to log in again.
+        Caso saia, será necessário efetuar o login novamente mais tarde.
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Voltar</button>
         <form action="<?php $_SERVER['PHP_SELF']; ?>" method="post">
-                <input class="btn btn-success" type="submit" name="logout" value="Yes, go out.">
+                <input class="btn btn-success" type="submit" name="logout" value="Sim, desejo sair.">
             </form>
       </div>
     </div>

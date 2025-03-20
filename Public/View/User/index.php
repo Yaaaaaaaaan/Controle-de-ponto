@@ -102,7 +102,7 @@ if ($_POST) {
                         <input hidden value="1" name="insertPointControl">
                         <input hidden value="<?= $_SESSION['id'] ?>" name="id">
                         <input hidden value="Verificação pendente" name="description">
-                        <button class="w-100 btn-lg btn btn-success" type="submit">Estou aqui!</button>
+                        <button class="btn-lg btn btn-success" style="width:90%;" type="submit">Estou aqui!</button>
                     </form>
                 </div>
             </div>
