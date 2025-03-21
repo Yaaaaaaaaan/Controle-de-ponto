@@ -7,7 +7,7 @@ if ($_POST) {
       $userController = new UserController();
     if(isset($_POST['registro'])){
       $userHistory = $userController->showUserHistory($_POST['registro']);
-    }
+    }// TODO: FINALIZAR UPLOAD DE IMAGENS PARA O PERFIL;
     // Verifica o upload da imagem de perfil
     /*if(isset($_FILES['profilepic'])) {
       $userController->updateUserProfilePicture($_FILES['profilepic']);
@@ -16,8 +16,9 @@ if ($_POST) {
       $userController->updateProfilePicture($_POST['selectedPicture']);
     }
 
-
+    // TODO: RESTAURAR CONFIGURAÇÕES DE TEMAS CLARO E ESCURO, UTILIZANDO LOCALSTORAGE;
     $defaultTheme = isset($_POST['defaultTheme']) ? 1 : 0;
+     //  TODO: RESTAURAR UPDATEUSER UTILIZANDO LOCALSTORAGE
     $updateSuccess = $userController->updateUser(
       $_POST['name'], 
       $_SESSION['id'], 
@@ -151,11 +152,11 @@ echo '</pre>';*/
                     <label for="floatingInputName">Name</label>
                 </div>
             </div>          
-            <div class="accordion" id="scrollspyHeading2">
+            <div class="accordion" id="scrollspyHeading2"> <!-- TODO: RESTAURAR ALTERAÇÃO DE SENHA -->
               <div class="accordion-item">
                 <h2 class="accordion-header">
                   <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
-                  Are you looking to change your password? <a class="ms-1 text-danger-emphasis">Click here!</a>
+                  Desejas alterar a senha? <a class="ms-1 text-danger-emphasis">Click here!</a>
                   </button>
                 </h2>
                 <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#scrollspyHeading2">
@@ -204,7 +205,7 @@ echo '</pre>';*/
                   </div>
                 </div>
               </div>
-              <div class="accordion-item">
+              <div class="accordion-item"> <!-- TODO: DECIDIR SE EXISTIRÁ HISTÓRICO DE USO PARA USUÁRIO, OU APENAS ADMINISTRATIVO (HOUSEKEEPING), E RESTAURÁ-LO.-->
                 <h2 class="accordion-header">
                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
                         Histórico de uso

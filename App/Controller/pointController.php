@@ -13,7 +13,7 @@ class PointController {
         $this->db = $database->getConnection();
         $this->user = new User($this->db);
     }
-
+        // TODO: CRIAR FILTRO PARA VISUALIZAÇÃO DE APENAS 3 MESES VIGENTES. (SEM INTERFACE PARA ESCOLHA DE MAIS MESES)
        public function getPointControlData($id) {
         $query = "SELECT DATE_FORMAT(dateIn, '%Y-%m') as month, COUNT(*) as count FROM pointControl WHERE uidUserFK = :id GROUP BY month ORDER BY month";
         $stmt = $this->db->prepare($query);
