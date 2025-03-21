@@ -136,19 +136,19 @@ echo '</pre>';*/
           <div class="row g-3">
             <div class="col-sm-6">
                 <div class="form-floating mb-3">
-                    <input type="email" class="form-control" name="email" id="floatingInputEmail" value="<?php echo htmlspecialchars($_SESSION['email']); ?>" placeholder="name@example.com">
+                    <input type="email" class="form-control" name="email" id="responseEmail" value="<?php echo htmlspecialchars($_SESSION['email']); ?>" placeholder="name@example.com">
                     <label for="floatingInputEmail">Email address</label>
                 </div>
             </div>
             <div class="col-sm-6">
                 <div class="form-floating mb-3">
-                    <input type="text" name="nickname" class="form-control" id="floatingInputNickname" value="<?php echo htmlspecialchars($_SESSION['nickname']); ?>" placeholder="Username">
+                    <input type="text" name="nickname" class="form-control" id="responseNickname" value="<?php echo htmlspecialchars($_SESSION['nickname']); ?>" placeholder="Username">
                     <label for="floatingInputNickname">Username</label>
                 </div>
             </div>
             <div class="col-12">
                 <div class="form-floating mb-3">
-                    <input type="text" name="name" class="form-control" id="floatingInputName" placeholder="Name" value="<?php echo htmlspecialchars($_SESSION['name']); ?>">
+                    <input type="text" name="name" class="form-control" id="responseName" placeholder="Name" value="<?php echo htmlspecialchars($_SESSION['name']); ?>">
                     <label for="floatingInputName">Name</label>
                 </div>
             </div>          
@@ -352,4 +352,9 @@ echo '</pre>';*/
                 // Exiba alguma mensagem de erro para o usuário
             });
     });
+
+    const input = document.getElementById("responseNickname");
+    if ('responseNickname') {
+        input.value = nickname;
+    }
 </script>

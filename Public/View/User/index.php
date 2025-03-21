@@ -91,10 +91,10 @@ if ($_POST) {
                     <?php // echo '<img src="' . $_SESSION['lastImageProfileUser'] . '" alt="Imagem do usuário" style="width:226px;" >'; ?>
                     <div class="index"><img id="pPicture"></div>
                     <small class="text-body-secondary"><span class="nav-link">
-                        Seu email: <text id="email"></text>
-                        <p>Seu nickname: <text id="nickname"></text></p>
+                        Seu email: <text id="responseEmail"></text>
+                        <p>Seu nickname: <text id="responseNickname"></text></p>
                         <p hidden id="responseUserToken"></p>
-                        <p hidden id="id"></p>
+                        <p hidden id="responseId"></p>
                         <p hidden id="theme"></p>
                         <p hidden id="rank"></p>
                     </span></small>

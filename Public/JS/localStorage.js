@@ -38,23 +38,23 @@ async function processUserData() {
       if (responseUserToken) {
           responseUserToken.textContent = userToken;
       }
-      const idElement = document.getElementById("id");
+      const idElement = document.getElementById("responseId");
       if (idElement) {
           idElement.textContent = id;
       }
-      const themeElement = document.getElementById("theme");
+      const themeElement = document.getElementById("responseTheme");
       if (themeElement) {
           themeElement.textContent = theme;
       }
-      const nicknameElement = document.getElementById("nickname");
+      const nicknameElement = document.getElementById("responseNickname");
       if (nicknameElement) {
           nicknameElement.textContent = nickname;
       }
-      const rankElement = document.getElementById("rank");
+      const rankElement = document.getElementById("responseRank");
       if (rankElement) {
           rankElement.textContent = rank;
       }
-      const emailElement = document.getElementById("email");
+      const emailElement = document.getElementById("responseEmail");
       if (emailElement) {
           emailElement.textContent = email;
       }

@@ -163,6 +163,7 @@ class User {
                         echo "Error: " . $e->getMessage();
                     }
                     $_SESSION['id'] = $row['uid'];
+                    $_SESSION['logged'] = true;
                     $_SESSION['userData'] = json_encode([
                         'userToken' => $userToken,
                         'name' => $row['uname'],
