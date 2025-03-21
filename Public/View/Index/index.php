@@ -23,7 +23,7 @@ if($_SESSION['logged'] != null){
         <body>
             <div class="container-userlogin">
                 <h1></h1>
-                <form action="<?php $_SERVER['PHP_SELF']; ?>" method="post">
+                <form action="index.php" method="post">
                     <div class="form-floating mb-3">
                         <input type="text" class="form-control" name="nickname" id="floatingInput" placeholder=".">
                         <label for="floatingInput">Usuário</label>

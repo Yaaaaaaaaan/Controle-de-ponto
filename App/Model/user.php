@@ -332,60 +332,44 @@ class User {
     }
 
     public function updateProfilePicture($userId, $pictureId) {
-        // 1. Remover a imagem de perfil antiga do banco de dados (profilepictures)
+        try {
+            $sql = "UPDATE " . $this->tableNames['pps'] . " SET uimageFK = :pictureId WHERE uidUserFK = :userId;
+            SELECT description FROM " . $this->tableNames['pic'] . " WHERE cod = :pictureId;";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindParam(':userId', $userId);
+            $stmt->bindParam(':pictureId', $pictureId);
+            $stmt->execute();
+            $row = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $userData = json_decode($_SESSION['userData'], true);
+            $userData['profileUser'] = $row['description'];
+            $_SESSION['userData'] = json_encode($userData);
+            echo '<pre>';
+            print_r(json_decode($_SESSION['userData'], true)); // Mostra a versão decodificada da sessão
+            echo '</pre>';
 
-        // 2. Inserir a nova imagem de perfil selecionada em profilepictures
-        $query = "INSERT INTO " . $this->tableNames['pps'] . "(uidUserFK, uimageFK)
-                  VALUES (:userId, :pictureId)";
-
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':userId', $userId);
-        $stmt->bindParam(':pictureId', $pictureId);
-
-        return $stmt->execute();
-
-    }
-    public function getLastInsertedPicturePath($userId){
-        $query = "SELECT pic.path
-                FROM pictures AS pic
-                INNER JOIN profilepictures AS pps ON pic.uimagePK = pps.uimageFK
-                INNER JOIN userdata AS ud ON pps.uidUserFK = ud.uidPK
-                WHERE ud.uidPK = :userId;";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':userId', $userId);
-        $stmt->execute();
-
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-
-        if ($row) {
-            $path = $row['path'];
-            $path = basename($path); // Retorna apenas o nome do arquivo
-            return $path;
+            return;
+        } catch(PDOException $e) {
+            return false;
         }
-
-
-        return null; // Ou algum valor padrão
     }
 
+      /*public function insertUserProfilePicture($profilePicture, $directory) {
+        $this->profilePicture = $profilePicture;
+        $this->directory = $directory;
+        $this->id = $_SESSION['id'];
 
-    /*public function insertUserProfilePicture($profilePicture, $directory) {
-      $this->profilePicture = $profilePicture;
-      $this->directory = $directory;
-      $this->id = $_SESSION['id'];
+        $sql = "UPDATE " . $this->tableNames['pps'] . " SET uimage = :profilePicture WHERE uidUserFK = :id";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue(':id', $this->id);
+        $stmt->bindValue(':profilePicture', $this->directory);
 
-      $sql = "UPDATE " . $this->tableNames['pps'] . " SET uimage = :profilePicture WHERE uidUserFK = :id";
-      $stmt = $this->conn->prepare($sql);
-      $stmt->bindValue(':id', $this->id);
-      $stmt->bindValue(':profilePicture', $this->directory);
-
-      if ($stmt->execute()) {
-          $_SESSION['lastImageProfileUser'] = $this->directory;
-          return true;
-      } else {
-          return false;
-      }
-  }*/
+        if ($stmt->execute()) {
+            $_SESSION['lastImageProfileUser'] = $this->directory;
+            return true;
+        } else {
+            return false;
+        }
+    }*/
      public function insertPointControl($id, $descricao) {
         $this->descricao = $descricao;
         $this->id = $id;

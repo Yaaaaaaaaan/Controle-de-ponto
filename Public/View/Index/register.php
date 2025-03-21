@@ -13,7 +13,7 @@
     <body>
         <div class="container-userlogin">
             <h2>Registro</h2>
-            <form action="<?php $_SERVER['PHP_SELF']; ?>" method="post">
+            <form action="register.php" method="post">
                 <div class="form-floating mb-3">
                     <input type="text" class="form-control" name="name" id="floatingInput" placeholder=".">
                     <label for="floatingInput">Nome completo</label>

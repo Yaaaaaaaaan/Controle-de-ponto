@@ -2,12 +2,12 @@
 ---settings.php---------------------------------------------------------------------------------
     <form method="post" action="settings.php">
         <div class="image-container">
-            <?php// foreach ($pictures as $picture) : ?>
+            <?php // foreach ($pictures as $picture) : ?>
                 <label class="image-radio-container">
-                    <input type="radio" name="selectedPicture" value="<?php echo $picture['cod']; ?>">
-                    <img src="<?// echo $picture['path']; ?>" class="d-block w-100" alt="Foto de Perfil">
+                    <input type="radio" name="selectedPicture" value="<?php //echo $picture['cod']; ?>">
+                    <img src="<? // echo $picture['path']; ?>" class="d-block w-100" alt="Foto de Perfil">
                 </label>
-            <?php// endforeach; ?>
+            <?php //endforeach; ?>
         </div>
         <text class="text-body-secondary">Essas são suas últimas três fotos adicionadas, Selecione uma.</text>
         <div class="d-flex justify-content-center mt-3">
