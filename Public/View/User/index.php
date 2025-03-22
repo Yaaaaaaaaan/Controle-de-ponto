@@ -96,8 +96,8 @@ $pointControlData = $pointController->getPointControl($id);
                     <?php // echo '<img src="' . $_SESSION['lastImageProfileUser'] . '" alt="Imagem do usuário" style="width:226px;" >'; ?>
                     <div class="index"><img id="pPicture"></div>
                     <small class="text-body-secondary"><span class="nav-link">
-                        Seu email: <text id="responseEmail"></text>
-                        <p>Seu nickname: <text id="responseNickname"></text></p>
+                        Meu email: <text id="responseEmail"></text>
+                        <p>Meu nickname: <text id="responseNickname"></text></p>
                         <p hidden id="responseUserToken"></p>
                         <p hidden id="responseId"></p>
                         <p hidden id="theme"></p>

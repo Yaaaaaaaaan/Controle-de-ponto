@@ -117,7 +117,7 @@ echo '</pre>';*/
         <div class="row">
           <div class="col-md-12">
             <h4 class="d-flex justify-content-between align-items-center mb-3">
-              <span class="text-primary">Seu perfil</span>
+              <span class="text-primary">Meu perfil</span>
             </h4>
             <div class="text-center border rounded py-2 mb-3">
             <div class="settings"><img id="pPicture"></div>
@@ -131,7 +131,7 @@ echo '</pre>';*/
        
       </div>
       <div class="col-md-7 col-lg-8">
-        <h4 class="mb-3">Seus dados</h4>
+        <h4 class="mb-3">Meus dados</h4>
         <form action="settings.php" method="post" class="needs-validation" novalidate>
           <div class="row g-3">
             <div class="col-sm-6">
@@ -263,7 +263,7 @@ echo '</pre>';*/
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h1 class="modal-title fs-5" id="profilePhotoLabel">Seu perfil</h1>
+                <h1 class="modal-title fs-5" id="profilePhotoLabel">Meu perfil</h1>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
