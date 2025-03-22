@@ -1,6 +1,7 @@
 <?php
 include_once '../../../App/Config/db.php';
 include_once '../../../App/Model/user.php';
+include_once '../../../App/Model/pointControl.php';
 if (!defined('APP_RAN')) {
     die('Acesso não permitido.');
 }
@@ -13,45 +14,56 @@ class PointController {
         $this->db = $database->getConnection();
         $this->user = new User($this->db);
     }
-        // TODO: CRIAR FILTRO PARA VISUALIZAÇÃO DE APENAS 3 MESES VIGENTES. (SEM INTERFACE PARA ESCOLHA DE MAIS MESES)
-       public function getPointControlData($id) {
-        $query = "SELECT DATE_FORMAT(dateIn, '%Y-%m') as month, COUNT(*) as count FROM pointControl WHERE uidUserFK = :id GROUP BY month ORDER BY month";
+
+    public function getPointControlData($id) {
+        $query = "SELECT DATE_FORMAT(dateIn, '%Y-%m') as month, COUNT(*) as count 
+              FROM pointControl 
+              WHERE uidUserFK = :id 
+              GROUP BY month 
+              ORDER BY month DESC 
+              LIMIT 3";
+
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':id', $id);
         $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Inverte a ordem para mostrar do mais antigo para o mais recente
+        return array_reverse($result);
     }
-    
 
-    
-/*public function getAllAvailableMonths($id) {
-    return $this->user->getAllAvailableMonths($id);
-}
 
-public function getPointControlData($id, $months) {
-    return $this->user->getPointControlData($id, $months);
-}
 
-public function converterMonthFromName($monthYear) {
-    $parts = explode('-', $monthYear);
-    $year = $parts[0];
-    $month = $parts[1];
-    $MonthNames = [
-        '01' => 'Jan',
-        '02' => 'Fev',
-        '03' => 'Mar',
-        '04' => 'Abr',
-        '05' => 'Mai',
-        '06' => 'Jun',
-        '07' => 'Jul',
-        '08' => 'Ago',
-        '09' => 'Set',
-        '10' => 'Out',
-        '11' => 'Nov',
-        '12' => 'Dez',
-    ];
-    return $MonthNames[$month] . ' - ' . $year;
-}*/
+
+    /*public function getAllAvailableMonths($id) {
+        return $this->user->getAllAvailableMonths($id);
+    }
+
+    public function getPointControlData($id, $months) {
+        return $this->user->getPointControlData($id, $months);
+    }
+
+    public function converterMonthFromName($monthYear) {
+        $parts = explode('-', $monthYear);
+        $year = $parts[0];
+        $month = $parts[1];
+        $MonthNames = [
+            '01' => 'Jan',
+            '02' => 'Fev',
+            '03' => 'Mar',
+            '04' => 'Abr',
+            '05' => 'Mai',
+            '06' => 'Jun',
+            '07' => 'Jul',
+            '08' => 'Ago',
+            '09' => 'Set',
+            '10' => 'Out',
+            '11' => 'Nov',
+            '12' => 'Dez',
+        ];
+        return $MonthNames[$month] . ' - ' . $year;
+    }*/
 
 }
 ?>
