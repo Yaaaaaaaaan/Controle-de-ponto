@@ -69,21 +69,23 @@
             }
         }
 
-        public function getPointControlData($id, $months) {
-            try {
-                $placeholders = implode(',', array_fill(0, count($months), '?'));
-                $query = "SELECT DATE_FORMAT(dateIn, '%Y-%m') as month, COUNT(*) as count FROM ".$this->tableNames['pc']." WHERE uidUserFK = :id AND DATE_FORMAT(dateIn, '%Y-%m') IN ($placeholders) GROUP BY month ORDER BY month";
-                $stmt = $this->conn->prepare($query);
-                $stmt->bindParam(':id', $id);
-                foreach ($months as $index => $month) {
-                    $stmt->bindValue($index + 1, $month);
-                }
-                $stmt->execute();
-                return $stmt->fetchAll(PDO::FETCH_ASSOC);
-            } catch (PDOException $e) {
-                error_log("Erro em getPointControlData: " . $e->getMessage());
-                return []; // Retorna um array vazio em caso de erro
-            }
+        public function getPointControlData($id): array
+        {
+            $query = "SELECT DATE_FORMAT(dateIn, '%Y-%m') as month, COUNT(*) as count 
+              FROM pointControl 
+              WHERE uidUserFK = :id 
+              GROUP BY month 
+              ORDER BY month DESC 
+              LIMIT 3";
+
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':id', $id);
+            $stmt->execute();
+
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Inverte a ordem para mostrar do mais antigo para o mais recente
+            return array_reverse($result);
         }
 
     }

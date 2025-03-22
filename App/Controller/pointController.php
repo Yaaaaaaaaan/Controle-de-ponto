@@ -1,36 +1,24 @@
 <?php
 include_once '../../../App/Config/db.php';
-include_once '../../../App/Model/user.php';
 include_once '../../../App/Model/pointControl.php';
 if (!defined('APP_RAN')) {
     die('Acesso não permitido.');
 }
-class PointController {
+class PointController
+{
     private $db;
-    private $user;
+    private $pointControl;
 
-    public function __construct() {
+    public function __construct()
+    {
         $database = new Database();
         $this->db = $database->getConnection();
-        $this->user = new User($this->db);
+        $this->pointControl = new PointControl($this->db);
     }
 
-    public function getPointControlData($id) {
-        $query = "SELECT DATE_FORMAT(dateIn, '%Y-%m') as month, COUNT(*) as count 
-              FROM pointControl 
-              WHERE uidUserFK = :id 
-              GROUP BY month 
-              ORDER BY month DESC 
-              LIMIT 3";
-
-        $stmt = $this->db->prepare($query);
-        $stmt->bindParam(':id', $id);
-        $stmt->execute();
-
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        // Inverte a ordem para mostrar do mais antigo para o mais recente
-        return array_reverse($result);
+    public function getPointControl($id): array
+    {
+        return $this->pointControl->getPointControlData($id);
     }
 
 

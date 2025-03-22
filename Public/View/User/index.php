@@ -1,9 +1,9 @@
 <?php
 define('APP_RAN', true);
 require "../layout/menu.php";
-include_once '../../../App/controller/pointController.php';
-// Inicialização do controlador fora do bloco POST
-$pointController = new PointController();
+include_once __DIR__ . '/../../../App/controller/pointController.php';
+
+
 
 if ($_POST) {
     include_once '../../../App/controller/UserController.php';
@@ -16,7 +16,12 @@ if ($_POST) {
 
 // Buscar dados para o gráfico apenas se o controlador estiver inicializado
     $id = $_SESSION['id'];
-    $pointControlData = $pointController->getPointControlData($id);
+// No arquivo que precisa usar estes dados
+$pointController = new PointController();
+$pointControlData = $pointController->getPointControl($id);
+
+// Use $pointControlData conforme necessário
+;
 
     // Preparar dados para o gráfico
     $labels = [];
