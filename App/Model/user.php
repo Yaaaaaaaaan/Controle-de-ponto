@@ -193,59 +193,52 @@ class User
 
     public function updateUser($name, $id, $email, $nickname, $oldPassword, $newPassword, $confirmPassword, $defaultTheme): bool
     {
-        $this->name = $name;
+        $this->name = trim($name);
         $this->id = $id;
-        $this->email = $email;
-        $this->nickname = $nickname;
+        $this->email = trim($email);
+        $this->nickname = trim($nickname);
         $this->oldPassword = $oldPassword;
         $this->newPassword = $newPassword;
         $this->confirmPassword = $confirmPassword;
-        $this->defaultTheme = $defaultTheme;
+        $this->defaultTheme = trim($defaultTheme);
 
-        // Inicializa a variável $updatedFields
-        $updatedFields = [];
         $updateFields = [];
         $params = [];
         $queries = [];
+        $updatedFields = [];
 
-
-// Validação correta antes da inclusão nos campos e parâmetros:
-        if (!empty($this->name)) { // troca isset por !empty
+        if (!empty($this->name)) {
             $updateFields['userdata'][] = "uname = :name";
             $params['userdata'][':name'] = $this->name;
         }
-
         if (!empty($this->email)) {
             $updateFields['userdata'][] = "uemail = :email";
             $params['userdata'][':email'] = $this->email;
         }
-
         if (!empty($this->nickname) && $this->nickname !== $_SESSION['nickname']) {
             $updateFields['userdata'][] = "username = :nickname";
             $params['userdata'][':nickname'] = $this->nickname;
         }
-
         if (!empty($this->defaultTheme) && $this->defaultTheme !== $_SESSION['defaultTheme']) {
             $updateFields['userdata'][] = "udefaultTheme = :defaultTheme";
             $params['userdata'][':defaultTheme'] = $this->defaultTheme;
         }
 
-// Agora, antes de executar o foreach principal, verificar totalmente:
         foreach ($updateFields as $table => $fields) {
-            if (count($fields) === 0) continue; // pula tabelas sem campos preenchidos
+            // segurança extra: Ignorar consultas sem campos definidos claramente
+            if (!empty($fields)) {
+                $column = ($table == 'userdata') ? 'uid' : 'uidUserFK';
+                $query = "UPDATE " . $table . " SET " . implode(", ", $fields) . " WHERE " . $column . " = :id";
+                $params[$table][':id'] = $this->id;
+                $queries[] = ['query' => $query, 'params' => $params[$table]];
 
-            $column = ($table == 'userdata') ? 'uid' : 'uidUserFK';
-            $query = "UPDATE " . $table . " SET " . implode(", ", $fields) . " WHERE " . $column . " = :id";
-            $params[$table][':id'] = $this->id;
-            $queries[] = ['query' => $query, 'params' => $params[$table]];
-
-            foreach ($fields as $field) {
-                $fieldName = explode(' ', $field)[0];
-                $updatedFields[$fieldName] = true;
+                foreach ($fields as $field) {
+                    $fieldName = explode(' ', $field)[0];
+                    $updatedFields[$fieldName] = true;
+                }
             }
         }
 
-// Procedimento padrão como já implementado:
         if (!empty($this->oldPassword) && !empty($this->newPassword) && !empty($this->confirmPassword) && $this->newPassword === $this->confirmPassword) {
             $query = "UPDATE " . $this->tableNames['ud'] . " SET upassword = :newPassword WHERE uid = :id";
             $paramsPassword = [
@@ -256,12 +249,21 @@ class User
             $updatedFields['upassword'] = true;
         }
 
-// Verificação final de segurança:
+        // Última barreira de segurança: garantir que nenhuma consulta vazia seja executada
         if (empty($queries)) {
-            return true; // Nada para atualizar, retornar imediatamente com sucesso
+            // Não houve alterações detectadas. Sai imediatamente com sucesso.
+            return true;
         }
 
+        // Debug Temporário: Apenas para esta execução, para você ver a consulta que está rodando e descobrir o erro
         foreach ($queries as $q) {
+            echo "<pre>";
+            echo "SQL gerado: \n";
+            var_dump($q['query']);
+            echo "Parametros: \n";
+            var_dump($q['params']);
+            echo "</pre>";
+
             try {
                 $stmt = $this->conn->prepare($q['query']);
                 foreach ($q['params'] as $param => $value) {
@@ -273,6 +275,14 @@ class User
                 return false;
             }
         }
+
+        // Atualização da sessão, caso tenha efetuado mudanças
+        if (isset($updatedFields['uname'])) User::updateSessionUserData('name', $this->name);
+        if (isset($updatedFields['uemail'])) User::updateSessionUserData('email', $this->email);
+        if (isset($updatedFields['username'])) User::updateSessionUserData('nickname', $this->nickname);
+        if (isset($updatedFields['udefaultTheme'])) User::updateSessionUserData('defaultTheme', $this->defaultTheme);
+
+        return true;
     }
 
     //TODO: a fazer FUNCIONALIDADE DELETEACCOUNT.
