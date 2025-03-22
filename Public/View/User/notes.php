@@ -27,3 +27,49 @@
 ---end settings.php-----------------------------------------------------------------------------
 -->
 
+public function updateProfilePicture($userId, $pictureId) {
+try {
+// Inicie uma transação
+$this->conn->beginTransaction();
+
+// Primeiro, atualize a tabela
+$updateSql = "UPDATE " . $this->tableNames['pps'] . "
+SET uimageFK = :pictureId
+WHERE uidUserFK = :userId";
+$updateStmt = $this->conn->prepare($updateSql);
+$updateStmt->bindParam(':userId', $userId);
+$updateStmt->bindParam(':pictureId', $pictureId);
+$updateStmt->execute();
+
+// Em seguida, realize o SELECT
+$selectSql = "SELECT description
+FROM " . $this->tableNames['pic'] . "
+WHERE cod = :pictureId";
+$selectStmt = $this->conn->prepare($selectSql);
+$selectStmt->bindParam(':pictureId', $pictureId);
+$selectStmt->execute();
+$row = $selectStmt->fetch(PDO::FETCH_ASSOC);
+
+// Confirme a transação
+$this->conn->commit();
+
+// Atualize o profileUser na sessão
+if ($row) {
+$userData = json_decode($_SESSION['userData'], true);
+$userData['profileUser'] = $row['description'];
+$_SESSION['userData'] = json_encode($userData);
+
+/* Depuração, se necessário
+echo '<pre>';
+                print_r(json_decode($_SESSION['userData'], true));
+                echo '</pre>';*/
+}
+
+return true;
+} catch (PDOException $e) {
+// Reverte a transação em caso de erro
+$this->conn->rollBack();
+echo "Erro: " . $e->getMessage(); // Para depuração
+return false;
+}
+}

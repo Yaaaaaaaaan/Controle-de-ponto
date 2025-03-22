@@ -1,9 +1,11 @@
  .index #pPicture{
+    object-fit: cover;
     width:226px;
     height: 226px;
 }
 
 .settings #pPicture{
+    object-fit: cover;
     width:226px;
     height: 226px;
 }
