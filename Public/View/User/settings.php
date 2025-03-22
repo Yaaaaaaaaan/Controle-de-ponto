@@ -136,19 +136,19 @@ echo '</pre>';*/
           <div class="row g-3">
             <div class="col-sm-6">
                 <div class="form-floating mb-3">
-                    <input type="email" class="form-control" name="email" id="responseEmail" value="<?php echo htmlspecialchars($_SESSION['email']); ?>" placeholder="name@example.com">
+                    <input type="email" class="form-control" name="email" id="floatingInputEmail" value="" placeholder="name@example.com">
                     <label for="floatingInputEmail">Email address</label>
                 </div>
             </div>
             <div class="col-sm-6">
                 <div class="form-floating mb-3">
-                    <input type="text" name="nickname" class="form-control" id="responseNickname" value="<?php echo htmlspecialchars($_SESSION['nickname']); ?>" placeholder="Username">
+                    <input type="text" name="nickname" class="form-control" id="floatingInputNickname" value="" placeholder="Username">
                     <label for="floatingInputNickname">Username</label>
                 </div>
             </div>
             <div class="col-12">
                 <div class="form-floating mb-3">
-                    <input type="text" name="name" class="form-control" id="responseName" placeholder="Name" value="<?php echo htmlspecialchars($_SESSION['name']); ?>">
+                    <input type="text" name="name" class="form-control" id="floatingInputName" placeholder="Name" value="">
                     <label for="floatingInputName">Name</label>
                 </div>
             </div>          
@@ -353,8 +353,38 @@ echo '</pre>';*/
             });
     });
 
-    const input = document.getElementById("responseNickname");
-    if ('responseNickname') {
-        input.value = nickname;
-    }
+    document.addEventListener('DOMContentLoaded', function() {
+        // Recuperar os dados do localStorage
+        const userDataString = localStorage.getItem("userData");
+
+        // Verificar se existem dados armazenados
+        if (userDataString) {
+            try {
+                // Converter a string para um array
+                let userdata = JSON.parse(userDataString).split(",");
+
+                // Extrair os valores necessários
+                let name = (userdata[1]).slice(8, -1);
+                let email = (userdata[2]).slice(9, -1);
+                let nickname = (userdata[4]).slice(12, -1);
+
+                // Preencher os campos de input
+                const nameInput = document.getElementById("floatingInputName");
+                const emailInput = document.getElementById("floatingInputEmail");
+                const nicknameInput = document.getElementById("floatingInputNickname");
+
+                if (nameInput) nameInput.value = name;
+                if (emailInput) emailInput.value = email;
+                if (nicknameInput) nicknameInput.value = nickname;
+
+                console.log("Dados carregados do localStorage com sucesso!");
+            } catch (error) {
+                console.error("Erro ao processar dados do localStorage:", error);
+            }
+        } else {
+            console.log("Nenhum dado de usuário encontrado no localStorage");
+        }
+    });
+
+
 </script>
