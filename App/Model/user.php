@@ -3,83 +3,86 @@ if (!defined('APP_RAN')) {
   die('Acesso não permitido');
 }
 
-class User {
-  private $conn;
-  private $tableNames = [
-    'ud' => 'userdata',
-    'pps' => 'profilepictures',
-    'pic' => 'pictures',
-    'hs' => 'history',
-    'ut' => 'usertoken',
-    'pc'=> 'pointControl'
-  ];
+class User
+{
+    private $conn;
+    private $tableNames = [
+        'ud' => 'userdata',
+        'pps' => 'profilepictures',
+        'pic' => 'pictures',
+        'hs' => 'history',
+        'ut' => 'usertoken',
+        'pc' => 'pointControl'
+    ];
 
-  public $id;
-  public $userToken;
-  public $name;
-  public $email;
-  public $password;
-  public $rank;
-  public $nickname;
+    public $id;
+    public $userToken;
+    public $name;
+    public $email;
+    public $password;
+    public $rank;
+    public $nickname;
 
-  public $newPassword;
-  public $confirmPassword;
-  public $oldPassword;
+    public $newPassword;
+    public $confirmPassword;
+    public $oldPassword;
 
-  public $defaultTheme;
+    public $defaultTheme;
 
-  public $profilePicture;
-  public $directory;
-  public $verifyUpload;
+    public $profilePicture;
+    public $directory;
+    public $verifyUpload;
 
-  public $descricao;
-  public $registro;
+    public $descricao;
+    public $registro;
 
-  public function __construct($db) {
-    $this->conn = $db;
-  }
+    public function __construct($db)
+    {
+        $this->conn = $db;
+    }
 
-  public function createUser() {
-    if (!empty($this->name && $this->email && $this->password && $this->rank && $this->nickname)) {
-        $userToken = bin2hex(random_bytes(32));
-        $this->profilePicture = 'Profile.png';
-        $this->directory = '/Controle-de-ponto/App/Persistence/userProfileImages/Profile.png';
+    public function createUser()
+    {
+        if (!empty($this->name && $this->email && $this->password && $this->rank && $this->nickname)) {
+            $userToken = bin2hex(random_bytes(32));
+            $this->profilePicture = 'Profile.png';
+            $this->directory = '/Controle-de-ponto/App/Persistence/userProfileImages/Profile.png';
 
-        $query1 = "INSERT INTO " . $this->tableNames['ud'] . " 
+            $query1 = "INSERT INTO " . $this->tableNames['ud'] . " 
             SET uname=:name, username=:nickname, uemail=:email, upassword=:password, urank=:rank;
             SET @newUserId = LAST_INSERT_ID();";
 
-        $stmt1 = $this->conn->prepare($query1);
-        $stmt1->bindParam(':name', $this->name);
-        $stmt1->bindParam(':nickname', $this->nickname);
-        $stmt1->bindParam(':email', $this->email);
-        $stmt1->bindParam(':password', $this->password);
-        $stmt1->bindParam(':rank', $this->rank);
-        $stmt1->execute();
-        $stmt1->closeCursor();
+            $stmt1 = $this->conn->prepare($query1);
+            $stmt1->bindParam(':name', $this->name);
+            $stmt1->bindParam(':nickname', $this->nickname);
+            $stmt1->bindParam(':email', $this->email);
+            $stmt1->bindParam(':password', $this->password);
+            $stmt1->bindParam(':rank', $this->rank);
+            $stmt1->execute();
+            $stmt1->closeCursor();
 
-        $query2 = "INSERT INTO " . $this->tableNames['pic'] . "(path, description, uidUserFK) 
+            $query2 = "INSERT INTO " . $this->tableNames['pic'] . "(path, description, uidUserFK) 
                 VALUES (:directory, :profilePicture, @newUserId);
                 SET @newPictureId = LAST_INSERT_ID();";
 
-        $stmt2 = $this->conn->prepare($query2);
-        $stmt2->bindParam(':directory', $this->directory);
-        $stmt2->bindParam(':profilePicture', $this->profilePicture);
-        $stmt2->execute();
-        $stmt2->closeCursor();
+            $stmt2 = $this->conn->prepare($query2);
+            $stmt2->bindParam(':directory', $this->directory);
+            $stmt2->bindParam(':profilePicture', $this->profilePicture);
+            $stmt2->execute();
+            $stmt2->closeCursor();
 
-        $query3 = "INSERT INTO " . $this->tableNames['pps'] . "(uidUserFK, uimageFK) 
+            $query3 = "INSERT INTO " . $this->tableNames['pps'] . "(uidUserFK, uimageFK) 
                 VALUES (@newUserId, @newPictureId)";
 
-        $stmt3 = $this->conn->prepare($query3);
-        $stmt3->execute();
-        $stmt3->closeCursor();
+            $stmt3 = $this->conn->prepare($query3);
+            $stmt3->execute();
+            $stmt3->closeCursor();
 
 
-      if ($stmt1->execute()) {   
-        $triggerExists = $this->checkTriggerExists('tr_insert_token');
-        if (!$triggerExists) {
-          $triggerQuery = "CREATE TRIGGER tr_insert_token
+            if ($stmt1->execute()) {
+                $triggerExists = $this->checkTriggerExists('tr_insert_token');
+                if (!$triggerExists) {
+                    $triggerQuery = "CREATE TRIGGER tr_insert_token
                            AFTER INSERT ON " . $this->tableNames['ud'] . "
                            FOR EACH ROW
                            BEGIN
@@ -87,35 +90,38 @@ class User {
                              VALUES (:userToken, @newUserId);
                            END;";
 
-          $stmt = $this->conn->prepare($triggerQuery);
-          $stmt->bindParam(':userToken', $userToken);
-          $stmt->execute();
-        }
-        //$query= "INSERT INTO " . $this->tableNames['profilepictures'] . " SET uimage = :image, uidUserFK = :id;"; precisa estudar a implementação dessa query para criação de linha de imagem. para que o login funcione corretamente.
-        $query = "INSERT INTO " . $this->tableNames['ut'] . " (token, uidUserFK) 
+                    $stmt = $this->conn->prepare($triggerQuery);
+                    $stmt->bindParam(':userToken', $userToken);
+                    $stmt->execute();
+                }
+                //$query= "INSERT INTO " . $this->tableNames['profilepictures'] . " SET uimage = :image, uidUserFK = :id;"; precisa estudar a implementação dessa query para criação de linha de imagem. para que o login funcione corretamente.
+                $query = "INSERT INTO " . $this->tableNames['ut'] . " (token, uidUserFK) 
                   VALUES (:userToken, @newUserId);";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':userToken', $userToken);
-        $stmt->execute();
+                $stmt = $this->conn->prepare($query);
+                $stmt->bindParam(':userToken', $userToken);
+                $stmt->execute();
 
-        return true;
-      }
+                return true;
+            }
+        }
+        return false;
     }
-    return false;
-  }
 
-  // Função para checagem de gatilho
-  private function checkTriggerExists($triggerName) {
-    $query = "SELECT COUNT(*) AS trigger_exists
+    // Função para checagem de gatilho
+    private function checkTriggerExists($triggerName)
+    {
+        $query = "SELECT COUNT(*) AS trigger_exists
               FROM information_schema.triggers
               WHERE trigger_name = :triggerName;";
-    $stmt = $this->conn->prepare($query);
-    $stmt->bindParam(':triggerName', $triggerName);
-    $stmt->execute();
-    $result = $stmt->fetch(PDO::FETCH_ASSOC);
-    return (int)$result['trigger_exists'] === 1;
-  }
-    public function authenticateUser() {
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':triggerName', $triggerName);
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (int)$result['trigger_exists'] === 1;
+    }
+
+    public function authenticateUser()
+    {
         if (!empty($this->nickname) && !empty($this->password)) {
             $userToken = bin2hex(random_bytes(32));
             if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
@@ -125,11 +131,11 @@ class User {
             }
             $query = "SELECT u.uid, t.token	, u.uname, u.username, u.urank, u.uemail, u.upassword, u.username, d.description, p.dateload, u.udefaultTheme 
             FROM " . $this->tableNames['ud'] . " u 
-            INNER JOIN ". $this->tableNames['pic'] ." d ON u.uid = d.uidUserFK 
-            INNER JOIN ".$this->tableNames['ut']." t ON u.uid = t.uidUserFK 
-            inner join ".$this->tableNames['pps']." p ON p.uimageFK = d.cod
+            INNER JOIN " . $this->tableNames['pic'] . " d ON u.uid = d.uidUserFK 
+            INNER JOIN " . $this->tableNames['ut'] . " t ON u.uid = t.uidUserFK 
+            inner join " . $this->tableNames['pps'] . " p ON p.uimageFK = d.cod
             WHERE u.username = :nickname AND u.upassword = :password;";
-            
+
             try {
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam(':nickname', $this->nickname);
@@ -137,21 +143,21 @@ class User {
                 $stmt->execute();
                 if ($stmt->rowCount() > 0) {
                     $row = $stmt->fetch(PDO::FETCH_ASSOC);
-                    
-                    $query2 ="START TRANSACTION;
-                        UPDATE ".$this->tableNames['ut']."
+
+                    $query2 = "START TRANSACTION;
+                        UPDATE " . $this->tableNames['ut'] . "
                         SET token = :userToken
                         WHERE uidUserFK = :id;
 
                         IF ROW_COUNT() = 0 THEN
-                            INSERT INTO ".$this->tableNames['ut']." (token, uidUserFK)
+                            INSERT INTO " . $this->tableNames['ut'] . " (token, uidUserFK)
                             VALUES (:userToken, :id);
                         END IF;
                     COMMIT;
                     
-                    INSERT INTO ". $this->tableNames['history'] . " SET description = :descricao, uidUserFK = :id";
-                    try{
-                        $this->descricao = 'login a partir do ip:'.$ip.' E criação do Hash para autenticação temporário: '.$userToken;
+                    INSERT INTO " . $this->tableNames['history'] . " SET description = :descricao, uidUserFK = :id";
+                    try {
+                        $this->descricao = 'login a partir do ip:' . $ip . ' E criação do Hash para autenticação temporário: ' . $userToken;
                         $this->userToken = $userToken;
                         $this->id = $row['uid'];
                         $stmt = $this->conn->prepare($query2);
@@ -159,7 +165,7 @@ class User {
                         $stmt->bindValue(':userToken', $this->userToken);
                         $stmt->bindValue(':descricao', $this->descricao);
                         $stmt->execute();
-                    }catch(PDOException $e){
+                    } catch (PDOException $e) {
                         echo "Error: " . $e->getMessage();
                     }
                     $_SESSION['id'] = $row['uid'];
@@ -184,7 +190,9 @@ class User {
         }
         return false;
     }
-    public function updateUser($name, $id, $email, $nickname, $oldPassword, $newPassword, $confirmPassword, $defaultTheme) {
+
+    public function updateUser($name, $id, $email, $nickname, $oldPassword, $newPassword, $confirmPassword, $defaultTheme): bool
+    {
         $this->name = $name;
         $this->id = $id;
         $this->email = $email;
@@ -193,37 +201,53 @@ class User {
         $this->newPassword = $newPassword;
         $this->confirmPassword = $confirmPassword;
         $this->defaultTheme = $defaultTheme;
+
+        // Inicializa a variável $updatedFields
+        $updatedFields = [];
         $updateFields = [];
         $params = [];
         $queries = [];
-        if (isset($this->name)) {
+
+
+// Validação correta antes da inclusão nos campos e parâmetros:
+        if (!empty($this->name)) { // troca isset por !empty
             $updateFields['userdata'][] = "uname = :name";
             $params['userdata'][':name'] = $this->name;
         }
-        if (isset($this->email)) {
+
+        if (!empty($this->email)) {
             $updateFields['userdata'][] = "uemail = :email";
             $params['userdata'][':email'] = $this->email;
         }
-        if (isset($this->nickname) && $this->nickname != $_SESSION['nickname']) {
+
+        if (!empty($this->nickname) && $this->nickname !== $_SESSION['nickname']) {
             $updateFields['userdata'][] = "username = :nickname";
             $params['userdata'][':nickname'] = $this->nickname;
         }
-        if (isset($this->defaultTheme) && $this->defaultTheme != $_SESSION['defaultTheme']) {
+
+        if (!empty($this->defaultTheme) && $this->defaultTheme !== $_SESSION['defaultTheme']) {
             $updateFields['userdata'][] = "udefaultTheme = :defaultTheme";
             $params['userdata'][':defaultTheme'] = $this->defaultTheme;
         }
+
+// Agora, antes de executar o foreach principal, verificar totalmente:
         foreach ($updateFields as $table => $fields) {
+            if (count($fields) === 0) continue; // pula tabelas sem campos preenchidos
+
             $column = ($table == 'userdata') ? 'uid' : 'uidUserFK';
             $query = "UPDATE " . $table . " SET " . implode(", ", $fields) . " WHERE " . $column . " = :id";
             $params[$table][':id'] = $this->id;
             $queries[] = ['query' => $query, 'params' => $params[$table]];
+
             foreach ($fields as $field) {
                 $fieldName = explode(' ', $field)[0];
                 $updatedFields[$fieldName] = true;
             }
         }
+
+// Procedimento padrão como já implementado:
         if (!empty($this->oldPassword) && !empty($this->newPassword) && !empty($this->confirmPassword) && $this->newPassword === $this->confirmPassword) {
-            $query = "UPDATE" . $this->tableNames['ud'] . "SET upassword = :newPassword WHERE uid = :id";
+            $query = "UPDATE " . $this->tableNames['ud'] . " SET upassword = :newPassword WHERE uid = :id";
             $paramsPassword = [
                 ':newPassword' => $this->newPassword,
                 ':id' => $this->id
@@ -231,6 +255,12 @@ class User {
             $queries[] = ['query' => $query, 'params' => $paramsPassword];
             $updatedFields['upassword'] = true;
         }
+
+// Verificação final de segurança:
+        if (empty($queries)) {
+            return true; // Nada para atualizar, retornar imediatamente com sucesso
+        }
+
         foreach ($queries as $q) {
             try {
                 $stmt = $this->conn->prepare($q['query']);
@@ -243,21 +273,9 @@ class User {
                 return false;
             }
         }
-        //if($id == $_SESSION['id']){
-            if (isset($updatedFields['uname'])) User::updateSessionUserData('name', $this->name);
-            if (isset($updatedFields['uemail'])) User::updateSessionUserData('email', $this->email);
-            if (isset($updatedFields['username'])) User::updateSessionUserData('nickname', $this->nickname);
-            if (isset($updatedFields['udefaultTheme'])) User::updateSessionUserData('defaultTheme', $this->defaultTheme);
-       // }
-        
-        return true;
     }
-    //Ainda assim não está funcionando a parte 
-    public static function updateSessionUserData($field, $value) {
-        $_SESSION['userData'][$field] = $value;
-    }
-    
- // a fazer.
+
+    //TODO: a fazer FUNCIONALIDADE DELETEACCOUNT.
     public function deleteAccount() {
         if (!empty($this->email) && !empty($this->password)) {
             $query = "SELECT uname, urank, email, upassword FROM " . $this->tableNames[0] . " 

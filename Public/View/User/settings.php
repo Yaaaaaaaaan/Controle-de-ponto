@@ -19,24 +19,52 @@ if ($_POST) {
     // TODO: RESTAURAR CONFIGURAÇÕES DE TEMAS CLARO E ESCURO, UTILIZANDO LOCALSTORAGE;
     $defaultTheme = isset($_POST['defaultTheme']) ? 1 : 0;
      //  TODO: RESTAURAR UPDATEUSER UTILIZANDO LOCALSTORAGE
-    $updateSuccess = $userController->updateUser(
-      $_POST['name'], 
-      $_SESSION['id'], 
-      $_POST['email'], 
-      $_POST['nickname'], 
-      $_POST['oldPassword'], 
-      $_POST['newPassword'], 
-      $_POST['confirmPassword'],
-      $defaultTheme
-    );
-    if ($updateSuccess) {
-      $_SESSION['name'] = $_POST['name'];
-      $_SESSION['email'] = $_POST['email'];
-      $_SESSION['nickname'] = $_POST['nickname'];
-      $_SESSION['defautTheme'] = $_POST['defautTheme'];
-      
-      header("Location: settings.php");
+    if ($_POST) {
+        include_once '../../../App/controller/UserController.php';
+        $userController = new UserController();
+
+        if(isset($_POST['registro'])) {
+            $userHistory = $userController->showUserHistory($_POST['registro']);
+        }
+
+        if(isset($_POST['selectedPicture'])) {
+            $userController->updateProfilePicture($_POST['selectedPicture']);
+        }
+
+        // Verifica se existem os campos necessários para atualizar o usuário
+        if (isset($_POST['name']) && isset($_POST['email']) && isset($_POST['nickname'])) {
+            // Processa os campos de senha apenas se todos estiverem preenchidos
+            $oldPassword = '';
+            $newPassword = '';
+            $confirmPassword = '';
+
+            if (!empty($_POST['oldPassword']) && !empty($_POST['newPassword']) && !empty($_POST['confirmPassword'])) {
+                $oldPassword = $_POST['oldPassword'];
+                $newPassword = $_POST['newPassword'];
+                $confirmPassword = $_POST['confirmPassword'];
+            }
+
+            $defaultTheme = isset($_POST['defaultTheme']) ? 1 : 0;
+
+            $updateSuccess = $userController->updateUser(
+                $_POST['name'],
+                $_SESSION['id'],
+                $_POST['email'],
+                $_POST['nickname'],
+                $oldPassword,
+                $newPassword,
+                $confirmPassword,
+                $defaultTheme
+            );
+
+            if ($updateSuccess === false) {
+                $_SESSION['response'] = "<div class='alert alert-danger'>Erro ao atualizar usuário.</div>";
+            } else {
+                $_SESSION['response'] = "<div class='alert alert-success'>Usuário atualizado com sucesso!</div>";
+            }
+        }
     }
+
 }
 include_once '../../../App/controller/pictureController.php';
 $controller = new pictureController();
