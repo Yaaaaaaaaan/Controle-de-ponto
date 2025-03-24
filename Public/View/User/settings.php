@@ -1,7 +1,7 @@
 <?php
 define('APP_RAN', true);
 require '../layout/menu.php';
-
+//TODO: OTIMIZAR A VERIFICAÇÃO DE LOGIN, REMOVER A SESSION ID E PASSAR A USAR A SESSION USERDATA.
 if ($_POST) {    
       include_once '../../../App/controller/UserController.php';
       $userController = new UserController();
@@ -46,6 +46,7 @@ if ($_POST) {
 
             $defaultTheme = isset($_POST['defaultTheme']) ? 1 : 0;
 
+
             $updateSuccess = $userController->updateUser(
                 $_POST['name'],
                 $_SESSION['id'],
@@ -66,6 +67,8 @@ if ($_POST) {
     }
 
 }
+
+echo $_SESSION['userData'];
 include_once '../../../App/controller/pictureController.php';
 $controller = new pictureController();
 $pictures = $controller->getUserPictures();

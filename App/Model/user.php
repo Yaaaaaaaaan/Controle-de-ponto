@@ -191,56 +191,52 @@ class User
         return false;
     }
 
-    public function updateUser($name, $id, $email, $nickname, $oldPassword, $newPassword, $confirmPassword, $defaultTheme): bool
-    {
-        $this->name = trim($name);
+
+    public function updateUser($name, $id, $email, $uname, $CPF, $location, $oldPassword, $newPassword, $confirmPassword, $defaultTheme) {
+        $userData= json_decode($json, true);
+
+        $nameDefault = $_SESSION['name'];
+        $emailDefault = $_SESSION['email'];
+        $nicknameDefault = $_SESSION['nickname'];
+        $this->name = $name;
         $this->id = $id;
-        $this->email = trim($email);
-        $this->nickname = trim($nickname);
+        $this->email = $email;
+        $this->nickname = $uname;
         $this->oldPassword = $oldPassword;
         $this->newPassword = $newPassword;
         $this->confirmPassword = $confirmPassword;
-        $this->defaultTheme = trim($defaultTheme);
-
+        $this->defaultTheme = $defaultTheme;
         $updateFields = [];
         $params = [];
         $queries = [];
-        $updatedFields = [];
-
-        if (!empty($this->name)) {
-            $updateFields['userdata'][] = "uname = :name";
-            $params['userdata'][':name'] = $this->name;
+        if (isset($this->name)) {
+            $updateFields['users'][] = "name = :name";
+            $params['users'][':name'] = $this->name;
         }
-        if (!empty($this->email)) {
-            $updateFields['userdata'][] = "uemail = :email";
-            $params['userdata'][':email'] = $this->email;
+        if (isset($this->email)) {
+            $updateFields['users'][] = "email = :email";
+            $params['users'][':email'] = $this->email;
         }
-        if (!empty($this->nickname) && $this->nickname !== $_SESSION['nickname']) {
-            $updateFields['userdata'][] = "username = :nickname";
-            $params['userdata'][':nickname'] = $this->nickname;
+        if (isset($this->uname) && $this->uname != $_SESSION['uname']) {
+            $updateFields['userdata'][] = "username = :uname";
+            $params['userdata'][':uname'] = $this->uname;
         }
-        if (!empty($this->defaultTheme) && $this->defaultTheme !== $_SESSION['defaultTheme']) {
-            $updateFields['userdata'][] = "udefaultTheme = :defaultTheme";
+        if (isset($this->defaultTheme) && $this->defaultTheme != $_SESSION['defaultTheme']) {
+            $updateFields['userdata'][] = "defaultTheme = :defaultTheme";
             $params['userdata'][':defaultTheme'] = $this->defaultTheme;
         }
-
         foreach ($updateFields as $table => $fields) {
-            // segurança extra: Ignorar consultas sem campos definidos claramente
-            if (!empty($fields)) {
-                $column = ($table == 'userdata') ? 'uid' : 'uidUserFK';
-                $query = "UPDATE " . $table . " SET " . implode(", ", $fields) . " WHERE " . $column . " = :id";
-                $params[$table][':id'] = $this->id;
-                $queries[] = ['query' => $query, 'params' => $params[$table]];
-
-                foreach ($fields as $field) {
-                    $fieldName = explode(' ', $field)[0];
-                    $updatedFields[$fieldName] = true;
-                }
+            $column = ($table == 'users') ? 'id' : 'idUserFK';
+            $query = "UPDATE " . $table . " SET " . implode(", ", $fields) . " WHERE " . $column . " = :id";
+            $params[$table][':id'] = $this->id;
+            $queries[] = ['query' => $query, 'params' => $params[$table]];
+            foreach ($fields as $field) {
+                $fieldName = explode(' ', $field)[0];
+                $updatedFields[$fieldName] = true;
             }
         }
-
         if (!empty($this->oldPassword) && !empty($this->newPassword) && !empty($this->confirmPassword) && $this->newPassword === $this->confirmPassword) {
-            $query = "UPDATE " . $this->tableNames['ud'] . " SET upassword = :newPassword WHERE uid = :id";
+            $query = "UPDATE users SET upassword = :newPassword WHERE id = :id";
             $paramsPassword = [
                 ':newPassword' => $this->newPassword,
                 ':id' => $this->id
@@ -248,22 +244,7 @@ class User
             $queries[] = ['query' => $query, 'params' => $paramsPassword];
             $updatedFields['upassword'] = true;
         }
-
-        // Última barreira de segurança: garantir que nenhuma consulta vazia seja executada
-        if (empty($queries)) {
-            // Não houve alterações detectadas. Sai imediatamente com sucesso.
-            return true;
-        }
-
-        // Debug Temporário: Apenas para esta execução, para você ver a consulta que está rodando e descobrir o erro
         foreach ($queries as $q) {
-            echo "<pre>";
-            echo "SQL gerado: \n";
-            var_dump($q['query']);
-            echo "Parametros: \n";
-            var_dump($q['params']);
-            echo "</pre>";
-
             try {
                 $stmt = $this->conn->prepare($q['query']);
                 foreach ($q['params'] as $param => $value) {
@@ -275,13 +256,6 @@ class User
                 return false;
             }
         }
-
-        // Atualização da sessão, caso tenha efetuado mudanças
-        if (isset($updatedFields['uname'])) User::updateSessionUserData('name', $this->name);
-        if (isset($updatedFields['uemail'])) User::updateSessionUserData('email', $this->email);
-        if (isset($updatedFields['username'])) User::updateSessionUserData('nickname', $this->nickname);
-        if (isset($updatedFields['udefaultTheme'])) User::updateSessionUserData('defaultTheme', $this->defaultTheme);
-
         return true;
     }
 
