@@ -73,3 +73,15 @@ echo "Erro: " . $e->getMessage(); // Para depuração
 return false;
 }
 }
+
+
+/*
+Apenas `authenticateUser` e, `createUser` , tanto em userController.php quanto em user.php serão apenas MVC com PHP e MYSQL.
+
+`unAuthenticateUser` precisa destruir e remover o `$_SESSION['remoteUserData']` e `$_SESSION['localUserData']` junto com `remoteUserdata` do localStorage (navegador do usuário), deixando apenas o `localUserData` salvo no localStorage.
+
+criação dinâmica de arrays `$remoteUserData` e `$localUserData` populando-as através do localStorage quando for efetuada a manipulação de dados como verificação em `public function remoteUpdateUser(){}`.
+
+população de `public function localUpdateUser(){}` deve ser feita através do formulário em settings.php, porém, deve seguir o mesmo fluxo como se fosse padronizado em MVC, mas, ao invés de user.php se ter a manipulação do banco de dados, haverá a criação de uma `$_SESSION['localUserData']` , que será manipulada em userData.php, e melhor trabalhada em localStorage.php
+
+*/

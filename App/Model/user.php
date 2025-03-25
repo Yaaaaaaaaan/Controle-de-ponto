@@ -342,8 +342,7 @@ class User
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function updateProfilePicture($userId, $pictureId): bool
-    {
+    public function updateProfilePicture($userId, $pictureId) {
         try {
             // Inicie uma transação
             $this->conn->beginTransaction();
