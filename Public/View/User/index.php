@@ -166,6 +166,8 @@ $pointControlData = $pointController->getPointControl($id);
     };
 
     const attendance = new Chart(ctx, config);
+
 </script>
+<img hidden id="pPictureModal">
 </body>
 </html>

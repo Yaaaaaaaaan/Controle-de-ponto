@@ -57,12 +57,6 @@ if ($_POST) {
                 $confirmPassword,
                 $defaultTheme
             );
-
-            if ($updateSuccess === false) {
-                $_SESSION['response'] = "<div class='alert alert-danger'>Erro ao atualizar usuário.</div>";
-            } else {
-                $_SESSION['response'] = "<div class='alert alert-success'>Usuário atualizado com sucesso!</div>";
-            }
         }
     }
 
@@ -218,12 +212,12 @@ echo '</pre>';*/
               <div class="accordion-item">
                 <h2 class="accordion-header">
                   <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                    Other preferences
+                    Outras preferências
                   </button>
                 </h2>
                 <div id="collapseTwo" class="accordion-collapse collapse <?php if($_SERVER['REQUEST_URI'] == '/Estudos/Public/View/User/settings.php?darkMode'){echo 'show ';} ?>" data-bs-parent="#scrollspyHeading2">
                   <div class="accordion-body">
-                    <strong>Don't forget to save your changes!</strong> It is hidden by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the <code>.accordion-body</code>, though the transition does limit overflow.
+                    <strong>Não se esqueça de salvar as alterações!</strong> Caso não as salve, elas serão perdidas.
                     <div class="row">
                       <div class="col-md-12">
                       <div class="form-check form-switch ms-3">
@@ -277,7 +271,7 @@ echo '</pre>';*/
             unset($_SESSION['response']);          
           } 
            ?>
-          <button class="w-100 btn-lg btn btn-success" type="submit">Update</button>
+          <button class="w-100 btn-lg btn btn-success" type="submit">Submeter</button>
         </form>
       </div>
     </div>
@@ -407,12 +401,12 @@ echo '</pre>';*/
                 if (emailInput) emailInput.value = email;
                 if (nicknameInput) nicknameInput.value = nickname;
 
-                console.log("Dados carregados do localStorage com sucesso!");
+                //console.log("Dados carregados do localStorage com sucesso!"); //verificação carga dados
             } catch (error) {
-                console.error("Erro ao processar dados do localStorage:", error);
+                //console.error("Erro ao processar dados do localStorage:", error); //verificação carga dados
             }
         } else {
-            console.log("Nenhum dado de usuário encontrado no localStorage");
+            //console.log("Nenhum dado de usuário encontrado no localStorage"); //verificação carga dados
         }
     });
 

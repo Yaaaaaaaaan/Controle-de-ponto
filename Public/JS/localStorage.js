@@ -6,7 +6,7 @@ async function processUserData() {
     if (userData.length > 0) {
       // Armazenando os dados no localStorage
       localStorage.setItem('userData', JSON.stringify(userData));
-      console.log('Dados armazenados no localStorage:', localStorage.getItem('userData'));
+      //console.log('Dados armazenados no localStorage:', localStorage.getItem('userData')); //apenas para verificação no console.
 
      // Recuperando a string do localStorage
      userDataString = localStorage.getItem("userData");
@@ -73,7 +73,7 @@ async function processUserData() {
           if (pPicture) {
               pPicture.src = srcImage;
               pPictureModal.src = srcImage;
-              console.log("link:", srcImage);
+              //console.log("link:", srcImage); //apenas para verificação do link exibido no console.
           } else {
               console.error("Elemento pPicture não encontrado.");
           }
@@ -93,7 +93,8 @@ const responseNameCurto = document.getElementById("responseNameCurto");
 if (responseNameCurto) {
   responseNameCurto.textContent = "Olá, " + nameCurto;
 } else {
-  console.log("Elemento responseNameCurto não encontrado em menu.php.");
+  //console.log("Elemento responseNameCurto não encontrado em menu.php."); //verificação falha
+    responseNameCurto.textContent = "Olá!"
 }
 }
 

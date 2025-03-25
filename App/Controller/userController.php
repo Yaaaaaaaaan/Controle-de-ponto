@@ -1,4 +1,7 @@
 <?php
+
+use Random\RandomException;
+
 include_once '../../../App/Config/db.php';
 include_once '../../../App/Model/user.php';
 if (!defined('APP_RAN')) {
@@ -32,6 +35,10 @@ class UserController {
     }
 
     //TODO: Apenas `authenticateUser` e, `createUser` , tanto em userController.php quanto em user.php serão apenas MVC com PHP e MYSQL.
+
+    /**
+     * @throws RandomException
+     */
     public function authenticateUser($nickname, $password): void
     {
         $this->user->nickname = $nickname;
