@@ -82,7 +82,8 @@ class UserController {
 
 
 
-    public function updateProfilePicture($pictureId) {
+    public function updateProfilePicture($pictureId): void
+    {
         if (isset($_SESSION['id'])) {
             if ($this->user->updateProfilePicture($_SESSION['id'], $pictureId)) {
                 $_SESSION['response'] = '<p>Foto de perfil atualizada com sucesso.</p>';
