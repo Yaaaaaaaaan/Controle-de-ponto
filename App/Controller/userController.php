@@ -97,7 +97,8 @@ class UserController {
 
 
 
-    public function insertUserProfilePicture($profilePicture) {
+    public function insertUserProfilePicture($profilePicture): void
+    {
         if (isset($profilePicture) && $profilePicture['error'] == 0) {
             $targetDirectory = __DIR__ . '/../../App/Persistence/userProfileImages/'; // Caminho absoluto
             $imageFileType = strtolower(pathinfo($profilePicture['name'], PATHINFO_EXTENSION));

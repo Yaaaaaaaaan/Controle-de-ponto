@@ -9,9 +9,9 @@ if ($_POST) {
       $userHistory = $userController->showUserHistory($_POST['registro']);
     }// TODO: FINALIZAR UPLOAD DE IMAGENS PARA O PERFIL;
     // Verifica o upload da imagem de perfil
-    /*if(isset($_FILES['profilepic'])) {
+    if(isset($_FILES['profilepic'])) {
       $userController->updateUserProfilePicture($_FILES['profilepic']);
-    }*/
+    }
      if(isset($_POST['selectedPicture'])) {
       $userController->updateProfilePicture($_POST['selectedPicture']);
     }
@@ -180,7 +180,7 @@ echo '</pre>';*/
               <div class="accordion-item">
                 <h2 class="accordion-header">
                   <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
-                  Desejas alterar a senha? <a class="ms-1 text-danger-emphasis">Click here!</a>
+                  Desejas alterar a senha? <a class="ms-1 text-danger-emphasis">Clique aqui!</a>
                   </button>
                 </h2>
                 <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#scrollspyHeading2">
@@ -217,13 +217,28 @@ echo '</pre>';*/
                 </h2>
                 <div id="collapseTwo" class="accordion-collapse collapse <?php if($_SERVER['REQUEST_URI'] == '/Estudos/Public/View/User/settings.php?darkMode'){echo 'show ';} ?>" data-bs-parent="#scrollspyHeading2">
                   <div class="accordion-body">
+                      <p class="mb-3 lead text-body-secondary">Modo escuro</p>
                     <strong>Não se esqueça de salvar as alterações!</strong> Caso não as salve, elas serão perdidas.
                     <div class="row">
                       <div class="col-md-12">
                       <div class="form-check form-switch ms-3">
                       <input name="defaultTheme" class="form-check-input" type="checkbox" role="switch" id="themeSwitch" <?php if($_SESSION['defaultTheme'] == 1){echo "checked";} ?>>
-                      <label class="form-check-label" for="themeSwitch">Dark mode</label>
+                      <label class="form-check-label" for="themeSwitch">Modo escuro</label>
                     </div>
+                          <div class="row">
+                              <div class="col-md-12">
+                                  <hr>
+                                  <p class="lead text-body-secondary">Faça upload de novas fotos ao sistema.</p>
+                                  <form action="settings.php" method="post" enctype="multipart/form-data">
+                                       <div class="input-group">
+                                           <input type="hidden" name="namePic" value="">
+                                           <input type="file" name="profilepic" class="form-control" id="inputGroupFile04" aria-describedby="inputGroupFileAddon04" aria-label="Upload">
+                                           <button class="btn btn-outline-secondary" type="submit">Salvar</button>
+                                       </div>
+                                   </form>
+                              </div>
+
+                          </div>
                       </div>
                     </div>
                   </div>
@@ -340,13 +355,7 @@ echo '</pre>';*/
 </div>
 
 
- <!--<form action="settings.php" method="post" enctype="multipart/form-data">
-                    <div class="input-group">
-                        <input type="hidden" name="namePic" value="">
-                        <input type="file" name="profilepic" class="form-control" id="inputGroupFile04" aria-describedby="inputGroupFileAddon04" aria-label="Upload">
-                        <button class="btn btn-outline-secondary" type="submit">Salvar</button>
-                    </div>
-                </form>-->
+
 
 <script>
     document.getElementById('updateProfilePicBtn').addEventListener('click', function() {

@@ -6,7 +6,7 @@ if (!defined('APP_RAN')) {
   die('Acesso não permitido');
 }
 
-class User
+#[AllowDynamicProperties] class User
 {
     private $conn;
     private $tableNames = [
@@ -351,7 +351,8 @@ class User
       }
 
       
-      /*public function setPictures($picture, $directory){ //insere imagens no banco de dados.
+      public function setPictures($picture, $directory): bool
+      { //insere imagens no banco de dados.
         $this->picture = $picture;
         $this->directory = $directory;
         $this->id = $_SESSION['id'];
@@ -367,7 +368,7 @@ class User
         } else {
             return false;
         }
-      }*/
+      }
 
       public function getUserPictures($userId) {
         $sql = "SELECT cod, path, description FROM " . $this->tableNames['pic'] . " WHERE uidUserFK = :userId ORDER BY dateload DESC LIMIT 3";
