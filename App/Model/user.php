@@ -48,60 +48,76 @@ class User
             $this->profilePicture = 'Profile.png';
             $this->directory = '/Controle-de-ponto/App/Persistence/userProfileImages/Profile.png';
 
-            $query1 = "INSERT INTO " . $this->tableNames['ud'] . " 
-            SET uname=:name, username=:nickname, uemail=:email, upassword=:password, urank=:rank;
-            SET @newUserId = LAST_INSERT_ID();";
+            // Iniciar transação para garantir consistência
+            $this->conn->beginTransaction();
 
-            $stmt1 = $this->conn->prepare($query1);
-            $stmt1->bindParam(':name', $this->name);
-            $stmt1->bindParam(':nickname', $this->nickname);
-            $stmt1->bindParam(':email', $this->email);
-            $stmt1->bindParam(':password', $this->password);
-            $stmt1->bindParam(':rank', $this->rank);
-            $stmt1->execute();
-            $stmt1->closeCursor();
+            try {
+                // Inserir usuário
+                $query1 = "INSERT INTO " . $this->tableNames['ud'] . " 
+                SET uname=:name, username=:nickname, uemail=:email, upassword=:password, urank=:rank";
 
-            $query2 = "INSERT INTO " . $this->tableNames['pic'] . "(path, description, uidUserFK) 
-                VALUES (:directory, :profilePicture, @newUserId);
-                SET @newPictureId = LAST_INSERT_ID();";
+                $stmt1 = $this->conn->prepare($query1);
+                $stmt1->bindParam(':name', $this->name);
+                $stmt1->bindParam(':nickname', $this->nickname);
+                $stmt1->bindParam(':email', $this->email);
+                $stmt1->bindParam(':password', $this->password);
+                $stmt1->bindParam(':rank', $this->rank);
+                $stmt1->execute();
 
-            $stmt2 = $this->conn->prepare($query2);
-            $stmt2->bindParam(':directory', $this->directory);
-            $stmt2->bindParam(':profilePicture', $this->profilePicture);
-            $stmt2->execute();
-            $stmt2->closeCursor();
+                // Obter o ID do novo usuário
+                $newUserId = $this->conn->lastInsertId();
 
-            $query3 = "INSERT INTO " . $this->tableNames['pps'] . "(uidUserFK, uimageFK) 
-                VALUES (@newUserId, @newPictureId)";
+                // Inserir imagem
+                $query2 = "INSERT INTO " . $this->tableNames['pic'] . "(path, description, uidUserFK) 
+                VALUES (:directory, :profilePicture, :newUserId)";
 
-            $stmt3 = $this->conn->prepare($query3);
-            $stmt3->execute();
-            $stmt3->closeCursor();
+                $stmt2 = $this->conn->prepare($query2);
+                $stmt2->bindParam(':directory', $this->directory);
+                $stmt2->bindParam(':profilePicture', $this->profilePicture);
+                $stmt2->bindParam(':newUserId', $newUserId);
+                $stmt2->execute();
 
+                // Obter o ID da imagem
+                $newPictureId = $this->conn->lastInsertId();
 
-            if ($stmt1->execute()) {
+                // Inserir relação usuário-imagem
+                $query3 = "INSERT INTO " . $this->tableNames['pps'] . "(uidUserFK, uimageFK) 
+                VALUES (:newUserId, :newPictureId)";
+
+                $stmt3 = $this->conn->prepare($query3);
+                $stmt3->bindParam(':newUserId', $newUserId);
+                $stmt3->bindParam(':newPictureId', $newPictureId);
+                $stmt3->execute();
+
+                // Verificar e criar o token do usuário
                 $triggerExists = $this->checkTriggerExists('tr_insert_token');
                 if (!$triggerExists) {
                     $triggerQuery = "CREATE TRIGGER tr_insert_token
-                           AFTER INSERT ON " . $this->tableNames['ud'] . "
-                           FOR EACH ROW
-                           BEGIN
-                             INSERT INTO " . $this->tableNames['ut'] . " (token, uidUserFK)
-                             VALUES (:userToken, @newUserId);
-                           END;";
+                       AFTER INSERT ON " . $this->tableNames['ud'] . "
+                       FOR EACH ROW
+                       BEGIN
+                         INSERT INTO " . $this->tableNames['ut'] . " (token, uidUserFK)
+                         VALUES (UNHEX(?), NEW.uid);
+                       END";
 
                     $stmt = $this->conn->prepare($triggerQuery);
-                    $stmt->bindParam(':userToken', $userToken);
-                    $stmt->execute();
+                    $stmt->execute([str_replace('0x', '', bin2hex($userToken))]);
                 }
-                //$query= "INSERT INTO " . $this->tableNames['profilepictures'] . " SET uimage = :image, uidUserFK = :id;"; precisa estudar a implementação dessa query para criação de linha de imagem. para que o login funcione corretamente.
+
+                // Inserir token diretamente
                 $query = "INSERT INTO " . $this->tableNames['ut'] . " (token, uidUserFK) 
-                  VALUES (:userToken, @newUserId);";
+                VALUES (:userToken, :newUserId)";
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam(':userToken', $userToken);
+                $stmt->bindParam(':newUserId', $newUserId);
                 $stmt->execute();
 
+                // Confirmar todas as operações
+                $this->conn->commit();
                 return true;
+            } catch (Exception $e) {
+                $this->conn->rollBack();
+                return false;
             }
         }
         return false;
@@ -192,71 +208,72 @@ class User
     }
 
 
-    public function updateUser($name, $id, $email, $uname, $CPF, $location, $oldPassword, $newPassword, $confirmPassword, $defaultTheme) {
-        $userData= json_decode($json, true);
+    public function updateUser(): bool
+    {
+        // Verificar os campos obrigatórios
+        if (empty($this->name) || empty($this->email) || empty($this->nickname)) {
+            return false;
+        }
 
-        $nameDefault = $_SESSION['name'];
-        $emailDefault = $_SESSION['email'];
-        $nicknameDefault = $_SESSION['nickname'];
-        $this->name = $name;
-        $this->id = $id;
-        $this->email = $email;
-        $this->nickname = $uname;
-        $this->oldPassword = $oldPassword;
-        $this->newPassword = $newPassword;
-        $this->confirmPassword = $confirmPassword;
-        $this->defaultTheme = $defaultTheme;
-        $updateFields = [];
-        $params = [];
-        $queries = [];
-        if (isset($this->name)) {
-            $updateFields['users'][] = "name = :name";
-            $params['users'][':name'] = $this->name;
-        }
-        if (isset($this->email)) {
-            $updateFields['users'][] = "email = :email";
-            $params['users'][':email'] = $this->email;
-        }
-        if (isset($this->uname) && $this->uname != $_SESSION['uname']) {
-            $updateFields['userdata'][] = "username = :uname";
-            $params['userdata'][':uname'] = $this->uname;
-        }
-        if (isset($this->defaultTheme) && $this->defaultTheme != $_SESSION['defaultTheme']) {
-            $updateFields['userdata'][] = "defaultTheme = :defaultTheme";
-            $params['userdata'][':defaultTheme'] = $this->defaultTheme;
-        }
-        foreach ($updateFields as $table => $fields) {
-            $column = ($table == 'users') ? 'id' : 'idUserFK';
-            $query = "UPDATE " . $table . " SET " . implode(", ", $fields) . " WHERE " . $column . " = :id";
-            $params[$table][':id'] = $this->id;
-            $queries[] = ['query' => $query, 'params' => $params[$table]];
-            foreach ($fields as $field) {
-                $fieldName = explode(' ', $field)[0];
-                $updatedFields[$fieldName] = true;
+        // Iniciar a consulta de atualização
+        $query = "UPDATE " . $this->tableNames['ud'] . " 
+          SET uname = :name, 
+              uemail = :email,
+              username = :nickname,
+              udefaultTheme = :defaultTheme ";  // Corrigido para udefaultTheme com parâmetro
+
+        // Adicionar alteração de senha à consulta, se aplicável
+        $passwordUpdated = false;
+        if (!empty($this->newPassword) && !empty($this->confirmPassword) && !empty($this->oldPassword)) {
+            // Verificar se a senha atual está correta antes de permitir a alteração
+            $checkPasswordQuery = "SELECT upassword FROM " . $this->tableNames['ud'] . " WHERE uid = :id";
+            $checkStmt = $this->conn->prepare($checkPasswordQuery);
+            $checkStmt->bindParam(':id', $this->id);
+            $checkStmt->execute();
+            $currentPassword = $checkStmt->fetchColumn();
+
+            if ($currentPassword == $this->oldPassword && $this->newPassword == $this->confirmPassword) {
+                $query .= ", upassword = :newPassword";
+                $passwordUpdated = true;
+            } else {
+                return false; // Senha atual incorreta ou as novas senhas não coincidem
             }
         }
-        if (!empty($this->oldPassword) && !empty($this->newPassword) && !empty($this->confirmPassword) && $this->newPassword === $this->confirmPassword) {
-            $query = "UPDATE users SET upassword = :newPassword WHERE id = :id";
-            $paramsPassword = [
-                ':newPassword' => $this->newPassword,
-                ':id' => $this->id
-            ];
-            $queries[] = ['query' => $query, 'params' => $paramsPassword];
-            $updatedFields['upassword'] = true;
-        }
-        foreach ($queries as $q) {
-            try {
-                $stmt = $this->conn->prepare($q['query']);
-                foreach ($q['params'] as $param => $value) {
-                    $stmt->bindValue($param, $value);
+
+        // Finalizar a consulta com a condição WHERE
+        $query .= " WHERE uid = :id";
+
+        try {
+            // Preparar e executar a consulta
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':name', $this->name);
+            $stmt->bindParam(':email', $this->email);
+            $stmt->bindParam(':nickname', $this->nickname);
+            $stmt->bindParam(':defaultTheme', $this->defaultTheme);
+            $stmt->bindParam(':id', $this->id);
+
+            if ($passwordUpdated) {
+                $stmt->bindParam(':newPassword', $this->newPassword);
+            }
+
+            if ($stmt->execute()) {
+                // Atualiza os dados da sessão
+                if (isset($_SESSION['userData'])) {
+                    $userData = json_decode($_SESSION['userData'], true);
+                    $userData['name'] = $this->name;
+                    $userData['email'] = $this->email;
+                    $userData['nickname'] = $this->nickname;
+                    $userData['theme'] = $this->defaultTheme;
+                    $_SESSION['userData'] = json_encode($userData);
                 }
-                $stmt->execute();
-            } catch (PDOException $e) {
-                echo "Error: " . $e->getMessage();
-                return false;
+                return true;
             }
+            return false;
+        } catch (PDOException $e) {
+            // Opcional: registre o erro em algum lugar
+            // error_log("Erro ao atualizar usuário: " . $e->getMessage());
+            return false;
         }
-        return true;
     }
 
     //TODO: a fazer FUNCIONALIDADE DELETEACCOUNT.
@@ -325,7 +342,8 @@ class User
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function updateProfilePicture($userId, $pictureId) {
+    public function updateProfilePicture($userId, $pictureId): bool
+    {
         try {
             // Inicie uma transação
             $this->conn->beginTransaction();

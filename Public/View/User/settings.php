@@ -68,7 +68,6 @@ if ($_POST) {
 
 }
 
-echo $_SESSION['userData'];
 include_once '../../../App/controller/pictureController.php';
 $controller = new pictureController();
 $pictures = $controller->getUserPictures();
