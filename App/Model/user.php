@@ -1,4 +1,7 @@
 <?php
+
+use Random\RandomException;
+
 if (!defined('APP_RAN')) {
   die('Acesso não permitido');
 }
@@ -41,110 +44,141 @@ class User
         $this->conn = $db;
     }
 
-    public function createUser()
+    public function createUser(): bool
     {
-        if (!empty($this->name && $this->email && $this->password && $this->rank && $this->nickname)) {
-            $userToken = bin2hex(random_bytes(32));
-            $this->profilePicture = 'Profile.png';
-            $this->directory = '/Controle-de-ponto/App/Persistence/userProfileImages/Profile.png';
+        // Verificar se todos os dados necessários foram fornecidos
+        if (empty($this->name) || empty($this->email) || empty($this->password) ||
+            empty($this->rank) || empty($this->nickname)) {
+            return false;
+        }
 
-            // Iniciar transação para garantir consistência
-            $this->conn->beginTransaction();
+        // Definir valores padrão para a imagem de perfil
+        $userToken = bin2hex(random_bytes(32));
+        $this->profilePicture = 'Profile.png';
+        $this->directory = '/Controle-de-ponto/App/Persistence/userProfileImages/Profile.png';
 
-            try {
-                // Inserir usuário
-                $query1 = "INSERT INTO " . $this->tableNames['ud'] . " 
-                SET uname=:name, username=:nickname, uemail=:email, upassword=:password, urank=:rank";
+        // Iniciar transação para garantir consistência dos dados
+        $this->conn->beginTransaction();
 
-                $stmt1 = $this->conn->prepare($query1);
-                $stmt1->bindParam(':name', $this->name);
-                $stmt1->bindParam(':nickname', $this->nickname);
-                $stmt1->bindParam(':email', $this->email);
-                $stmt1->bindParam(':password', $this->password);
-                $stmt1->bindParam(':rank', $this->rank);
-                $stmt1->execute();
+        try {
+            // 1. Inserir dados do usuário na tabela userdata
+            $queryUser = "INSERT INTO {$this->tableNames['ud']} 
+                  (uname, username, uemail, upassword, urank) 
+                  VALUES (:name, :nickname, :email, :password, :rank)";
 
-                // Obter o ID do novo usuário
-                $newUserId = $this->conn->lastInsertId();
+            $stmtUser = $this->conn->prepare($queryUser);
+            $stmtUser->bindParam(':name', $this->name);
+            $stmtUser->bindParam(':nickname', $this->nickname);
+            $stmtUser->bindParam(':email', $this->email);
+            $stmtUser->bindParam(':password', $this->password);
+            $stmtUser->bindParam(':rank', $this->rank);
+            $stmtUser->execute();
 
-                // Inserir imagem
-                $query2 = "INSERT INTO " . $this->tableNames['pic'] . "(path, description, uidUserFK) 
-                VALUES (:directory, :profilePicture, :newUserId)";
+            // Obter o ID do usuário recém-inserido
+            $newUserId = $this->conn->lastInsertId();
 
-                $stmt2 = $this->conn->prepare($query2);
-                $stmt2->bindParam(':directory', $this->directory);
-                $stmt2->bindParam(':profilePicture', $this->profilePicture);
-                $stmt2->bindParam(':newUserId', $newUserId);
-                $stmt2->execute();
+            // 2. Inserir dados da imagem na tabela pictures
+            $queryPicture = "INSERT INTO {$this->tableNames['pic']}
+                     (path, description, uidUserFK) 
+                     VALUES (:directory, :profilePicture, :newUserId)";
 
-                // Obter o ID da imagem
-                $newPictureId = $this->conn->lastInsertId();
+            $stmtPicture = $this->conn->prepare($queryPicture);
+            $stmtPicture->bindParam(':directory', $this->directory);
+            $stmtPicture->bindParam(':profilePicture', $this->profilePicture);
+            $stmtPicture->bindParam(':newUserId', $newUserId);
+            $stmtPicture->execute();
 
-                // Inserir relação usuário-imagem
-                $query3 = "INSERT INTO " . $this->tableNames['pps'] . "(uidUserFK, uimageFK) 
-                VALUES (:newUserId, :newPictureId)";
+            // Obter o ID da imagem recém-inserida
+            $newPictureId = $this->conn->lastInsertId();
 
-                $stmt3 = $this->conn->prepare($query3);
-                $stmt3->bindParam(':newUserId', $newUserId);
-                $stmt3->bindParam(':newPictureId', $newPictureId);
-                $stmt3->execute();
+            // 3. Inserir relação entre usuário e imagem de perfil na tabela profilepictures
+            $queryProfilePic = "INSERT INTO {$this->tableNames['pps']}
+                        (uidUserFK, uimageFK) 
+                        VALUES (:newUserId, :newPictureId)";
 
-                // Verificar e criar o token do usuário
-                $triggerExists = $this->checkTriggerExists('tr_insert_token');
-                if (!$triggerExists) {
-                    $triggerQuery = "CREATE TRIGGER tr_insert_token
-                       AFTER INSERT ON " . $this->tableNames['ud'] . "
+            $stmtProfilePic = $this->conn->prepare($queryProfilePic);
+            $stmtProfilePic->bindParam(':newUserId', $newUserId);
+            $stmtProfilePic->bindParam(':newPictureId', $newPictureId);
+            $stmtProfilePic->execute();
+
+            // 4. Verificar se o trigger para a criação automática de tokens já existe
+            $triggerExists = $this->checkTriggerExists('tr_insert_token');
+
+            // Se o trigger não existir, criar um novo
+            if (!$triggerExists) {
+                $triggerQuery = "CREATE TRIGGER tr_insert_token
+                       AFTER INSERT ON {$this->tableNames['ud']}
                        FOR EACH ROW
                        BEGIN
-                         INSERT INTO " . $this->tableNames['ut'] . " (token, uidUserFK)
+                         INSERT INTO {$this->tableNames['ut']} (token, uidUserFK)
                          VALUES (UNHEX(?), NEW.uid);
                        END";
 
-                    $stmt = $this->conn->prepare($triggerQuery);
-                    $stmt->execute([str_replace('0x', '', bin2hex($userToken))]);
-                }
-
-                // Inserir token diretamente
-                $query = "INSERT INTO " . $this->tableNames['ut'] . " (token, uidUserFK) 
-                VALUES (:userToken, :newUserId)";
-                $stmt = $this->conn->prepare($query);
-                $stmt->bindParam(':userToken', $userToken);
-                $stmt->bindParam(':newUserId', $newUserId);
-                $stmt->execute();
-
-                // Confirmar todas as operações
-                $this->conn->commit();
-                return true;
-            } catch (Exception $e) {
-                $this->conn->rollBack();
-                return false;
+                $stmtTrigger = $this->conn->prepare($triggerQuery);
+                $stmtTrigger->execute([str_replace('0x', '', bin2hex($userToken))]);
             }
+
+            // 5. Inserir token do usuário na tabela usertoken
+            $queryToken = "INSERT INTO {$this->tableNames['ut']} 
+                   (token, uidUserFK) 
+                   VALUES (:userToken, :newUserId)";
+
+            $stmtToken = $this->conn->prepare($queryToken);
+            $stmtToken->bindParam(':userToken', $userToken);
+            $stmtToken->bindParam(':newUserId', $newUserId);
+            $stmtToken->execute();
+
+            // Confirmar todas as operações
+            $this->conn->commit();
+            return true;
+
+        } catch (Exception $e) {
+            // Em caso de erro, reverter todas as alterações
+            $this->conn->rollBack();
+            return false;
         }
-        return false;
     }
 
-    // Função para checagem de gatilho
-    private function checkTriggerExists($triggerName)
+    /**
+     * Verifica se um trigger específico já existe no banco de dados
+     *
+     * @param string $triggerName Nome do trigger a ser verificado
+     * @return bool Retorna true se o trigger existir, false caso contrário
+     */
+    private function checkTriggerExists($triggerName): bool
     {
         $query = "SELECT COUNT(*) AS trigger_exists
-              FROM information_schema.triggers
-              WHERE trigger_name = :triggerName;";
+          FROM information_schema.triggers
+          WHERE trigger_name = :triggerName";
+
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':triggerName', $triggerName);
+        // Utiliza bindValue em vez de bindParam para valor literal
+        $stmt->bindValue(':triggerName', $triggerName);
         $stmt->execute();
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
         return (int)$result['trigger_exists'] === 1;
     }
 
-    public function authenticateUser()
+    /**
+     * Método destrutor para limpar a conexão com o banco de dados
+     */
+    public function __destruct()
+    {
+        // Forma correta de fechar uma conexão PDO
+        if ($this->conn) {
+            $this->conn = null;
+        }
+    }
+
+    /**
+     * @throws RandomException
+     */
+    public function authenticateUser(): bool
     {
         if (!empty($this->nickname) && !empty($this->password)) {
             $userToken = bin2hex(random_bytes(32));
-            if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-                $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
-            } else {
-                $ip = $_SERVER['REMOTE_ADDR'];
-            }
+            $ip = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'];
             $query = "SELECT u.uid, t.token	, u.uname, u.username, u.urank, u.uemail, u.upassword, u.username, d.description, p.dateload, u.udefaultTheme 
             FROM " . $this->tableNames['ud'] . " u 
             INNER JOIN " . $this->tableNames['pic'] . " d ON u.uid = d.uidUserFK 
@@ -172,6 +206,7 @@ class User
                     COMMIT;
                     
                     INSERT INTO " . $this->tableNames['history'] . " SET description = :descricao, uidUserFK = :id";
+
                     try {
                         $this->descricao = 'login a partir do ip:' . $ip . ' E criação do Hash para autenticação temporário: ' . $userToken;
                         $this->userToken = $userToken;
@@ -429,10 +464,6 @@ class User
         }   
     }
 
-
-    public function __destruct() {
-        $this->conn->close();
-    }
 }
 
 

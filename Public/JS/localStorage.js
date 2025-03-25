@@ -27,6 +27,9 @@ async function processUserData() {
      profileUser = (userdata[7]).slice(14, -1);
 
      //faz a manipulação detalhada da string
+        if(name.indexOf(" ") == -1)
+        nameCurto = name;
+        else
      nameCurto = name.substring(0, name.indexOf(" "));
 
       // Atualiza elementos em outras páginas

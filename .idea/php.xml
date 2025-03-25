@@ -20,7 +20,7 @@
       <path value="$PROJECT_DIR$" />
     </include_path>
   </component>
-  <component name="PhpProjectSharedConfiguration" php_language_level="8.0" />
+  <component name="PhpProjectSharedConfiguration" php_language_level="8.2" />
   <component name="PhpStan">
     <PhpStan_settings>
       <phpstan_by_interpreter asDefaultInterpreter="true" interpreter_id="4afb7151-f8d5-4192-8cf5-3121b901a92c" timeout="60000" />
