@@ -185,7 +185,7 @@ echo '</pre>';*/
                 </h2>
                 <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#scrollspyHeading2">
                     <div class="accordion-body">
-                        <strong>Please enter your new password and confirm it.</strong> It must, by default, contain at least one number and one upper and lower case letter, it is recommended to use symbols such as <code>"!@#$%&*"</code>
+                        <strong>Por favor, digite a sua nova senha e confirme-a.</strong> Ela deve, por padrão, conter pelo menos um número e uma letra maiúscula e minúscula. É recomendável usar símbolos como <code>"!@#$%&*"</code>
                         <div class="row mt-3">
                         <div class="col-sm-12">
                                 <div class="form-floating mb-3">
@@ -228,7 +228,7 @@ echo '</pre>';*/
                           <div class="row">
                               <div class="col-md-12">
                                   <hr>
-                                  <p class="lead text-body-secondary">Faça upload de novas fotos ao sistema.</p>
+                                  <p class="lead text-body-secondary">Upload de novas fotos</p>
                                   <form action="settings.php" method="post" enctype="multipart/form-data">
                                        <div class="input-group">
                                            <input type="hidden" name="namePic" value="">
