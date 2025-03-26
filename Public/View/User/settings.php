@@ -190,19 +190,19 @@ echo '</pre>';*/
                         <div class="col-sm-12">
                                 <div class="form-floating mb-3">
                                     <input type="password" name="oldPassword" class="form-control" id="floatingInputCurrentPassword" placeholder="password">
-                                    <label for="floatingInputCurrentPassword">current password</label>
+                                    <label for="floatingInputCurrentPassword">Senha atual</label>
                                 </div>
                             </div>
                             <div class="col-sm-6">
                                 <div class="form-floating mb-3">
                                     <input type="password" name="newPassword" class="form-control" id="floatingInputNewPassword" placeholder="password">
-                                    <label for="floatingInputNewPassword">New password</label>
+                                    <label for="floatingInputNewPassword">Nova senha</label>
                                 </div>
                             </div>
                             <div class="col-sm-6">
                                 <div class="form-floating mb-3">
                                     <input type="password" name="confirmPassword" class="form-control" id="floatingInputConfirmNewPassword" placeholder="Password confirmation">
-                                    <label for="floatingInputConfirmNewPassword">Password confirmation</label>
+                                    <label for="floatingInputConfirmNewPassword">Confirmação de nova senha</label>
                                 </div>
                             </div>
                         </div>
