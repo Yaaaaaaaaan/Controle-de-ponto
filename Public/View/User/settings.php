@@ -161,7 +161,7 @@ echo '</pre>';*/
             <div class="col-sm-6">
                 <div class="form-floating mb-3">
                     <input type="email" class="form-control" name="email" id="floatingInputEmail" value="" placeholder="name@example.com">
-                    <label for="floatingInputEmail">Email address</label>
+                    <label for="floatingInputEmail">Email</label>
                 </div>
             </div>
             <div class="col-sm-6">
@@ -173,7 +173,7 @@ echo '</pre>';*/
             <div class="col-12">
                 <div class="form-floating mb-3">
                     <input type="text" name="name" class="form-control" id="floatingInputName" placeholder="Name" value="">
-                    <label for="floatingInputName">Name</label>
+                    <label for="floatingInputName">Nome</label>
                 </div>
             </div>          
             <div class="accordion" id="scrollspyHeading2"> <!-- TODO: RESTAURAR ALTERAÇÃO DE SENHA -->
