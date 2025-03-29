@@ -185,6 +185,7 @@ echo '</pre>';*/
                 </h2>
                 <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#scrollspyHeading2">
                     <div class="accordion-body">
+                        <p class="lead text-body-secondary">Alteração de senha</p>
                         <strong>Por favor, digite a sua nova senha e confirme-a.</strong> Ela deve, por padrão, conter pelo menos um número e uma letra maiúscula e minúscula. É recomendável usar símbolos como <code>"!@#$%&*"</code>
                         <div class="row mt-3">
                         <div class="col-sm-12">
@@ -252,6 +253,14 @@ echo '</pre>';*/
                 </h2>
                 <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#scrollspyHeading2">
                   <div class="accordion-body">
+                      <p class="lead text-body-secondary">Histórico de uso</p>
+                      <form action="settings.php" method="post">
+                          <div class="input-group mb-3">
+                              <input type="text" class="form-control" placeholder="Quantidade de registros a serem exibidos" name="registro" aria-label="quantidade de registros a serem exibidos">
+                              <button class="btn btn-outline-secondary" type="submit">Pesquisar</button>
+                          </div>
+                      </form>
+                      <hr>
                     <table class="table">
                       <thead>
                           <tr>
@@ -272,10 +281,6 @@ echo '</pre>';*/
                           <?php endforeach; ?>
                       </tbody>
                     </table>
-                    <form action="settings.php" method="post">
-                      <input type="text" name="registro" placeholder ="quantidade de registros a serem exibidos">
-                      <button type="submit">Atualizar</button>
-                    </form>
                   </div>
                 </div>
               </div>
