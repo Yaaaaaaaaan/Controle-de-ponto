@@ -283,7 +283,21 @@ echo '</pre>';*/
           <hr class="my-4">
           <?php if($_POST){
             echo $_SESSION['response'];
-            unset($_SESSION['response']);          
+              if (isset($_SESSION['response']) && strpos($_SESSION['response'], 'Alterações feitas com sucesso!') !== false){
+                    echo "
+                            <script>
+                                // Força uma nova requisição para atualizar o localStorage
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    // Primeiro atualiza o localStorage
+                                    processUserData().then(() => {
+                                        // Depois preenche os campos do formulário
+                                        preencherCamposFormulario();
+                                    });
+                                });
+                            </script>
+                        ";
+                  }
+              unset($_SESSION['response']);
           } 
            ?>
           <button class="w-100 btn-lg btn btn-success" type="submit">Submeter</button>
@@ -387,37 +401,35 @@ echo '</pre>';*/
     });
 
     document.addEventListener('DOMContentLoaded', function() {
-        // Recuperar os dados do localStorage
-        const userDataString = localStorage.getItem("userData");
 
-        // Verificar se existem dados armazenados
-        if (userDataString) {
-            try {
-                // Converter a string para um array
-                let userdata = JSON.parse(userDataString).split(",");
-
-                // Extrair os valores necessários
-                let name = (userdata[1]).slice(8, -1);
-                let email = (userdata[2]).slice(9, -1);
-                let nickname = (userdata[4]).slice(12, -1);
-
-                // Preencher os campos de input
-                const nameInput = document.getElementById("floatingInputName");
-                const emailInput = document.getElementById("floatingInputEmail");
-                const nicknameInput = document.getElementById("floatingInputNickname");
-
-                if (nameInput) nameInput.value = name;
-                if (emailInput) emailInput.value = email;
-                if (nicknameInput) nicknameInput.value = nickname;
-
-                //console.log("Dados carregados do localStorage com sucesso!"); //verificação carga dados
-            } catch (error) {
-                //console.error("Erro ao processar dados do localStorage:", error); //verificação carga dados
-            }
-        } else {
-            //console.log("Nenhum dado de usuário encontrado no localStorage"); //verificação carga dados
-        }
+        preencherCamposFormulario();
     });
 
+    function preencherCamposFormulario() {
+        // Recupera os dados do localStorage
+        const userDataString = localStorage.getItem("userData");
+        if (!userDataString) return;
+
+        // Converte a string para um objeto JavaScript
+        let UserData = JSON.parse(userDataString);
+
+        // Extrai os valores
+        let userdata = UserData.split(",");
+        let name = (userdata[1]).slice(8, -1);
+        let email = (userdata[2]).slice(9, -1);
+        let nickname = (userdata[4]).slice(12, -1);
+        let theme = (userdata[5]).slice(8);
+
+        // Preenche os campos do formulário
+        const nameInput = document.getElementById("floatingInputName");
+        const emailInput = document.getElementById("floatingInputEmail");
+        const nicknameInput = document.getElementById("floatingInputNickname");
+        const themeToggle = document.getElementById("defaultTheme"); // Checkbox de tema
+
+
+        if (nameInput) nameInput.value = name;
+        if (emailInput) emailInput.value = email;
+        if (nicknameInput) nicknameInput.value = nickname;
+    }
 
 </script>

@@ -62,7 +62,11 @@ async function processUserData() {
           emailElement.textContent = email;
       }
 
-      // Atualiza o menu
+        // Atualiza os campos do formulário
+        preencherCamposFormulario();
+
+
+        // Atualiza o menu
       atualizarMenu(nameCurto);
 
       const imageBasePath = '/controle-de-ponto/App/Persistence/userProfileImages/';
@@ -97,7 +101,9 @@ if (responseNameCurto) {
     responseNameCurto.textContent = "Olá!"
 }
 }
-
 document.addEventListener('DOMContentLoaded', function() {
 processUserData();
 });
+
+
+
