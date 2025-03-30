@@ -63,7 +63,9 @@ async function processUserData() {
       }
 
         // Atualiza os campos do formulário
-        preencherCamposFormulario();
+        if(window.location.pathname.endsWith('/User/settings.php')){
+            preencherCamposFormulario();
+        }
 
 
         // Atualiza o menu
