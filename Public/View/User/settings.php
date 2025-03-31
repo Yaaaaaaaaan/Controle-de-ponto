@@ -148,7 +148,7 @@ echo '</pre>';*/
               <img id="pPicture" alt="Imagem de perfil">
               <div class="polaroid-caption">
                   <small ><a href="" class="nav-link" data-bs-toggle="modal" data-bs-target="#profilePhoto">
-                          Mude sua foto de perfil...
+                          Quero mudar minha foto de perfil...
                       </a></small>
               </div>
           </div>
@@ -329,7 +329,7 @@ echo '</pre>';*/
                         <div class="text-center">
                         <img id="pPictureModal">
                         </div>
-                        <text class="text-body-secondary">Essa é sua foto atual</text>
+                        <text class="text-body-secondary">Minha foto atual</text>
                     </div>
                     <center><hr style="width:50%;"></center>
                     
