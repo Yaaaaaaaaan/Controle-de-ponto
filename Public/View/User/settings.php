@@ -256,7 +256,7 @@ echo '</pre>';*/
                       <p class="lead text-body-secondary">Histórico de uso</p>
                       <form action="settings.php" method="post">
                           <div class="input-group mb-3">
-                              <input type="text" class="form-control" placeholder="Quantidade de registros a serem exibidos" name="registro" aria-label="quantidade de registros a serem exibidos">
+                              <input type="text" class="form-control" placeholder="Quantidade de registros" name="registro" aria-label="quantidade de registros a serem exibidos">
                               <button class="btn btn-outline-secondary" type="submit">Pesquisar</button>
                           </div>
                       </form>
