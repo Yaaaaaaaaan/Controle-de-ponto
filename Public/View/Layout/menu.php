@@ -52,8 +52,6 @@
             echo'<li class="nav-item">
                     <a class="nav-link" href="../Housekeeping/index.php">Admin</a>
                 </li>';
-
-                echo $_SERVER['REQUEST_URI'];
           }?>
             <li class="nav-item">
             <?php 

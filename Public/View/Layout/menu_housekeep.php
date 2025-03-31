@@ -12,7 +12,7 @@ if ($_POST) {
 <!DOCTYPE html>
 <html lang="pt-br">
     <head>
-        <title>Ondetem.io - Housekeeping</title>
+        <title>Controle de ponto</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
@@ -21,7 +21,7 @@ if ($_POST) {
         <body>
         <nav class="navbar navbar-dark bg-dark fixed-top">
   <div class="container-fluid">
-    <a class="navbar-brand" href="#">Ondetem.io - Housekeeping</a>
+    <a class="navbar-brand" href="#">Controle de ponto - Housekeeping</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasDarkNavbar" aria-controls="offcanvasDarkNavbar">
       <span class="navbar-toggler-icon"></span>
     </button>

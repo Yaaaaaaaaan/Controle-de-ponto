@@ -76,7 +76,67 @@ $pointControlData = $pointController->getPointControl($id);
         }
         .mt-6{margin-top:2rem;}
     }
-    </style>
+
+        /* Estilo personalizado para o crachá */
+        .badge-card {
+            border-radius: 12px;
+            border: 1px solid #ddd;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: #f8f9fa;
+            transition: transform 0.3s ease;
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        .badge-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .profile-pic {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #fff;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            margin: 0 auto 15px;
+            display: block;
+        }
+
+        .user-full-name {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 20px;
+            margin-bottom: 6px;
+            text-align: center;
+        }
+
+        .user-nickname {
+            font-family: 'Roboto', sans-serif;
+            font-size: 16px;
+            color: #6c757d;
+            text-align: center;
+            margin-bottom: 6px;
+        }
+
+        .user-email {
+            font-family: 'Roboto', sans-serif;
+            font-size: 14px;
+            color: #495057;
+            text-align: center;
+            margin-bottom: 20px;
+            word-break: break-all;
+        }
+
+        .badge-action-btn {
+            width: 100%;
+            padding: 10px;
+            font-weight: 500;
+        }
+
+</style>
 </head>
 
 <body>
@@ -87,30 +147,30 @@ $pointControlData = $pointController->getPointControl($id);
                 <canvas id="attendance"></canvas>
             </div>
         </div>
-        <div class="mt-6 col-12 col-md-4">
-            <div class="col-12">
-                <div class="text-center border rounded py-2 mb-3">
-                    <h4 class="d-flex justify-content-between align-items-center mb-3 ms-2">
-                        <span class="text-primary">Olá, <text id="responseName"></text>!</span>
-                    </h4>
-                    <?php // echo '<img src="' . $_SESSION['lastImageProfileUser'] . '" alt="Imagem do usuário" style="width:226px;" >'; ?>
-                    <div class="index"><img id="pPicture"></div>
-                    <small class="text-body-secondary"><span class="nav-link">
-                        Meu email: <text id="responseEmail"></text>
-                        <p>Meu nickname: <text id="responseNickname"></text></p>
-                        <p hidden id="responseUserToken"></p>
-                        <p hidden id="responseId"></p>
-                        <p hidden id="theme"></p>
-                        <p hidden id="rank"></p>
-                    </span></small>
+        <div class="mt-5 col-12 col-md-4">
+
+                <div class="badge-card">
+                    <!-- Foto do perfil -->
+                    <img id="pPicture" alt="Foto do perfil" class="profile-pic">
+
+                    <!-- Informações do usuário -->
+                    <h3 id="responseName" class="user-full-name">@nome completo.</h3>
+                    <div id="responseNickname" class="user-nickname">@nickname</div>
+                    <div id="responseEmail" class="user-email">usuario@email.com</div>
+
+                    <!-- Botão de ação -->
                     <form action="index.php" method="post" name="insertPointControl">
                         <input hidden value="1" name="insertPointControl">
                         <input hidden value="<?= $_SESSION['id'] ?>" name="id">
                         <input hidden value="Verificação pendente" name="description">
-                        <button class="btn-lg btn btn-success" style="width:90%;" type="submit">Estou aqui!</button>
+                        <button type="submit" class="btn btn-success badge-action-btn">Confirmar Presença</button>
                     </form>
+                    <p hidden id="responseUserToken"></p>
+                    <p hidden id="responseId"></p>
+                    <p hidden id="theme"></p>
+                    <p hidden id="rank"></p>
                 </div>
-            </div>
+
         </div>
     </div>
 </div>
