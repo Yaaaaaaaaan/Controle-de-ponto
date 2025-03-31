@@ -128,31 +128,30 @@ echo '</pre>';*/
             width: 30%;
         }
     }
+
+
+
 </style>
 <div class="container">
   <main>
   <div data-bs-spy="scroll" data-bs-target="#navbar-example2"  data-bs-smooth-scroll="true" tabindex="0">
-    <div class="py-5 text-center mt-5 pt-5">
+    <div class="py-4 text-center mt-2 pt-2">
       <h2>Configurações</h2>
       <p class="lead">Informações de usuário</p>
     </div>
     <div class="row">
       <div class="col-md-5 col-lg-4 order-md-last">
-        <div class="row">
-          <div class="col-md-12">
-            <h4 class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="d-flex justify-content-between align-items-center mb-3">
               <span class="text-primary">Meu perfil</span>
-            </h4>
-            <div class="text-center border rounded py-2 mb-3">
-            <div class="settings"><img id="pPicture"></div>
-              <small class="text-body-secondary"><a href="" class="nav-link" data-bs-toggle="modal" data-bs-target="#profilePhoto">
-                    Mude sua foto de perfil...
-                  </a></small>
-            </div>
+          </h4>
+          <div class="polaroid">
+              <img id="pPicture" alt="Imagem de perfil">
+              <div class="polaroid-caption">
+                  <small ><a href="" class="nav-link" data-bs-toggle="modal" data-bs-target="#profilePhoto">
+                          Mude sua foto de perfil...
+                      </a></small>
+              </div>
           </div>
-        </div>
-        
-       
       </div>
       <div class="col-md-7 col-lg-8">
         <h4 class="mb-3">Meus dados</h4>
@@ -176,7 +175,7 @@ echo '</pre>';*/
                     <label for="floatingInputName">Nome</label>
                 </div>
             </div>          
-            <div class="accordion" id="scrollspyHeading2"> <!-- TODO: RESTAURAR ALTERAÇÃO DE SENHA -->
+            <div class="accordion" id="scrollspyHeading2">
               <div class="accordion-item">
                 <h2 class="accordion-header">
                   <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
@@ -311,7 +310,7 @@ echo '</pre>';*/
     </div>
   </div>
   </main>
-  <footer class="my-5 pt-5 text-body-secondary text-center text-small">
+  <footer class="my-5 pt-2 text-body-secondary text-center text-small">
     <p class="mb-1">&copy; 2024 Controle de ponto</p>
   </footer>
 </div>
@@ -372,6 +371,7 @@ echo '</pre>';*/
         </div>
     </div>
 </div>
+
 
 
 
