@@ -37,7 +37,7 @@
     </button>
     <div class="offcanvas offcanvas-end text-bg-dark" tabindex="-1" id="offcanvasDarkNavbar" aria-labelledby="responseName">
       <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id=""><p id="responseNameCurto"></p></h5>
+        <h5 class="offcanvas-title"><p id="responseNameCurto"></p></h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
       </div>
       <div class="offcanvas-body">
