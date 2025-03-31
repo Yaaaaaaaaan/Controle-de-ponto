@@ -231,5 +231,4 @@ $pointControlData = $pointController->getPointControl($id);
 </script>
 <img hidden id="pPictureModal">
 </body>
-
 </html>
