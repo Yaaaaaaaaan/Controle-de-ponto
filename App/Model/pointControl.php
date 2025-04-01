@@ -88,6 +88,37 @@
             return array_reverse($result);
         }
 
+        public function getDetailedPointControlData($id): array
+        {
+            // Obter os últimos 3 meses de dados
+            $sql = "SELECT 
+                DATE_FORMAT(dateIn, '%Y-%m') as month,
+                DATE_FORMAT(dateIn, '%Y-%m-%d') as fullDate,
+                DATE_FORMAT(dateIn, '%d/%m/%Y') as formattedDate,
+                TIME_FORMAT(dateIn, '%H:%i') as timeIn,
+                description
+            FROM pointControl 
+            WHERE uidUserFK = ?
+            AND dateIn >= DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH)
+            ORDER BY dateIn DESC";
+
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bind_param("i", $id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            $data = [];
+            while ($row = $result->fetch_assoc()) {
+                $month = $row['month'];
+                if (!isset($data[$month])) {
+                    $data[$month] = [];
+                }
+                $data[$month][] = $row;
+            }
+
+            return $data;
+        }
+
     }
 
 ?>

@@ -21,6 +21,11 @@ class PointController
         return $this->pointControl->getPointControlData($id);
     }
 
+    public function getDetailedPointControlData($id): array
+    {
+        return $this->pointControl->getDetailedPointControlData($id);
+    }
+
 
 
 

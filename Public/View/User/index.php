@@ -20,8 +20,6 @@ if ($_POST) {
 $pointController = new PointController();
 $pointControlData = $pointController->getPointControl($id);
 
-// Use $pointControlData conforme necessário
-;
 
     // Preparar dados para o gráfico
     $labels = [];
@@ -30,6 +28,30 @@ $pointControlData = $pointController->getPointControl($id);
         $labels[] = $row['month'];
         $dataPoints[] = $row['count'];
     }
+
+// Obter dados dos últimos 3 meses
+//$monthlyData = $pointController->getDetailedPointControlData($id);
+
+// Converter os dados para JSON para usar no JavaScript
+$monthlyDataJSON = json_encode($monthlyData);
+
+// Mapeamento de meses em português
+$monthNames = [
+    '01' => 'Janeiro',
+    '02' => 'Fevereiro',
+    '03' => 'Março',
+    '04' => 'Abril',
+    '05' => 'Maio',
+    '06' => 'Junho',
+    '07' => 'Julho',
+    '08' => 'Agosto',
+    '09' => 'Setembro',
+    '10' => 'Outubro',
+    '11' => 'Novembro',
+    '12' => 'Dezembro'
+];
+
+
 /* // Buscar dados para o gráfico apenas se o controlador estiver inicializado
  $id = $_SESSION['id'];
  $pointControlData = $pointController->getPointControlData($id, $months);
