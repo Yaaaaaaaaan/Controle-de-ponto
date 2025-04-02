@@ -73,9 +73,69 @@ $monthNames = [
 <html>
 <head>
 <style>
+    #chartContainer {
+        width: auto;
+        height: 60vh;
+        margin: auto;
+        position: relative; /* Importante para posicionamento relativo */
+    }
+
+    canvas {
+        max-width: 100%;
+    }
+
+    /* Estilo para o popup de detalhes */
+    .detail-popup {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        z-index: 1000;
+        width: 80%;
+        max-width: 500px;
+    }
+
+    .detail-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #333;
+    }
+
+    .detail-body {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    @media (max-width: 375px) {
+        #chartContainer {
+            width: 100%;
+            height: 75vh;
+            padding: 0;
+        }
+
+        .detail-popup {
+            width: 90%;
+            padding: 15px;
+        }
+    }
 
 
-        body {
+    body {
             font-family: Arial, sans-serif;
             margin: 50px;
         }
@@ -169,6 +229,20 @@ $monthNames = [
                 <canvas id="attendance"></canvas>
             </div>
         </div>
+
+        <!-- Adicione esta div para o popup de detalhes -->
+        <div id="detailContainer" class="detail-popup" style="display: none;">
+            <div class="detail-content">
+                <div class="detail-header">
+                    <h4 id="detailTitle">Detalhes do Mês</h4>
+                    <button type="button" class="close-btn" onclick="closeDetailPopup()">&times;</button>
+                </div>
+                <div id="detailContent" class="detail-body">
+                    <!-- Conteúdo detalhado será inserido aqui via JavaScript -->
+                </div>
+            </div>
+        </div>
+
         <div class="mt-5 col-12 col-md-4">
 
                 <div class="badge-card">
@@ -199,56 +273,202 @@ $monthNames = [
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    const ctx = document.getElementById('attendance').getContext('2d');
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('attendance').getContext('2d');
 
-    const labels = <?php echo json_encode($labels); ?>;
-    const dataPoints = <?php echo json_encode($dataPoints); ?>;
+        const labels = <?php echo json_encode($labels); ?>;
+        const dataPoints = <?php echo json_encode($dataPoints); ?>;
 
-    const data = {
-        labels: labels,
-        datasets: [{
-            label: 'Total Mensal',
-            data: dataPoints,
-            borderColor: 'rgba(0, 123, 255, 1)',
-            backgroundColor: 'rgba(0, 123, 255, 0.2)',
-            fill: true,
-            tension: 0.4,
-            pointRadius: 5,
-            pointHoverRadius: 7,
-        }]
-    };
+        const data = {
+            labels: labels,
+            datasets: [{
+                label: 'Total Mensal',
+                data: dataPoints,
+                borderColor: 'rgba(0, 123, 255, 1)',
+                backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+            }]
+        };
 
-    const config = {
-        type: 'line',
-        data: data,
-        options: {
-            responsive: true,
-            maintainAspectRatio: false, // Permite ajustar a altura do gráfico
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function (value) {
-                            return value.toLocaleString();
+        const config = {
+            type: 'line',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function (value) {
+                                return value.toLocaleString();
+                            }
                         }
                     }
-                }
-            },
-            plugins: {
-                tooltip: {
-                    callbacks: {
-                        label: function (context) {
-                            let value = context.raw;
-                            return value.toLocaleString();
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                let value = context.raw;
+                                return value.toLocaleString();
+                            }
                         }
                     }
-                }
+                },
+                onClick: handleChartClick
+            }
+        };
+
+        const attendance = new Chart(ctx, config);
+
+        // Função para lidar com o clique no gráfico
+        function handleChartClick(event, elements, chart) {
+            if (elements.length > 0) {
+                const clickedElement = elements[0];
+                const dataIndex = clickedElement.index;
+                const month = labels[dataIndex];
+                const value = dataPoints[dataIndex];
+
+                showDetailPopup(month, value, dataIndex);
             }
         }
-    };
+    });
 
-    const attendance = new Chart(ctx, config);
+    // Função para exibir o popup com detalhes
+    function showDetailPopup(month, value, index) {
+        const detailContainer = document.getElementById('detailContainer');
+        const detailTitle = document.getElementById('detailTitle');
+        const detailContent = document.getElementById('detailContent');
 
+        // Definir o título com o mês clicado
+        detailTitle.textContent = `Detalhes de ${month}`;
+
+        // Converter número do mês para nome do mês, se aplicável
+        let monthName = month;
+        if (/^\d{2}$/.test(month)) {
+            const monthNames = {
+                '01': 'Janeiro',
+                '02': 'Fevereiro',
+                '03': 'Março',
+                '04': 'Abril',
+                '05': 'Maio',
+                '06': 'Junho',
+                '07': 'Julho',
+                '08': 'Agosto',
+                '09': 'Setembro',
+                '10': 'Outubro',
+                '11': 'Novembro',
+                '12': 'Dezembro'
+            };
+            monthName = monthNames[month] || month;
+            detailTitle.textContent = `Detalhes de ${monthName}`;
+        }
+
+        // Construir o conteúdo detalhado
+        let contentHTML = `
+        <div class="month-summary">
+            <h5>Resumo</h5>
+            <p>Total de registros em ${monthName}: <strong>${value.toLocaleString()}</strong></p>
+        </div>
+
+        <div class="mt-4">
+            <button class="btn btn-primary" onclick="buscarDetalhesDoMes('${month}')">
+                Ver registros detalhados
+            </button>
+        </div>
+    `;
+
+        // Inserir o conteúdo no popup
+        detailContent.innerHTML = contentHTML;
+
+        // Exibir o popup
+        detailContainer.style.display = 'block';
+    }
+
+    // Função para fechar o popup
+    function closeDetailPopup() {
+        document.getElementById('detailContainer').style.display = 'none';
+    }
+
+    // Função para buscar detalhes adicionais via AJAX
+    function buscarDetalhesDoMes(month) {
+        // Aqui você implementaria sua chamada AJAX real
+        const detailContent = document.getElementById('detailContent');
+
+        // Adicionar indicador de carregamento
+        detailContent.innerHTML += `
+        <div class="mt-3 loading-indicator">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Carregando...</span>
+            </div>
+            <p>Buscando detalhes para o mês...</p>
+        </div>
+    `;
+
+        // Exemplo: você pode usar AJAX para buscar dados detalhados
+        // Aqui está uma simulação:
+        setTimeout(() => {
+            // Esta é apenas uma simulação - substitua por seus dados reais
+            const dadosDetalhados = {
+                mes: month,
+                registrosDiarios: [
+                    { data: '05/' + month, registros: Math.floor(Math.random() * 10) + 1 },
+                    { data: '12/' + month, registros: Math.floor(Math.random() * 10) + 1 },
+                    { data: '19/' + month, registros: Math.floor(Math.random() * 10) + 1 },
+                    { data: '26/' + month, registros: Math.floor(Math.random() * 10) + 1 }
+                ]
+            };
+
+            // Atualizar o popup com os dados detalhados
+            atualizarDetalhesPopup(dadosDetalhados);
+        }, 1000);
+    }
+
+    function atualizarDetalhesPopup(dados) {
+        const detailContent = document.getElementById('detailContent');
+
+        // Remover o indicador de carregamento
+        const loadingIndicator = detailContent.querySelector('.loading-indicator');
+        if (loadingIndicator) {
+            loadingIndicator.remove();
+        }
+
+        // Criar tabela com os dados diários
+        let htmlDetalhes = `
+        <div class="mt-4">
+            <h5>Registros diários</h5>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Registros</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+        dados.registrosDiarios.forEach(dia => {
+            htmlDetalhes += `
+            <tr>
+                <td>${dia.data}</td>
+                <td>${dia.registros}</td>
+            </tr>
+        `;
+        });
+
+        htmlDetalhes += `
+                </tbody>
+            </table>
+        </div>
+    `;
+
+        // Adicionar a tabela ao conteúdo
+        detailContent.innerHTML += htmlDetalhes;
+    }
 
 </script>
 <img hidden id="pPictureModal">
