@@ -102,6 +102,7 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
             transition: transform 0.3s ease, opacity 0.3s ease;
             max-width: 100%;
             margin: 0 auto;
+            height: 350px;
         }
 
         .badge-card:hover {
@@ -109,7 +110,7 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
         }
 
-        .profile-pic {
+        .badge-card .profile-pic {
             width: 140px;
             height: 140px;
             border-radius: 50%;
@@ -120,7 +121,7 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
             display: block;
         }
 
-        .user-full-name {
+        .badge-card .user-full-name {
             font-family: 'Montserrat', sans-serif;
             font-weight: 700;
             font-size: 20px;
@@ -128,7 +129,7 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
             text-align: center;
         }
 
-        .user-nickname {
+        .badge-card .user-nickname {
             font-family: 'Roboto', sans-serif;
             font-size: 16px;
             color: #6c757d;
@@ -136,7 +137,7 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
             margin-bottom: 6px;
         }
 
-        .user-email {
+        .badge-card .user-email {
             font-family: 'Roboto', sans-serif;
             font-size: 14px;
             color: #495057;
@@ -155,10 +156,34 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
         #detailCard {
             display: none;
         }
+        .detailCard{
+            border-radius: 12px;
+            border: 1px solid #ddd;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: #f8f9fa;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            max-width: 100%;
+            margin: 0 auto;
+            overflow-y: auto;
+            height: 350px;
+        }
 
-        .back-btn {
-            margin-bottom: 15px;
+        .detailCard:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Novo estilo para o cabeçalho fixo */
+        .detail-card-header {
+            position: sticky;
+            top: 0;
+            background-color: #f8f9fa;
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+            z-index: 10;
             width: 100%;
+            font-weight: bold;
         }
 
         .month-title {
@@ -218,20 +243,17 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
             </div>
 
             <!-- Card de detalhes - mesma aparência que o badge-card -->
-            <div id="detailCard" class="badge-card">
+            <div id="detailCard" class="detailCard">
                 <!-- Botão para voltar -->
                 <button class="btn-close" onclick="voltarParaUsuario()"></button>
 
-                <!-- Ícone para o mês -->
-                <i class="fas fa-calendar-alt detail-icon"></i>
-
                 <!-- Título do mês -->
-                <h3 id="monthName" class="month-title">Mês</h3>
-
-                <!-- Resumo -->
-                <div id="monthSummary" class="detail-summary">
-                    Total de registros: <strong id="monthTotal">0</strong>
+                <div class="py-4 text-center mt-4 pt-1">
+                    <h2 id="monthName"></h2>
                 </div>
+                <!-- Total de registros do mês vigente -->
+                <p class="lead">Total de registros: <text id="monthTotal">0</text></p>
+
 
                 <!-- Área para informações detalhadas -->
                 <div id="detailContent">
@@ -239,7 +261,7 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
                 </div>
 
                 <!-- Botão para ver mais detalhes -->
-                <button id="detailButton" class="btn btn-primary badge-action-btn mt-3" onclick="">
+                <button id="detailButton" class="btn btn-outline-secondary badge-action-btn mt-3" onclick="">
                     Ver registros detalhados
                 </button>
             </div>
@@ -459,12 +481,6 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
 
         // Adicionar indicador de carregamento
         detailContent.innerHTML = `
-        <div class="text-center my-4">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Carregando...</span>
-            </div>
-            <p class="mt-2">Buscando detalhes para o mês...</p>
-        </div>
     `;
 
         // Desativar o botão enquanto carrega
@@ -558,76 +574,13 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
                 detailButton.disabled = false;
                 detailButton.textContent = 'Atualizar detalhes';
             }
-        }, 1000);
+        }, 500);
     }
 
 
 
 
-    // Função para buscar detalhes adicionais
-    function buscarDetalhesDoMes(month) {
-        // Obter o contêiner de detalhes
-        const detailContent = document.getElementById('detailContent');
 
-        // Adicionar indicador de carregamento
-        detailContent.innerHTML = `
-        <div class="text-center my-4">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Carregando...</span>
-            </div>
-            <p class="mt-2">Buscando detalhes para o mês...</p>
-        </div>
-    `;
-
-        // Desativar o botão enquanto carrega
-        const detailButton = document.getElementById('detailButton');
-        detailButton.disabled = true;
-        detailButton.textContent = 'Carregando...';
-
-        // Simular carregamento (pode ser substituído por uma chamada AJAX real)
-        setTimeout(() => {
-            // Verificar se temos dados para este mês
-            const diasDoMes = daysData[month] || [];
-
-            // Criar estrutura de dados para exibição
-            const dadosDetalhados = {
-                mes: month,
-                registrosDiarios: []
-            };
-
-            // Converter os dias em registros diários
-            // Aqui vamos contar quantas ocorrências há de cada dia
-            const contagem = {};
-            diasDoMes.forEach(dia => {
-                if (!contagem[dia]) {
-                    contagem[dia] = 0;
-                }
-                contagem[dia]++;
-            });
-
-            // Transformar a contagem em registros diários
-            Object.keys(contagem).forEach(dia => {
-                dadosDetalhados.registrosDiarios.push({
-                    data: dia + '/' + month.split('-')[1] + '/' + month.split('-')[0],
-                    registros: contagem[dia]
-                });
-            });
-
-            // Ordenar por dia
-            dadosDetalhados.registrosDiarios.sort((a, b) => {
-                const diaA = parseInt(a.data.split('/')[0]);
-                const diaB = parseInt(b.data.split('/')[0]);
-                return diaA - diaB;
-            });
-
-            // Atualizar o card com os dados detalhados
-            atualizarDetalhesCard(dadosDetalhados);
-
-            // Reativar o botão
-            detailButton.disabled = false;
-            detailButton.textContent = 'Atualizar detalhes';
-        }, 1000);
-    }
 
 
 </script>
