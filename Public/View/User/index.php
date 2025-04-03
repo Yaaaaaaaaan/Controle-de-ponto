@@ -21,127 +21,60 @@ $pointController = new PointController();
 $pointControlData = $pointController->getPointControl($id);
 
 
-    // Preparar dados para o gráfico
-    $labels = [];
-    $dataPoints = [];
-    foreach ($pointControlData as $row) {
-        $labels[] = $row['month'];
-        $dataPoints[] = $row['count'];
+// Preparar dados para o gráfico
+$labels = [];
+$dataPoints = [];
+$daysData = []; // Array para armazenar os dias de cada mês
+
+foreach ($pointControlData as $row) {
+    $month = $row['month'];
+    $labels[] = $month;
+    $dataPoints[] = $row['count'];
+
+    // Se ainda não tem dados para este mês, cria um array vazio
+    if (!isset($daysData[$month])) {
+        $daysData[$month] = [];
     }
 
-// Obter dados dos últimos 3 meses
-//$monthlyData = $pointController->getDetailedPointControlData($id);
+    // Adiciona todos os dias nos dados deste mês (da propriedade 'dias')
+    if (isset($row['dias']) && is_array($row['dias'])) {
+        foreach ($row['dias'] as $diaInfo) {
+            if (isset($diaInfo['day'])) {
+                // Adiciona o dia como chave e a contagem como valor
+                $daysData[$month][] = [
+                    'dia' => $diaInfo['day'],
+                    'contagem' => $diaInfo['day_count']
+                ];
+            }
+        }
+    }
+}
 
-// Converter os dados para JSON para usar no JavaScript
-$monthlyDataJSON = json_encode($monthlyData);
-
-// Mapeamento de meses em português
-$monthNames = [
-    '01' => 'Janeiro',
-    '02' => 'Fevereiro',
-    '03' => 'Março',
-    '04' => 'Abril',
-    '05' => 'Maio',
-    '06' => 'Junho',
-    '07' => 'Julho',
-    '08' => 'Agosto',
-    '09' => 'Setembro',
-    '10' => 'Outubro',
-    '11' => 'Novembro',
-    '12' => 'Dezembro'
-];
-
-
-/* // Buscar dados para o gráfico apenas se o controlador estiver inicializado
- $id = $_SESSION['id'];
- $pointControlData = $pointController->getPointControlData($id, $months);
-
- // Preparar dados para o gráfico
- $allMonths = $pointController->getAllAvailableMonths($id);
- $selectedMonths = isset($_GET['months']) ? $_GET['months'] : $allMonths;
- $pointControlData = $pointController->getPointControlData($id, $selectedMonths);
-
- $labels = [];
- $dataPoints = [];
- foreach ($pointControlData as $row) {
-     $labels[] = $pointController->converterMonthFromName($row['month']);
-     $dataPoints[] = $row['count'];
- }*/
+echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . ");</script>";
 
 ?>
 
 <html>
 <head>
-<style>
-    #chartContainer {
-        width: auto;
-        height: 60vh;
-        margin: auto;
-        position: relative; /* Importante para posicionamento relativo */
-    }
-
-    canvas {
-        max-width: 100%;
-    }
-
-    /* Estilo para o popup de detalhes */
-    .detail-popup {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background-color: white;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        z-index: 1000;
-        width: 80%;
-        max-width: 500px;
-    }
-
-    .detail-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
-        border-bottom: 1px solid #eee;
-        padding-bottom: 10px;
-    }
-
-    .close-btn {
-        background: none;
-        border: none;
-        font-size: 24px;
-        cursor: pointer;
-        color: #333;
-    }
-
-    .detail-body {
-        max-height: 400px;
-        overflow-y: auto;
-    }
-
-    @media (max-width: 375px) {
+    <style>
         #chartContainer {
-            width: 100%;
-            height: 75vh;
-            padding: 0;
+            width: auto;
+            height: 60vh;
+            margin: auto;
+            position: relative;
         }
 
-        .detail-popup {
-            width: 90%;
-            padding: 15px;
+        canvas {
+            max-width: 100%;
         }
-    }
 
-
-    body {
+        body {
             font-family: Arial, sans-serif;
             margin: 50px;
         }
 
         #chartContainer {
-            width: auto; /* Garante que o contêiner ocupe toda a largura */
+            width: auto;
             height: 60vh;
             margin: auto;
         }
@@ -151,13 +84,13 @@ $monthNames = [
         }
 
         @media (max-width: 375px) {
-        #chartContainer {
-            width: 100%;
-            height: 75vh; 
-            padding: 0;  /* Ajuste para telas de 375px */
+            #chartContainer {
+                width: 100%;
+                height: 75vh;
+                padding: 0;
+            }
+            .mt-6{margin-top:2rem;}
         }
-        .mt-6{margin-top:2rem;}
-    }
 
         /* Estilo personalizado para o crachá */
         .badge-card {
@@ -166,7 +99,7 @@ $monthNames = [
             padding: 20px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             background-color: #f8f9fa;
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, opacity 0.3s ease;
             max-width: 100%;
             margin: 0 auto;
         }
@@ -218,7 +151,37 @@ $monthNames = [
             font-weight: 500;
         }
 
-</style>
+        /* Estilos para o card de detalhes */
+        #detailCard {
+            display: none;
+        }
+
+        .back-btn {
+            margin-bottom: 15px;
+            width: 100%;
+        }
+
+        .month-title {
+            font-size: 22px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .detail-icon {
+            font-size: 50px;
+            text-align: center;
+            margin: 15px auto;
+            display: block;
+            color: #0d6efd;
+        }
+
+        .detail-summary {
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 25px;
+        }
+    </style>
 </head>
 
 <body>
@@ -230,49 +193,63 @@ $monthNames = [
             </div>
         </div>
 
-        <!-- Adicione esta div para o popup de detalhes -->
-        <div id="detailContainer" class="detail-popup" style="display: none;">
-            <div class="detail-content">
-                <div class="detail-header">
-                    <h4 id="detailTitle">Detalhes do Mês</h4>
-                    <button type="button" class="close-btn" onclick="closeDetailPopup()">&times;</button>
-                </div>
-                <div id="detailContent" class="detail-body">
-                    <!-- Conteúdo detalhado será inserido aqui via JavaScript -->
-                </div>
-            </div>
-        </div>
-
         <div class="mt-5 col-12 col-md-4">
+            <!-- Card do usuário -->
+            <div id="userCard" class="badge-card">
+                <!-- Foto do perfil -->
+                <img id="pPicture" alt="Foto do perfil" class="profile-pic">
 
-                <div class="badge-card">
-                    <!-- Foto do perfil -->
-                    <img id="pPicture" alt="Foto do perfil" class="profile-pic">
+                <!-- Informações do usuário -->
+                <h3 id="responseName" class="user-full-name">@nome completo.</h3>
+                <div id="responseNickname" class="user-nickname">@nickname</div>
+                <div id="responseEmail" class="user-email">usuario@email.com</div>
 
-                    <!-- Informações do usuário -->
-                    <h3 id="responseName" class="user-full-name">@nome completo.</h3>
-                    <div id="responseNickname" class="user-nickname">@nickname</div>
-                    <div id="responseEmail" class="user-email">usuario@email.com</div>
+                <!-- Botão de ação -->
+                <form action="index.php" method="post" name="insertPointControl">
+                    <input hidden value="1" name="insertPointControl">
+                    <input hidden value="<?= $_SESSION['id'] ?>" name="id">
+                    <input hidden value="Verificação pendente" name="description">
+                    <button type="submit" class="btn btn-success badge-action-btn">Confirmar Presença</button>
+                </form>
+                <p hidden id="responseUserToken"></p>
+                <p hidden id="responseId"></p>
+                <p hidden id="theme"></p>
+                <p hidden id="rank"></p>
+            </div>
 
-                    <!-- Botão de ação -->
-                    <form action="index.php" method="post" name="insertPointControl">
-                        <input hidden value="1" name="insertPointControl">
-                        <input hidden value="<?= $_SESSION['id'] ?>" name="id">
-                        <input hidden value="Verificação pendente" name="description">
-                        <button type="submit" class="btn btn-success badge-action-btn">Confirmar Presença</button>
-                    </form>
-                    <p hidden id="responseUserToken"></p>
-                    <p hidden id="responseId"></p>
-                    <p hidden id="theme"></p>
-                    <p hidden id="rank"></p>
+            <!-- Card de detalhes - mesma aparência que o badge-card -->
+            <div id="detailCard" class="badge-card">
+                <!-- Botão para voltar -->
+                <button class="btn-close" onclick="voltarParaUsuario()"></button>
+
+                <!-- Ícone para o mês -->
+                <i class="fas fa-calendar-alt detail-icon"></i>
+
+                <!-- Título do mês -->
+                <h3 id="monthName" class="month-title">Mês</h3>
+
+                <!-- Resumo -->
+                <div id="monthSummary" class="detail-summary">
+                    Total de registros: <strong id="monthTotal">0</strong>
                 </div>
 
+                <!-- Área para informações detalhadas -->
+                <div id="detailContent">
+                    <!-- Aqui serão inseridos os detalhes do mês via JavaScript -->
+                </div>
+
+                <!-- Botão para ver mais detalhes -->
+                <button id="detailButton" class="btn btn-primary badge-action-btn mt-3" onclick="">
+                    Ver registros detalhados
+                </button>
+            </div>
         </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    const daysData = <?php echo json_encode($daysData); ?>;
     document.addEventListener('DOMContentLoaded', function() {
         const ctx = document.getElementById('attendance').getContext('2d');
 
@@ -333,23 +310,34 @@ $monthNames = [
                 const month = labels[dataIndex];
                 const value = dataPoints[dataIndex];
 
-                showDetailPopup(month, value, dataIndex);
+                mostrarCardDetalhes(month, value);
             }
         }
     });
 
-    // Função para exibir o popup com detalhes
-    function showDetailPopup(month, value, index) {
-        const detailContainer = document.getElementById('detailContainer');
-        const detailTitle = document.getElementById('detailTitle');
-        const detailContent = document.getElementById('detailContent');
+    // Função para exibir o card de detalhes e ocultar o card do usuário
+    function mostrarCardDetalhes(month, value) {
+        // Ocultar o card do usuário
+        document.getElementById('userCard').style.display = 'none';
 
-        // Definir o título com o mês clicado
-        detailTitle.textContent = `Detalhes de ${month}`;
+        // Obter o card de detalhes
+        const detailCard = document.getElementById('detailCard');
+        const monthNameElement = document.getElementById('monthName');
+        const monthTotalElement = document.getElementById('monthTotal');
+        const detailButtonElement = document.getElementById('detailButton');
 
         // Converter número do mês para nome do mês, se aplicável
         let monthName = month;
-        if (/^\d{2}$/.test(month)) {
+        if (month) {
+            // Extrair o mês de uma string no formato "YYYY-MM" ou similar
+            let monthValue = month;
+            let yearValue;
+            // Verificar se está no formato YYYY-MM e extrair apenas o mês
+            if (month.includes('-')) {
+                monthValue = month.split('-')[1]; // Pega o que vem depois do hífen
+                yearValue = month.split('-')[0]; // Pega o que vem antes do hífen
+            }
+
             const monthNames = {
                 '01': 'Janeiro',
                 '02': 'Fevereiro',
@@ -364,83 +352,85 @@ $monthNames = [
                 '11': 'Novembro',
                 '12': 'Dezembro'
             };
-            monthName = monthNames[month] || month;
-            detailTitle.textContent = `Detalhes de ${monthName}`;
+
+            monthName = monthNames[monthValue]+' de '+yearValue || month;
         }
 
-        // Construir o conteúdo detalhado
-        let contentHTML = `
-        <div class="month-summary">
-            <h5>Resumo</h5>
-            <p>Total de registros em ${monthName}: <strong>${value.toLocaleString()}</strong></p>
-        </div>
 
-        <div class="mt-4">
-            <button class="btn btn-primary" onclick="buscarDetalhesDoMes('${month}')">
-                Ver registros detalhados
-            </button>
-        </div>
-    `;
 
-        // Inserir o conteúdo no popup
-        detailContent.innerHTML = contentHTML;
+        // Definir o nome do mês e o total
+        monthNameElement.textContent = monthName;
+        monthTotalElement.textContent = value.toLocaleString();
 
-        // Exibir o popup
-        detailContainer.style.display = 'block';
+        // Configurar o botão para buscar detalhes específicos deste mês
+        detailButtonElement.onclick = function() {
+            buscarDetalhesDoMes(month);
+        };
+
+        // Limpar qualquer conteúdo de detalhes anterior
+        document.getElementById('detailContent').innerHTML = '';
+
+        // Exibir o card de detalhes
+        detailCard.style.display = 'block';
     }
 
-    // Função para fechar o popup
-    function closeDetailPopup() {
-        document.getElementById('detailContainer').style.display = 'none';
+    // Função para voltar ao card do usuário
+    function voltarParaUsuario() {
+        // Ocultar o card de detalhes
+        document.getElementById('detailCard').style.display = 'none';
+
+        // Exibir o card do usuário
+        document.getElementById('userCard').style.display = 'block';
     }
 
-    // Função para buscar detalhes adicionais via AJAX
-    function buscarDetalhesDoMes(month) {
-        // Aqui você implementaria sua chamada AJAX real
-        const detailContent = document.getElementById('detailContent');
 
-        // Adicionar indicador de carregamento
-        detailContent.innerHTML += `
-        <div class="mt-3 loading-indicator">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Carregando...</span>
-            </div>
-            <p>Buscando detalhes para o mês...</p>
-        </div>
-    `;
+    function atualizarDetalhesCard(monthYearObj) {
+        console.log("Chamando atualizarDetalhesCard com:", monthYearObj);
 
-        // Exemplo: você pode usar AJAX para buscar dados detalhados
-        // Aqui está uma simulação:
-        setTimeout(() => {
-            // Esta é apenas uma simulação - substitua por seus dados reais
-            const dadosDetalhados = {
-                mes: month,
-                registrosDiarios: [
-                    { data: '05/' + month, registros: Math.floor(Math.random() * 10) + 1 },
-                    { data: '12/' + month, registros: Math.floor(Math.random() * 10) + 1 },
-                    { data: '19/' + month, registros: Math.floor(Math.random() * 10) + 1 },
-                    { data: '26/' + month, registros: Math.floor(Math.random() * 10) + 1 }
-                ]
-            };
+        // Extrair a string do mês
+        const monthYearStr = monthYearObj.mes;
 
-            // Atualizar o popup com os dados detalhados
-            atualizarDetalhesPopup(dadosDetalhados);
-        }, 1000);
-    }
-
-    function atualizarDetalhesPopup(dados) {
-        const detailContent = document.getElementById('detailContent');
-
-        // Remover o indicador de carregamento
-        const loadingIndicator = detailContent.querySelector('.loading-indicator');
-        if (loadingIndicator) {
-            loadingIndicator.remove();
+        if (!monthYearStr || !monthYearStr.includes('-')) {
+            console.error("Formato de mês inválido:", monthYearStr);
+            return;
         }
 
-        // Criar tabela com os dados diários
-        let htmlDetalhes = `
-        <div class="mt-4">
-            <h5>Registros diários</h5>
+        const [year, month] = monthYearStr.split('-');
+
+        // Obter dados do mês do daysData
+        const monthData = daysData[monthYearStr] || [];
+
+        // Calcular total de registros
+        let totalRegistros = 0;
+        if (monthData.length > 0) {
+            totalRegistros = monthData.reduce((total, item) => total + parseInt(item.contagem), 0);
+        }
+
+        // Determinar o nome do mês e ano
+        const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+        const monthName = date.toLocaleString('pt-BR', { month: 'long' });
+
+        // Criar tabela com os dias e registros
+        let tableRows = '';
+
+        if (monthData.length > 0) {
+            monthData.forEach(item => {
+                const dia = String(item.dia).padStart(2, '0');
+                tableRows += `<tr>
+                <td>${dia}/${month}/${year}</td>
+                <td>${item.contagem}</td>
+            </tr>`;
+            });
+        }
+
+        // Atualizar o card de detalhes
+        const detailCard = document.getElementById('detailCard');
+        detailCard.innerHTML = `
+        <div class="card-header">
+            <h5 class="card-title">${monthName.charAt(0).toUpperCase() + monthName.slice(1)} de ${year}</h5>
+            <h6>Total de registros: ${totalRegistros}</h6>
+        </div>
+        <div class="card-body">
             <table class="table table-striped">
                 <thead>
                     <tr>
@@ -449,26 +439,196 @@ $monthNames = [
                     </tr>
                 </thead>
                 <tbody>
-    `;
-
-        dados.registrosDiarios.forEach(dia => {
-            htmlDetalhes += `
-            <tr>
-                <td>${dia.data}</td>
-                <td>${dia.registros}</td>
-            </tr>
-        `;
-        });
-
-        htmlDetalhes += `
+                    ${tableRows}
                 </tbody>
             </table>
         </div>
     `;
 
-        // Adicionar a tabela ao conteúdo
-        detailContent.innerHTML += htmlDetalhes;
+        // Mostrar o card
+        detailCard.style.display = 'block';
     }
+
+
+
+
+    // Função para buscar detalhes do mês
+    function buscarDetalhesDoMes(month) {
+        // Obter o contêiner de detalhes
+        const detailContent = document.getElementById('detailContent');
+
+        // Adicionar indicador de carregamento
+        detailContent.innerHTML = `
+        <div class="text-center my-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Carregando...</span>
+            </div>
+            <p class="mt-2">Buscando detalhes para o mês...</p>
+        </div>
+    `;
+
+        // Desativar o botão enquanto carrega
+        const detailButton = document.getElementById('detailButton');
+        if (detailButton) {
+            detailButton.disabled = true;
+            detailButton.textContent = 'Carregando...';
+        }
+
+        // Processar os dados localmente
+        setTimeout(() => {
+            // Verificar se temos dados para este mês
+            const diasDoMes = daysData[month] || [];
+            console.log('Dados do mês:', month, diasDoMes); // Depuração
+
+            // Criar estrutura de dados para exibição
+            const dadosDetalhados = {
+                mes: month,
+                registrosDiarios: []
+            };
+
+            // Processar os dados dos dias
+            if (diasDoMes.length > 0) {
+                // Verificar se os dias são objetos com propriedades 'dia' e 'contagem'
+                if (diasDoMes[0] && (diasDoMes[0].dia !== undefined || diasDoMes[0].day !== undefined)) {
+                    // Os dias são objetos estruturados
+                    diasDoMes.forEach(diaInfo => {
+                        // Obter o dia e contagem, considerando diferentes nomes de propriedades
+                        const dia = diaInfo.dia || diaInfo.day || '';
+                        const contagem = diaInfo.contagem || diaInfo.day_count || 1;
+
+                        // Formatar a data
+                        const [ano, mes] = month.split('-');
+                        const dataFormatada = dia + '/' + mes + '/' + ano;
+
+                        dadosDetalhados.registrosDiarios.push({
+                            data: dataFormatada,
+                            registros: contagem
+                        });
+                    });
+                } else {
+                    // Formato antigo: array simples de dias
+                    const contagem = {};
+                    diasDoMes.forEach(dia => {
+                        if (dia !== null) {
+                            if (!contagem[dia]) {
+                                contagem[dia] = 0;
+                            }
+                            contagem[dia]++;
+                        }
+                    });
+
+                    // Transformar a contagem em registros diários
+                    Object.keys(contagem).forEach(dia => {
+                        const [ano, mes] = month.split('-');
+                        const dataFormatada = dia + '/' + mes + '/' + ano;
+
+                        dadosDetalhados.registrosDiarios.push({
+                            data: dataFormatada,
+                            registros: contagem[dia]
+                        });
+                    });
+                }
+            }
+
+            // Se não houver registros, adicionar uma mensagem
+            if (dadosDetalhados.registrosDiarios.length === 0) {
+                dadosDetalhados.registrosDiarios.push({
+                    data: 'Sem registros',
+                    registros: 0
+                });
+            }
+
+            // Ordenar por dia
+            dadosDetalhados.registrosDiarios.sort((a, b) => {
+                if (a.data === 'Sem registros') return -1;
+                if (b.data === 'Sem registros') return 1;
+
+                const diaA = parseInt(a.data.split('/')[0]);
+                const diaB = parseInt(b.data.split('/')[0]);
+                return diaA - diaB;
+            });
+
+            console.log('Dados processados:', dadosDetalhados); // Depuração
+
+            // Atualizar o card com os dados detalhados
+            atualizarDetalhesCard(dadosDetalhados);
+
+            // Reativar o botão
+            if (detailButton) {
+                detailButton.disabled = false;
+                detailButton.textContent = 'Atualizar detalhes';
+            }
+        }, 1000);
+    }
+
+
+
+
+    // Função para buscar detalhes adicionais
+    function buscarDetalhesDoMes(month) {
+        // Obter o contêiner de detalhes
+        const detailContent = document.getElementById('detailContent');
+
+        // Adicionar indicador de carregamento
+        detailContent.innerHTML = `
+        <div class="text-center my-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Carregando...</span>
+            </div>
+            <p class="mt-2">Buscando detalhes para o mês...</p>
+        </div>
+    `;
+
+        // Desativar o botão enquanto carrega
+        const detailButton = document.getElementById('detailButton');
+        detailButton.disabled = true;
+        detailButton.textContent = 'Carregando...';
+
+        // Simular carregamento (pode ser substituído por uma chamada AJAX real)
+        setTimeout(() => {
+            // Verificar se temos dados para este mês
+            const diasDoMes = daysData[month] || [];
+
+            // Criar estrutura de dados para exibição
+            const dadosDetalhados = {
+                mes: month,
+                registrosDiarios: []
+            };
+
+            // Converter os dias em registros diários
+            // Aqui vamos contar quantas ocorrências há de cada dia
+            const contagem = {};
+            diasDoMes.forEach(dia => {
+                if (!contagem[dia]) {
+                    contagem[dia] = 0;
+                }
+                contagem[dia]++;
+            });
+
+            // Transformar a contagem em registros diários
+            Object.keys(contagem).forEach(dia => {
+                dadosDetalhados.registrosDiarios.push({
+                    data: dia + '/' + month.split('-')[1] + '/' + month.split('-')[0],
+                    registros: contagem[dia]
+                });
+            });
+
+            // Ordenar por dia
+            dadosDetalhados.registrosDiarios.sort((a, b) => {
+                const diaA = parseInt(a.data.split('/')[0]);
+                const diaB = parseInt(b.data.split('/')[0]);
+                return diaA - diaB;
+            });
+
+            // Atualizar o card com os dados detalhados
+            atualizarDetalhesCard(dadosDetalhados);
+
+            // Reativar o botão
+            detailButton.disabled = false;
+            detailButton.textContent = 'Atualizar detalhes';
+        }, 1000);
+    }
+
 
 </script>
 <img hidden id="pPictureModal">

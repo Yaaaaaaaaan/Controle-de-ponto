@@ -3,7 +3,7 @@
         die('Acesso não permitido');
     }
 
-    class pointControl
+    #[AllowDynamicProperties] class pointControl
     {
         private $conn;
         private $tableNames = [
@@ -18,11 +18,13 @@
         public $name;
         public $email;
 
-        public function __construct($db){
+        public function __construct($db)
+        {
             $this->conn = $db;
         }
 
-        public function insertPointControl($id, $descricao) {
+        public function insertPointControl($id, $descricao): bool
+        {
             $this->descricao = $descricao;
             $this->id = $id;
 
@@ -43,82 +45,50 @@
             }
         }
 
-        public function getPointControl($id, $ano) {
-            $sql = "SELECT DATE_FORMAT(data, '%Y-%m') AS mes, COUNT(*) AS presenca FROM presenca WHERE id_usuario = $id AND YEAR(data) = $ano GROUP BY mes ORDER BY mes";
-            $result = $this->conn->query($sql);
-            $data = [];
-            if ($result->num_rows > 0) {
-                while ($row = $result->fetch_assoc()) {
-                    $data[] = $row;
-                }
-            }
-            return $data;
-        }
-
-
-        public function getAllAvailableMonths($id) {
-            try {
-                $query = "SELECT DISTINCT DATE_FORMAT(dateIn, '%Y-%m') as month FROM ".$this->tableNames['pc']." WHERE uidUserFK = :id ORDER BY month";
-                $stmt = $this->conn->prepare($query);
-                $stmt->bindParam(':id', $id);
-                $stmt->execute();
-                return $stmt->fetchAll(PDO::FETCH_COLUMN);
-            } catch (PDOException $e) {
-                error_log("Erro em getAllAvailableMonths: " . $e->getMessage());
-                return []; // Retorna um array vazio em caso de erro
-            }
-        }
-
         public function getPointControlData($id): array
         {
-            $query = "SELECT DATE_FORMAT(dateIn, '%Y-%m') as month, COUNT(*) as count 
-              FROM pointControl 
-              WHERE uidUserFK = :id 
-              GROUP BY month 
-              ORDER BY month DESC 
-              LIMIT 3";
+            // Consulta para obter os meses (para o gráfico)
+            $queryMeses = "SELECT DATE_FORMAT(dateIn, '%Y-%m') as month, COUNT(*) as count 
+        FROM pointControl 
+        WHERE uidUserFK = :id 
+        GROUP BY month 
+        ORDER BY month DESC 
+        LIMIT 3";
 
-            $stmt = $this->conn->prepare($query);
+            $stmt = $this->conn->prepare($queryMeses);
             $stmt->bindParam(':id', $id);
             $stmt->execute();
-
-            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $resultMeses = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             // Inverte a ordem para mostrar do mais antigo para o mais recente
-            return array_reverse($result);
-        }
+            $resultMeses = array_reverse($resultMeses);
 
-        public function getDetailedPointControlData($id): array
-        {
-            // Obter os últimos 3 meses de dados
-            $sql = "SELECT 
-                DATE_FORMAT(dateIn, '%Y-%m') as month,
-                DATE_FORMAT(dateIn, '%Y-%m-%d') as fullDate,
-                DATE_FORMAT(dateIn, '%d/%m/%Y') as formattedDate,
-                TIME_FORMAT(dateIn, '%H:%i') as timeIn,
-                description
+            // Obter detalhes dos dias para cada mês
+            $diasPorMes = [];
+            foreach ($resultMeses as $mes) {
+                $monthStr = $mes['month'];
+
+                // Consulta para obter os dias deste mês específico
+                $queryDias = "SELECT DATE_FORMAT(dateIn, '%d') as day, COUNT(*) as day_count
             FROM pointControl 
-            WHERE uidUserFK = ?
-            AND dateIn >= DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH)
-            ORDER BY dateIn DESC";
+            WHERE uidUserFK = :id AND DATE_FORMAT(dateIn, '%Y-%m') = :month
+            GROUP BY day
+            ORDER BY day";
 
-            $stmt = $this->conn->prepare($sql);
-            $stmt->bind_param("i", $id);
-            $stmt->execute();
-            $result = $stmt->get_result();
-
-            $data = [];
-            while ($row = $result->fetch_assoc()) {
-                $month = $row['month'];
-                if (!isset($data[$month])) {
-                    $data[$month] = [];
-                }
-                $data[$month][] = $row;
+                $stmtDias = $this->conn->prepare($queryDias);
+                $stmtDias->bindParam(':id', $id);
+                $stmtDias->bindParam(':month', $monthStr);
+                $stmtDias->execute();
+                $diasPorMes[$monthStr] = $stmtDias->fetchAll(PDO::FETCH_ASSOC);
             }
 
-            return $data;
-        }
+            // Adicionar informações de dias ao resultado
+            foreach ($resultMeses as &$mes) {
+                $mes['dias'] = $diasPorMes[$mes['month']] ?? [];
+            }
 
+            return $resultMeses;
+        }
     }
 
 ?>
