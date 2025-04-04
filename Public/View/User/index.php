@@ -160,7 +160,7 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
         .detailCard{
             border-radius: 12px;
             border: 1px solid #ddd;
-            padding: 20px;
+            padding: 0 20px 20px 20px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             background-color: #f8f9fa;
             transition: transform 0.3s ease, opacity 0.3s ease;
@@ -173,39 +173,6 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
         .detailCard:hover {
             transform: translateY(-5px);
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        /* Novo estilo para o cabeçalho fixo */
-        .detail-card-header {
-            position: sticky;
-            top: 0;
-            background-color: #f8f9fa;
-            padding: 10px 0;
-            border-bottom: 1px solid #ddd;
-            z-index: 10;
-            width: 100%;
-            font-weight: bold;
-        }
-
-        .month-title {
-            font-size: 22px;
-            font-weight: 700;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .detail-icon {
-            font-size: 50px;
-            text-align: center;
-            margin: 15px auto;
-            display: block;
-            color: #0d6efd;
-        }
-
-        .detail-summary {
-            text-align: center;
-            font-size: 18px;
-            margin-bottom: 25px;
         }
     </style>
 </head>
@@ -244,24 +211,22 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
             </div>
 
             <!-- Card de detalhes - mesma aparência que o badge-card -->
-            <div id="detailCard" class="detailCard">
-                <!-- Botão para voltar -->
-                <button class="btn-close" onclick="voltarParaUsuario()"></button>
-
-                <!-- Título do mês -->
-                <div class="py-4 text-center mt-4 pt-1">
-                    <h2 id="monthName"></h2>
+            <div id="detailCard" class="detailCard" style="position: relative;">
+                <!-- Botão para voltar - posicionado fora da área de overflow -->
+                <div style="position: sticky; top: 0; right: 0; text-align: right; z-index: 1000; background-color: #f8f9fa; padding: 10px;">
+                    <button class="btn-close" onclick="voltarParaUsuario()"></button>
+                    <!-- Título do mês -->
+                    <div class="py-1 text-center">
+                        <h3 id="monthName"></h3>
+                        <!-- Total de registros do mês vigente -->
+                        <h6>Total de registros: <text id="monthTotal">0</text></h6>
+                    </div>
                 </div>
-                <!-- Total de registros do mês vigente -->
-                <p class="lead">Total de registros: <text id="monthTotal">0</text></p>
-
 
                 <!-- Área para informações detalhadas -->
                 <div id="detailContent">
                     <!-- Aqui serão inseridos os detalhes do mês via JavaScript -->
                 </div>
-
-
             </div>
         </div>
     </div>
