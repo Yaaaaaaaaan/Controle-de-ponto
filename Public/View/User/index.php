@@ -261,10 +261,7 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
                     <!-- Aqui serão inseridos os detalhes do mês via JavaScript -->
                 </div>
 
-                <!-- Botão para ver mais detalhes -->
-                <button id="detailButton" class="btn btn-outline-secondary badge-action-btn mt-3" onclick="">
-                    Ver registros detalhados
-                </button>
+
             </div>
         </div>
     </div>
@@ -272,6 +269,7 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    //chama daysData por fora, pelo simples fato de se estar sendo feita a consulta independente do chart.js.
     const daysData = <?php echo json_encode($daysData); ?>;
     document.addEventListener('DOMContentLoaded', function() {
         const ctx = document.getElementById('attendance').getContext('2d');
@@ -347,7 +345,6 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
         const detailCard = document.getElementById('detailCard');
         const monthNameElement = document.getElementById('monthName');
         const monthTotalElement = document.getElementById('monthTotal');
-        const detailButtonElement = document.getElementById('detailButton');
 
         // Converter número do mês para nome do mês, se aplicável
         let monthName = month;
@@ -379,23 +376,20 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
             monthName = monthNames[monthValue]+' de '+yearValue || month;
         }
 
-
-
         // Definir o nome do mês e o total
         monthNameElement.textContent = monthName;
         monthTotalElement.textContent = value.toLocaleString();
-
-        // Configurar o botão para buscar detalhes específicos deste mês
-        detailButtonElement.onclick = function() {
-            buscarDetalhesDoMes(month);
-        };
 
         // Limpar qualquer conteúdo de detalhes anterior
         document.getElementById('detailContent').innerHTML = '';
 
         // Exibir o card de detalhes
         detailCard.style.display = 'block';
+
+        // Chamar diretamente a função para buscar detalhes do mês
+        buscarDetalhesDoMes(month);
     }
+
 
     // Função para voltar ao card do usuário
     function voltarParaUsuario() {
@@ -408,8 +402,6 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
 
 
     function atualizarDetalhesCard(monthYearObj) {
-        console.log("Chamando atualizarDetalhesCard com:", monthYearObj);
-
         // Extrair a string do mês
         const monthYearStr = monthYearObj.mes;
 
@@ -439,7 +431,6 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
         if (monthData.length > 0) {
             monthData.forEach(item => {
                 const dia = String(item.dia || item.day).padStart(2, '0');
-                // Usar a descrição em vez da contagem
                 const descricao = item.description;
                 tableRows += `<tr>
                 <td>${dia}/${month}/${year}</td>
@@ -448,30 +439,27 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
             });
         }
 
-        // Atualizar o card de detalhes
-        const detailCard = document.getElementById('detailCard');
-        detailCard.innerHTML = `
-    <div class="card-header">
-        <h5 class="card-title">${monthName.charAt(0).toUpperCase() + monthName.slice(1)} de ${year}</h5>
-        <h6>Total de registros: ${totalRegistros}</h6>
-    </div>
-    <div class="card-body">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Data</th>
-                    <th>Descrição</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${tableRows}
-            </tbody>
-        </table>
-    </div>
-`;
+        // Atualizar apenas o conteúdo do detailContent em vez de todo o detailCard
+        const detailContent = document.getElementById('detailContent');
+        detailContent.innerHTML = `
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Descrição</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows}
+                </tbody>
+            </table>
+        </div>
+    `;
 
-        // Mostrar o card
-        detailCard.style.display = 'block';
+        // Atualizar o nome do mês e total no card existente
+        document.getElementById('monthName').textContent = monthName.charAt(0).toUpperCase() + monthName.slice(1) + ' de ' + year;
+        document.getElementById('monthTotal').textContent = totalRegistros;
     }
 
     // Função para buscar detalhes do mês
@@ -493,7 +481,7 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
         setTimeout(() => {
             // Verificar se temos dados para este mês
             const diasDoMes = daysData[month] || [];
-            console.log('Dados do mês:', month, diasDoMes); // Depuração
+            //console.log('Dados do mês:', month, diasDoMes); // Depuração
 
             // Criar estrutura de dados para exibição
             const dadosDetalhados = {
@@ -501,7 +489,7 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
                 registrosDiarios: []
             };
 
-            console.log(dadosDetalhados);
+            //console.log(dadosDetalhados);
 
             // Processar os dados dos dias
             if (diasDoMes.length > 0) {
@@ -578,15 +566,8 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
                 detailButton.disabled = false;
                 detailButton.textContent = 'Atualizar detalhes';
             }
-        }, 500);
+        }, 0);
     }
-
-
-
-
-
-
-
 
 </script>
 <img hidden id="pPictureModal">
