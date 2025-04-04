@@ -49,11 +49,11 @@
         {
             // Consulta para obter os meses (para o gráfico)
             $queryMeses = "SELECT DATE_FORMAT(dateIn, '%Y-%m') as month, COUNT(*) as count 
-        FROM pointControl 
-        WHERE uidUserFK = :id 
-        GROUP BY month 
-        ORDER BY month DESC 
-        LIMIT 3";
+FROM pointControl 
+WHERE uidUserFK = :id 
+GROUP BY month 
+ORDER BY month DESC 
+LIMIT 3";
 
             $stmt = $this->conn->prepare($queryMeses);
             $stmt->bindParam(':id', $id);
@@ -68,12 +68,12 @@
             foreach ($resultMeses as $mes) {
                 $monthStr = $mes['month'];
 
-                // Consulta para obter os dias deste mês específico
-                $queryDias = "SELECT DATE_FORMAT(dateIn, '%d') as day, COUNT(*) as day_count
-            FROM pointControl 
-            WHERE uidUserFK = :id AND DATE_FORMAT(dateIn, '%Y-%m') = :month
-            GROUP BY day
-            ORDER BY day";
+                // Consulta modificada para incluir a descrição para cada dia
+                $queryDias = "SELECT DATE_FORMAT(dateIn, '%d') as day, COUNT(*) as day_count, description
+    FROM pointControl 
+    WHERE uidUserFK = :id AND DATE_FORMAT(dateIn, '%Y-%m') = :month
+    GROUP BY day, description
+    ORDER BY day";
 
                 $stmtDias = $this->conn->prepare($queryDias);
                 $stmtDias->bindParam(':id', $id);
@@ -91,4 +91,4 @@
         }
     }
 
-?>
+    ?>

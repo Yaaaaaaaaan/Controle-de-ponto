@@ -43,6 +43,7 @@ foreach ($pointControlData as $row) {
                 // Adiciona o dia como chave e a contagem como valor
                 $daysData[$month][] = [
                     'dia' => $diaInfo['day'],
+                    'description' => $diaInfo['description'],
                     'contagem' => $diaInfo['day_count']
                 ];
             }
@@ -425,22 +426,24 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
         // Calcular total de registros
         let totalRegistros = 0;
         if (monthData.length > 0) {
-            totalRegistros = monthData.reduce((total, item) => total + parseInt(item.contagem), 0);
+            totalRegistros = monthData.reduce((total, item) => total + parseInt(item.day_count || item.contagem || 0), 0);
         }
 
         // Determinar o nome do mês e ano
         const date = new Date(parseInt(year), parseInt(month) - 1, 1);
         const monthName = date.toLocaleString('pt-BR', { month: 'long' });
 
-        // Criar tabela com os dias e registros
+        // Criar tabela com os dias e descrições
         let tableRows = '';
 
         if (monthData.length > 0) {
             monthData.forEach(item => {
-                const dia = String(item.dia).padStart(2, '0');
+                const dia = String(item.dia || item.day).padStart(2, '0');
+                // Usar a descrição em vez da contagem
+                const descricao = item.description;
                 tableRows += `<tr>
                 <td>${dia}/${month}/${year}</td>
-                <td>${item.contagem}</td>
+                <td>${descricao}</td>
             </tr>`;
             });
         }
@@ -448,31 +451,28 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
         // Atualizar o card de detalhes
         const detailCard = document.getElementById('detailCard');
         detailCard.innerHTML = `
-        <div class="card-header">
-            <h5 class="card-title">${monthName.charAt(0).toUpperCase() + monthName.slice(1)} de ${year}</h5>
-            <h6>Total de registros: ${totalRegistros}</h6>
-        </div>
-        <div class="card-body">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Data</th>
-                        <th>Registros</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${tableRows}
-                </tbody>
-            </table>
-        </div>
-    `;
+    <div class="card-header">
+        <h5 class="card-title">${monthName.charAt(0).toUpperCase() + monthName.slice(1)} de ${year}</h5>
+        <h6>Total de registros: ${totalRegistros}</h6>
+    </div>
+    <div class="card-body">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Descrição</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${tableRows}
+            </tbody>
+        </table>
+    </div>
+`;
 
         // Mostrar o card
         detailCard.style.display = 'block';
     }
-
-
-
 
     // Função para buscar detalhes do mês
     function buscarDetalhesDoMes(month) {
@@ -480,8 +480,7 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
         const detailContent = document.getElementById('detailContent');
 
         // Adicionar indicador de carregamento
-        detailContent.innerHTML = `
-    `;
+        detailContent.innerHTML = ``;
 
         // Desativar o botão enquanto carrega
         const detailButton = document.getElementById('detailButton');
@@ -502,15 +501,18 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
                 registrosDiarios: []
             };
 
+            console.log(dadosDetalhados);
+
             // Processar os dados dos dias
             if (diasDoMes.length > 0) {
                 // Verificar se os dias são objetos com propriedades 'dia' e 'contagem'
                 if (diasDoMes[0] && (diasDoMes[0].dia !== undefined || diasDoMes[0].day !== undefined)) {
                     // Os dias são objetos estruturados
                     diasDoMes.forEach(diaInfo => {
-                        // Obter o dia e contagem, considerando diferentes nomes de propriedades
+                        // Obter o dia e descrição, considerando diferentes nomes de propriedades
                         const dia = diaInfo.dia || diaInfo.day || '';
-                        const contagem = diaInfo.contagem || diaInfo.day_count || 1;
+                        // Usar a descrição em vez da contagem
+                        const descricao = diaInfo.description;
 
                         // Formatar a data
                         const [ano, mes] = month.split('-');
@@ -518,7 +520,7 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
 
                         dadosDetalhados.registrosDiarios.push({
                             data: dataFormatada,
-                            registros: contagem
+                            descricao: descricao  // Adicionando a descrição aos dados
                         });
                     });
                 } else {
@@ -540,7 +542,8 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
 
                         dadosDetalhados.registrosDiarios.push({
                             data: dataFormatada,
-                            registros: contagem[dia]
+                            registros: contagem[dia],
+                            descricao: 'Sem descrição'  // Para o formato antigo, não temos descrição
                         });
                     });
                 }
@@ -550,7 +553,8 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
             if (dadosDetalhados.registrosDiarios.length === 0) {
                 dadosDetalhados.registrosDiarios.push({
                     data: 'Sem registros',
-                    registros: 0
+                    registros: 0,
+                    descricao: 'Sem descrição'
                 });
             }
 
@@ -564,7 +568,7 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
                 return diaA - diaB;
             });
 
-            console.log('Dados processados:', dadosDetalhados); // Depuração
+            //console.log('Dados processados:', dadosDetalhados); // Depuração
 
             // Atualizar o card com os dados detalhados
             atualizarDetalhesCard(dadosDetalhados);
@@ -576,6 +580,7 @@ echo "<script>console.log('Formato de daysData:', " . json_encode($daysData) . "
             }
         }, 500);
     }
+
 
 
 
