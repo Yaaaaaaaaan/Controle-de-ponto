@@ -375,7 +375,9 @@ if (!defined('APP_RAN')) {
         $stmt = $this->conn->prepare($sql);
         $stmt->bindParam(':userId', $userId);
         $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $pictures = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $_SESSION['lastProfilePictures']= json_encode($pictures);
+        return $pictures;
     }
 
     public function updateProfilePicture($userId, $pictureId): bool

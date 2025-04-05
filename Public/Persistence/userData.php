@@ -1,23 +1,31 @@
 <?php
 session_start();
 
-$userData = false;
+// Criar um objeto de resposta
+$response = array();
+
+// Adicionar userData
 if (isset($_SESSION['userData']) && $_SESSION['userData'] != null) {
     $userData = $_SESSION['userData'];
-}
 
-if (isset($_SESSION['profileImagePath'])) {
-    if ($userData !== false) {
+    if (isset($_SESSION['profileImagePath'])) {
         $userData['profileUser'] = $_SESSION['profileImagePath'];
+        unset($_SESSION['profileImagePath']);
     }
-    unset($_SESSION['profileImagePath']); // Limpa a variável de sessão
-}
 
-
-
-if ($userData !== false) {
-    echo json_encode($userData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+    $response['userData'] = $userData;
 } else {
-    echo "[]";
+    $response['userData'] = array();
 }
+
+// Adicionar lastProfilePictures
+if (isset($_SESSION['lastProfilePictures']) && $_SESSION['lastProfilePictures'] != null) {
+    $response['lastProfilePictures'] = $_SESSION['lastProfilePictures'];
+} else {
+    $response['lastProfilePictures'] = array();
+}
+
+// Retornar tudo como um único JSON
+header('Content-Type: application/json');
+echo json_encode($response, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 ?>
