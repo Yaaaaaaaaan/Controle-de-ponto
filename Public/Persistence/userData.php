@@ -27,5 +27,5 @@ if (isset($_SESSION['lastProfilePictures']) && $_SESSION['lastProfilePictures'] 
 
 // Retornar tudo como um único JSON
 header('Content-Type: application/json');
-echo json_encode($response, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+print json_encode($response, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 ?>

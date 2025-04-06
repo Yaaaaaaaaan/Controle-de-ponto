@@ -2,11 +2,13 @@ async function processUserData(){
     try{
         const response = await fetch('../../Persistence/userData.php');
         const data = await response.json();
-
+        console.log(data);
         // Usar data.userData em vez de userData diretamente
         const userData = data.userData;
 
-        if(Object.keys(userData).length > 0){
+        if (Object.keys(userData).length <= 0) {
+            console.error("Dados do usuário inválidos ou vazios. ", localStorage.getItem('userData'));
+        } else {
             // Armazenando os dados no localStorage
             localStorage.setItem('userData', JSON.stringify(userData));
 
@@ -30,44 +32,44 @@ async function processUserData(){
             profileUser = (userdata[7]).slice(14, -1);
 
             //faz a manipulação detalhada da string
-            if(name.indexOf(" ") == -1){
+            if (name.indexOf(" ") == -1) {
                 nameCurto = name;
-            }else{
+            } else {
                 nameCurto = name.substring(0, name.indexOf(" "));
             }
 
             // Atualiza elementos em outras páginas
             const responseName = document.getElementById("responseName");
-            if(responseName){
+            if (responseName) {
                 responseName.textContent = name;
             }
             const responseUserToken = document.getElementById("responseUserToken");
-            if(responseUserToken){
+            if (responseUserToken) {
                 responseUserToken.textContent = userToken;
             }
             const idElement = document.getElementById("responseId");
-            if(idElement){
+            if (idElement) {
                 idElement.textContent = id;
             }
             const themeElement = document.getElementById("responseTheme");
-            if(themeElement){
+            if (themeElement) {
                 themeElement.textContent = theme;
             }
             const nicknameElement = document.getElementById("responseNickname");
-            if(nicknameElement){
+            if (nicknameElement) {
                 nicknameElement.textContent = nickname;
             }
             const rankElement = document.getElementById("responseRank");
-            if(rankElement){
+            if (rankElement) {
                 rankElement.textContent = rank;
             }
             const emailElement = document.getElementById("responseEmail");
-            if(emailElement){
+            if (emailElement) {
                 emailElement.textContent = email;
             }
 
             // Atualiza os campos do formulário
-            if(window.location.pathname.endsWith('/User/settings.php')){
+            if (window.location.pathname.endsWith('/User/settings.php')) {
                 preencherCamposFormulario();
             }
 
@@ -75,23 +77,21 @@ async function processUserData(){
             atualizarMenu(nameCurto);
 
             const imageBasePath = '/controle-de-ponto/App/Persistence/userProfileImages/';
-            if(profileUser){
+            if (profileUser) {
                 const srcImage = imageBasePath + profileUser.replace(/"/g, '');
                 const pPicture = document.getElementById("pPicture");
                 const pPictureModal = document.getElementById("pPictureModal");
-                if(pPicture){
+                if (pPicture) {
                     pPicture.src = srcImage;
                     pPictureModal.src = srcImage;
                     //console.log("link:", srcImage); //apenas para verificação do link exibido no console.
-                }else{
+                } else {
                     console.error("Elemento pPicture não encontrado.");
                 }
-            }else{
+            } else {
                 console.error("profileUser não encontrado no localStorage.");
             }
-        }else{
-                console.error("Dados do usuário inválidos ou vazios. ", localStorage.getItem('userData')); );
-            }
+        }
     }catch(error){
         console.error('Erro ao processar dados:', error);
     }
