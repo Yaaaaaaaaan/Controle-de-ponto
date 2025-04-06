@@ -111,11 +111,10 @@ async function lastProfilePictures(){
     try{
         const response = await fetch('../../Persistence/userData.php');
         const data = await response.json();
-        const profilePictures = data.lastProfilePictures;
+        const lastProfilePictures = data.lastProfilePictures;
 
         // Faça algo com as imagens de perfil aqui
-        console.log(profilePictures);
-
+        console.log(lastProfilePictures);
         // Por exemplo, você pode mostrar as imagens em uma galeria
         // ...
 
