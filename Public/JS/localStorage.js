@@ -1,4 +1,5 @@
 async function processUserData(){
+    //TODO: criar autenticação usando token e nickname, ou token e ID de usuário para manipulação de dados entre localStorage e php+MySQL
     try{
         const savedUserData = localStorage.getItem("userData");
 
