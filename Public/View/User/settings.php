@@ -57,6 +57,8 @@ if ($_POST) {
                 $confirmPassword,
                 $defaultTheme
             );
+            $_SESSION['userData_updated'] = true;
+
         }
     }
 
@@ -406,35 +408,54 @@ echo '</pre>';*/
     });
 
     document.addEventListener('DOMContentLoaded', function() {
-
         preencherCamposFormulario();
     });
 
     function preencherCamposFormulario() {
         // Recupera os dados do localStorage
         const userDataString = localStorage.getItem("userData");
-        if (!userDataString) return;
+        if (!userDataString) {
+            console.log("Dados de usuário não encontrados no localStorage");
+            return;
+        }
 
-        // Converte a string para um objeto JavaScript
-        let UserData = JSON.parse(userDataString);
+        try {
+            // Tenta processar os dados como JSON primeiro
+            let userData = JSON.parse(userDataString);
+            console.log("Processando dados do formulário:", userData);
 
-        // Extrai os valores
-        let userdata = UserData.split(",");
-        let name = (userdata[1]).slice(8, -1);
-        let email = (userdata[2]).slice(9, -1);
-        let nickname = (userdata[4]).slice(12, -1);
-        let theme = (userdata[5]).slice(8);
+            // Verifica se os dados são um objeto JavaScript (formato novo)
+            if (typeof userData === 'object' && !Array.isArray(userData)) {
+                // Preenche os campos do formulário com o formato de objeto
+                document.getElementById("floatingInputName").value = userData.name || '';
+                document.getElementById("floatingInputEmail").value = userData.email || '';
+                document.getElementById("floatingInputNickname").value = userData.nickname || '';
 
-        // Preenche os campos do formulário
-        const nameInput = document.getElementById("floatingInputName");
-        const emailInput = document.getElementById("floatingInputEmail");
-        const nicknameInput = document.getElementById("floatingInputNickname");
-        const themeToggle = document.getElementById("defaultTheme"); // Checkbox de tema
+                // Atualiza o tema se necessário
+                const themeSwitch = document.getElementById("themeSwitch");
+                if (themeSwitch && userData.theme) {
+                    themeSwitch.checked = (userData.theme == 1);
+                }
+            } else {
+                // Formato antigo (string com valores separados por vírgulas)
+                let userdata = userData.split(",");
+                let name = (userdata[1]).slice(8, -1);
+                let email = (userdata[2]).slice(9, -1);
+                let nickname = (userdata[4]).slice(12, -1);
 
-
-        if (nameInput) nameInput.value = name;
-        if (emailInput) emailInput.value = email;
-        if (nicknameInput) nicknameInput.value = nickname;
+                // Preenche os campos do formulário
+                document.getElementById("floatingInputName").value = name;
+                document.getElementById("floatingInputEmail").value = email;
+                document.getElementById("floatingInputNickname").value = nickname;
+            }
+        } catch (error) {
+            console.error("Erro ao processar dados do usuário para o formulário:", error);
+            console.error("String que causou o erro:", userDataString);
+        }
     }
+
+    // Event listener para o botão de atualização de foto de perfil
+    document.getElementById('updateProfilePicBtn').addEventListener('click', function() {
+    });
 
 </script>

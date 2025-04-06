@@ -42,9 +42,11 @@ async function processUserData(){
 }
 
 // Função para processar os dados do usuário a partir da string do localStorage
+// Função para processar os dados do usuário a partir da string do localStorage
 function processUserDataFromString(userDataString) {
     try {
         let UserData = JSON.parse(userDataString);
+        console.log("Processando dados do usuário:", UserData); // Depuração
 
         // IMPORTANTE: Verifica a estrutura dos dados
         if (typeof UserData === 'object' && !Array.isArray(UserData)) {
@@ -61,7 +63,7 @@ function processUserDataFromString(userDataString) {
             // Manipulação do nome
             let nameCurto = '';
             if (name) {
-                nameCurto = name.indexOf(" ") == -1 ? name : name.substring(0, name.indexOf(" "));
+                nameCurto = "Olá, "+name.indexOf(" ") == -1 ? name : name.substring(0, name.indexOf(" "));
             }
 
             // Atualiza elementos na página
@@ -80,52 +82,81 @@ function processUserDataFromString(userDataString) {
 
             // Manipulação do nome
             let nameCurto = '';
-
+            if (name.indexOf(" ") == -1) {
+                nameCurto = "Olá, "+name;
+            } else {
+                nameCurto = "Olá, "+name.substring(0, name.indexOf(" "));
+            }
 
             // Atualiza elementos na página
             updateUIElements(name, userToken, email, rank, nickname, theme, id, nameCurto, profileUser);
         }
     } catch (error) {
         console.error("Erro ao processar string de dados:", error);
+        console.error("String que causou o erro:", userDataString);
     }
 }
 
 // Função para atualizar elementos da UI
+// Função para atualizar elementos da UI
 function updateUIElements(name, userToken, email, rank, nickname, theme, id, nameCurto, profileUser) {
+    console.log("Atualizando UI com:", { name, email, nickname, nameCurto }); // Depuração
+
     // Atualiza elementos em outras páginas
     const responseName = document.getElementById("responseName");
     if (responseName) {
         responseName.textContent = name;
     }
+
+    // IMPORTANTE: Atualiza o elemento responseNameCurto que estava faltando
+    const responseNameCurto = document.getElementById("responseNameCurto");
+    if (responseNameCurto) {
+        responseNameCurto.textContent = nameCurto || nickname || name;
+        console.log("Nome curto atualizado:", responseNameCurto.textContent); // Depuração
+    }
+
     const responseUserToken = document.getElementById("responseUserToken");
     if (responseUserToken) {
         responseUserToken.textContent = userToken;
     }
-    const emailElement = document.getElementById("responseEmail");
-    if (emailElement) {
-        emailElement.textContent = email;
+
+    const responseEmail = document.getElementById("responseEmail");
+    if (responseEmail) {
+        responseEmail.textContent = email;
     }
-    const rankElement = document.getElementById("responseRank");
-    if (rankElement) {
-        rankElement.textContent = rank;
+
+    const responseRank = document.getElementById("responseRank");
+    if (responseRank) {
+        responseRank.textContent = rank;
     }
-    const nicknameElement = document.getElementById("responseNickname");
-    if (nicknameElement) {
-        nicknameElement.textContent = nickname;
+
+    const responseNickname = document.getElementById("responseNickname");
+    if (responseNickname) {
+        responseNickname.textContent = nickname;
     }
-    const themeElement = document.getElementById("responseTheme");
-    if (themeElement) {
-        themeElement.textContent = theme;
+
+    const responseTheme = document.getElementById("responseTheme");
+    if (responseTheme) {
+        responseTheme.textContent = theme;
     }
-    const idElement = document.getElementById("responseId");
-    if (idElement) {
-        idElement.textContent = id;
+
+    const responseId = document.getElementById("responseId");
+    if (responseId) {
+        responseId.textContent = id;
     }
-    if (name.indexOf(" ") == -1) {
-        nameCurto = name;
-    } else {
-        nameCurto = name.substring(0, name.indexOf(" "));
+
+    // Atualiza campos de formulário se estamos na página de configurações
+    if (window.location.href.includes('../View/User/settings.php')) {
+        const nameInput = document.getElementById("name");
+        const emailInput = document.getElementById("email");
+        const nicknameInput = document.getElementById("nickname");
+
+        if (nameInput) nameInput.value = name;
+        if (emailInput) emailInput.value = email;
+        if (nicknameInput) nicknameInput.value = nickname;
     }
+
+    // Processa a imagem de perfil
     const imageBasePath = '/controle-de-ponto/App/Persistence/userProfileImages/';
     if (profileUser) {
         const srcImage = imageBasePath + profileUser.replace(/"/g, '');
@@ -133,8 +164,10 @@ function updateUIElements(name, userToken, email, rank, nickname, theme, id, nam
         const pPictureModal = document.getElementById("pPictureModal");
         if (pPicture) {
             pPicture.src = srcImage;
-            pPictureModal.src = srcImage;
-            //console.log("link:", srcImage); //apenas para verificação do link exibido no console.
+            if (pPictureModal) {
+                pPictureModal.src = srcImage;
+            }
+            console.log("Imagem atualizada:", srcImage); // Depuração
         }
     }
 }
@@ -157,10 +190,60 @@ async function lastProfilePictures(){
         console.error('Erro ao buscar imagens de perfil:', error);
     }
 }
+function checkForUserDataUpdates() {
+    fetch('../../Persistence/userData.php?checkUpdates=true')
+        .then(response => response.json())
+        .then(data => {
+            console.log("Verificando atualizações:", data); // Depuração
+
+            if (data.dataUpdated && data.userData) {
+                console.log('Dados atualizados na sessão, atualizando localStorage');
+
+                // Importante: verificar se os dados são válidos
+                if (typeof data.userData === 'object' && Object.keys(data.userData).length > 0) {
+                    // Atualiza o localStorage com os novos dados
+                    localStorage.setItem('userData', JSON.stringify(data.userData));
+                    console.log("Novo localStorage:", localStorage.getItem('userData')); // Depuração
+
+                    // Atualiza a interface com os novos dados
+                    processUserDataFromString(JSON.stringify(data.userData));
+
+                    // Se estivermos na página de configurações, mostra uma notificação
+                    if (window.location.href.includes('settings.php')) {
+                        notifyUserSuccess('Dados atualizados com sucesso');
+                    }
+                } else {
+                    console.error("Dados inválidos recebidos da API:", data.userData);
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao verificar atualizações:', error);
+        });
+}
+
+// Função para exibir notificação de sucesso
+function notifyUserSuccess(message) {
+    // Se você tem um elemento para notificações
+    const notificationElement = document.getElementById('notificationArea');
+    if (notificationElement) {
+        //notificationElement.innerHTML = `<div class="alert alert-success">${message}</div>`;
+        setTimeout(() => {
+            notificationElement.innerHTML = '';
+        }, 3000);
+    } else {
+        // Fallback para alert se não houver elemento de notificação
+       // alert(message);
+    }
+}
+
+// Verificar atualizações a cada 5 segundos
+setInterval(checkForUserDataUpdates, 5000);
 
 document.addEventListener('DOMContentLoaded', function(){
 processUserData();
 lastProfilePictures();
+checkForUserDataUpdates();
 });
 
 

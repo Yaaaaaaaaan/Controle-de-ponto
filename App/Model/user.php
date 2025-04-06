@@ -300,6 +300,8 @@ if (!defined('APP_RAN')) {
                     $userData['nickname'] = $this->nickname;
                     $userData['theme'] = $this->defaultTheme;
                     $_SESSION['userData'] = json_encode($userData);
+                    $_SESSION['userData_updated'] = true;
+
                 }
                 return true;
             }

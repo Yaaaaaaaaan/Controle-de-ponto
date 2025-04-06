@@ -15,19 +15,47 @@ if (isset($_GET['clearSession']) && $_GET['clearSession'] === 'true') {
     exit; // Importante: interrompe a execução do script
 }
 
+// Nova funcionalidade: verificar atualizações
+if (isset($_GET['checkUpdates']) && $_GET['checkUpdates'] === 'true') {
+    $response = ['dataUpdated' => false];
+
+    // Verifica se os dados foram atualizados na sessão
+    if (isset($_SESSION['userData_updated']) && $_SESSION['userData_updated'] === true) {
+        // Remove a flag para não processar novamente
+        unset($_SESSION['userData_updated']);
+
+        // Retorna os dados atualizados
+        $response = [
+            'dataUpdated' => true,
+            'userData' => json_decode($_SESSION['userData'], true)
+        ];
+    }
+
+    // Retorna a resposta em formato JSON
+    header('Content-Type: application/json');
+    echo json_encode($response);
+    exit;
+}
+
+// Verificar se é uma solicitação para sincronizar dados do localStorage para a sessão
+if (isset($_POST['syncToSession']) && $_POST['syncToSession'] === 'true') {
+    $userDataFromClient = $_POST['userData'];
+
+    if ($userDataFromClient) {
+        $_SESSION['userData'] = $userDataFromClient;
+        echo json_encode(['success' => true, 'message' => 'Sessão sincronizada com localStorage']);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Dados inválidos']);
+    }
+    exit;
+}
+
 // Criar um objeto de resposta
 $response = array();
 
-// Adicionar userData
-if (isset($_SESSION['userData']) && $_SESSION['userData'] != null) {
-    $userData = $_SESSION['userData'];
-
-    if (isset($_SESSION['profileImagePath'])) {
-        $userData['profileUser'] = $_SESSION['profileImagePath'];
-        unset($_SESSION['profileImagePath']);
-    }
-
-    $response['userData'] = $userData;
+// Adicionar userData à resposta
+if (isset($_SESSION['userData']) && $_SESSION['userData'] != null && !isset($_SESSION['userData_processed'])) {
+    $response['userData'] = json_decode($_SESSION['userData'], true);
     $response['userDataAvailable'] = true;
 } else {
     $response['userData'] = array();
