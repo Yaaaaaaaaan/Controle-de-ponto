@@ -1,6 +1,20 @@
 <?php
 session_start();
 
+// Verificar se é uma solicitação para limpar a sessão
+if (isset($_GET['clearSession']) && $_GET['clearSession'] === 'true') {
+    // Limpar apenas a sessão, sem afetar o localStorage
+    unset($_SESSION['userData']);
+
+    // Indicar que a sessão foi limpa e não deve atualizar o localStorage
+    header('Content-Type: application/json');
+    echo json_encode([
+        'sessionCleared' => true,
+        'doNotUpdateLocalStorage' => true
+    ]);
+    exit; // Importante: interrompe a execução do script
+}
+
 // Criar um objeto de resposta
 $response = array();
 
@@ -14,8 +28,10 @@ if (isset($_SESSION['userData']) && $_SESSION['userData'] != null) {
     }
 
     $response['userData'] = $userData;
+    $response['userDataAvailable'] = true;
 } else {
     $response['userData'] = array();
+    $response['userDataAvailable'] = false;
 }
 
 // Adicionar lastProfilePictures
