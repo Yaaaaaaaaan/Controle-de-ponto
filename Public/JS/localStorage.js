@@ -182,7 +182,7 @@ async function lastProfilePictures(){
         const lastProfilePictures = data.lastProfilePictures;
 
         // Faça algo com as imagens de perfil aqui
-        console.log(lastProfilePictures);
+        //console.log(lastProfilePictures);
         // Por exemplo, você pode mostrar as imagens em uma galeria
         // ...
 
@@ -209,9 +209,9 @@ function checkForUserDataUpdates() {
                     processUserDataFromString(JSON.stringify(data.userData));
 
                     // Se estivermos na página de configurações, mostra uma notificação
-                    if (window.location.href.includes('settings.php')) {
+                    /*if (window.location.href.includes('settings.php')) {
                         notifyUserSuccess('Dados atualizados com sucesso');
-                    }
+                    }*/
                 } else {
                     console.error("Dados inválidos recebidos da API:", data.userData);
                 }
@@ -223,11 +223,11 @@ function checkForUserDataUpdates() {
 }
 
 // Função para exibir notificação de sucesso
-function notifyUserSuccess(message) {
+/*function notifyUserSuccess(message) {
     // Se você tem um elemento para notificações
     const notificationElement = document.getElementById('notificationArea');
     if (notificationElement) {
-        //notificationElement.innerHTML = `<div class="alert alert-success">${message}</div>`;
+        notificationElement.innerHTML = `<div class="alert alert-success">${message}</div>`;
         setTimeout(() => {
             notificationElement.innerHTML = '';
         }, 3000);
@@ -235,10 +235,10 @@ function notifyUserSuccess(message) {
         // Fallback para alert se não houver elemento de notificação
        // alert(message);
     }
-}
+}*/
 
 // Verificar atualizações a cada 5 segundos
-setInterval(checkForUserDataUpdates, 5000);
+//setInterval(checkForUserDataUpdates, 5000);
 
 document.addEventListener('DOMContentLoaded', function(){
 processUserData();
