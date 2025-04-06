@@ -29,6 +29,7 @@ if ($_POST) {
 
         if(isset($_POST['selectedPicture'])) {
             $userController->updateProfilePicture($_POST['selectedPicture']);
+            $_SESSION['userData_updated'] = true;
         }
 
         // Verifica se existem os campos necessários para atualizar o usuário
@@ -408,10 +409,10 @@ echo '</pre>';*/
     });
 
     document.addEventListener('DOMContentLoaded', function() {
-        preencherCamposFormulario();
+        updateUIElements();
     });
 
-    function preencherCamposFormulario() {
+    function updateUIElements() {
         // Recupera os dados do localStorage
         const userDataString = localStorage.getItem("userData");
         if (!userDataString) {

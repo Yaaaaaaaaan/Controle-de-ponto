@@ -63,11 +63,12 @@ function processUserDataFromString(userDataString) {
             // Manipulação do nome
             let nameCurto = '';
             if (name) {
-                nameCurto = "Olá, "+name.indexOf(" ") == -1 ? name : name.substring(0, name.indexOf(" "));
+                nameCurto = name.indexOf(" ") == -1 ? name : name.substring(0, name.indexOf(" "));
             }
 
             // Atualiza elementos na página
-            updateUIElements(name, userToken, email, rank, nickname, theme, id, nameCurto, profileUser);
+            updateUIPicture(profileUser);
+            updateUIElements(name, userToken, email, rank, nickname, theme, id, nameCurto);
         } else {
             // Se os dados são uma string JSON formatada (como no código original)
             let userdata = UserData.split(",");
@@ -83,13 +84,14 @@ function processUserDataFromString(userDataString) {
             // Manipulação do nome
             let nameCurto = '';
             if (name.indexOf(" ") == -1) {
-                nameCurto = "Olá, "+name;
+                nameCurto = name;
             } else {
-                nameCurto = "Olá, "+name.substring(0, name.indexOf(" "));
+                nameCurto = name.substring(0, name.indexOf(" "));
             }
 
             // Atualiza elementos na página
-            updateUIElements(name, userToken, email, rank, nickname, theme, id, nameCurto, profileUser);
+            updateUIElements(name, userToken, email, rank, nickname, theme, id, nameCurto);
+            updateUIPicture(profileUser);
         }
     } catch (error) {
         console.error("Erro ao processar string de dados:", error);
@@ -97,9 +99,25 @@ function processUserDataFromString(userDataString) {
     }
 }
 
+function updateUIPicture(profileUser){
+    // Processa a imagem de perfil
+    const imageBasePath = '/controle-de-ponto/App/Persistence/userProfileImages/';
+    if (profileUser) {
+        const srcImage = imageBasePath + profileUser.replace(/"/g, '');
+        const pPicture = document.getElementById("pPicture");
+        const pPictureModal = document.getElementById("pPictureModal");
+        if (pPicture) {
+            pPicture.src = srcImage;
+            if (pPictureModal) {
+                pPictureModal.src = srcImage;
+            }
+            console.log("Imagem atualizada:", srcImage); // Depuração
+        }
+    }
+}
+
 // Função para atualizar elementos da UI
-// Função para atualizar elementos da UI
-function updateUIElements(name, userToken, email, rank, nickname, theme, id, nameCurto, profileUser) {
+function updateUIElements(name, userToken, email, rank, nickname, theme, id, nameCurto) {
     console.log("Atualizando UI com:", { name, email, nickname, nameCurto }); // Depuração
 
     // Atualiza elementos em outras páginas
@@ -111,8 +129,7 @@ function updateUIElements(name, userToken, email, rank, nickname, theme, id, nam
     // IMPORTANTE: Atualiza o elemento responseNameCurto que estava faltando
     const responseNameCurto = document.getElementById("responseNameCurto");
     if (responseNameCurto) {
-        responseNameCurto.textContent = nameCurto || nickname || name;
-        console.log("Nome curto atualizado:", responseNameCurto.textContent); // Depuração
+        responseNameCurto.textContent = "Olá, "+nameCurto;
     }
 
     const responseUserToken = document.getElementById("responseUserToken");
@@ -154,21 +171,7 @@ function updateUIElements(name, userToken, email, rank, nickname, theme, id, nam
         if (nameInput) nameInput.value = name;
         if (emailInput) emailInput.value = email;
         if (nicknameInput) nicknameInput.value = nickname;
-    }
 
-    // Processa a imagem de perfil
-    const imageBasePath = '/controle-de-ponto/App/Persistence/userProfileImages/';
-    if (profileUser) {
-        const srcImage = imageBasePath + profileUser.replace(/"/g, '');
-        const pPicture = document.getElementById("pPicture");
-        const pPictureModal = document.getElementById("pPictureModal");
-        if (pPicture) {
-            pPicture.src = srcImage;
-            if (pPictureModal) {
-                pPictureModal.src = srcImage;
-            }
-            console.log("Imagem atualizada:", srcImage); // Depuração
-        }
     }
 }
 
