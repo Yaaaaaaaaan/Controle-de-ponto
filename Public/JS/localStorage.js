@@ -1,5 +1,5 @@
 async function processUserData(){
-    //TODO: criar autenticação usando token e nickname, ou token e ID de usuário para manipulação de dados entre localStorage e php+MySQL
+    //TODO: criar autenticação usando token e ID de usuário para manipulação de dados entre localStorage e php+MySQL
     try{
         const savedUserData = localStorage.getItem("userData");
 
@@ -31,11 +31,12 @@ async function processUserData(){
         // Processa os dados recebidos
         processUserDataFromString(localStorage.getItem("userData"));
         // Limpar a sessão depois de armazenar no localStorage
-        fetch('../../Persistence/userData.php?clearSession=true')
+        //TODO: É necessário verificar outras formas para remover as globais sesion em php. Pois, quando se remove as globais, o localStorage dá complicação.
+        /*fetch('../../Persistence/userData.php?clearSession=true')
             .then(response => response.json())
             .then(data => {
                 console.log('Sessão limpa:', data.sessionCleared);
-            });
+            });*/
 
     } catch (error) {
         console.error("Erro ao processar dados do usuário:", error);
