@@ -36,7 +36,7 @@ async function processUserData(){
             .then(data => {
                 console.log('Sessão limpa:', data.sessionCleared);
             });*/
-            //TODO: É necessário reavaliar a possibilidade de limpeza de $_SESSIONS, ou seja, provavelmente será necessário fazer validação usando os userTokens.
+            //TODO: É necessário reavaliar a possibilidade de limpeza de $_SESSIONS, ou seja, provavelmente será necessário fazer validação usando os userTokens em cada requisição de alteração dos dados (formulários).
     } catch (error) {
         console.error("Erro ao processar dados do usuário:", error);
     }
