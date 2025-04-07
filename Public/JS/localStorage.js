@@ -5,8 +5,8 @@ async function processUserData(){
 
         if (savedUserData) {
             // Se existem dados no localStorage, use-os diretamente
-            console.log("Usando dados do localStorage");
-            console.log(savedUserData);
+            //console.log("Usando dados do localStorage");
+           //console.log(savedUserData);
             processUserDataFromString(savedUserData);
             return; // Importante: sai da função sem fazer a requisição
         }
@@ -14,7 +14,7 @@ async function processUserData(){
         // Se não existem dados no localStorage, tenta buscar da API
         const response = await fetch('../../Persistence/userData.php');
         const data = await response.json();
-        console.log("Dados recebidos da API:", data);
+        //console.log("Dados recebidos da API:", data);
 
         const userData = data.userData;
 
@@ -26,8 +26,8 @@ async function processUserData(){
 
         // Armazena no localStorage os novos dados da API
         localStorage.setItem('userData', JSON.stringify(userData));
-        console.log('Novos dados armazenados no localStorage');
-        console.log(userData);
+        //console.log('Novos dados armazenados no localStorage');
+        //console.log(userData);
         // Processa os dados recebidos
         processUserDataFromString(localStorage.getItem("userData"));
         // Limpar a sessão depois de armazenar no localStorage
@@ -48,7 +48,7 @@ async function processUserData(){
 function processUserDataFromString(userDataString) {
     try {
         let UserData = JSON.parse(userDataString);
-        console.log("Processando dados do usuário:", UserData); // Depuração
+        //console.log("Processando dados do usuário:", UserData); // Depuração
 
         // IMPORTANTE: Verifica a estrutura dos dados
         if (typeof UserData === 'object' && !Array.isArray(UserData)) {
@@ -120,14 +120,14 @@ function updateUIPicture(profileUser){
             if (pPictureModal) {
                 pPictureModal.src = srcImage;
             }
-            console.log("Imagem atualizada:", srcImage); // Depuração
+            //console.log("Imagem atualizada:", srcImage); // Depuração
         }
     }
 }
 
 // Função para atualizar elementos da UI
 function updateUIElements(name, userToken, email, rank, nickname, theme, id, nameCurto) {
-    console.log("Atualizando UI com:", { name, email, nickname, nameCurto }); // Depuração
+    //console.log("Atualizando UI com:", { name, email, nickname, nameCurto }); // Depuração
 
     // Atualiza elementos em outras páginas
     const responseName = document.getElementById("responseName");
@@ -200,16 +200,16 @@ function checkForUserDataUpdates() {
     fetch('../../Persistence/userData.php?checkUpdates=true')
         .then(response => response.json())
         .then(data => {
-            console.log("Verificando atualizações:", data); // Depuração
+            //console.log("Verificando atualizações:", data); // Depuração
 
             if (data.dataUpdated && data.userData) {
-                console.log('Dados atualizados na sessão, atualizando localStorage');
+                //console.log('Dados atualizados na sessão, atualizando localStorage');
 
                 // Importante: verificar se os dados são válidos
                 if (typeof data.userData === 'object' && Object.keys(data.userData).length > 0) {
                     // Atualiza o localStorage com os novos dados
                     localStorage.setItem('userData', JSON.stringify(data.userData));
-                    console.log("Novo localStorage:", localStorage.getItem('userData')); // Depuração
+                    //console.log("Novo localStorage:", localStorage.getItem('userData')); // Depuração
 
                     // Atualiza a interface com os novos dados
                     processUserDataFromString(JSON.stringify(data.userData));
