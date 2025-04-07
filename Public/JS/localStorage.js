@@ -5,7 +5,7 @@ async function processUserData(){
 
         if (savedUserData) {
             // Se existem dados no localStorage, use-os diretamente
-            console.log("Usando dados do localStorage");
+            //console.log("Usando dados do localStorage");
             //console.log(savedUserData);
             processUserDataFromString(savedUserData);
             return; // Importante: sai da função sem fazer a requisição
@@ -31,12 +31,12 @@ async function processUserData(){
         // Processa os dados recebidos
         processUserDataFromString(localStorage.getItem("userData"));
         // Limpar a sessão depois de armazenar no localStorage
-        fetch('../../Persistence/userData.php?clearSession=true')
+        /*fetch('../../Persistence/userData.php?clearSession=true')
             .then(response => response.json())
             .then(data => {
-                //console.log('Sessão limpa:', data.sessionCleared);
-            });
-
+                console.log('Sessão limpa:', data.sessionCleared);
+            });*/
+            //TODO: É necessário reavaliar a possibilidade de limpeza de $_SESSIONS, ou seja, provavelmente será necessário fazer validação usando os userTokens.
     } catch (error) {
         console.error("Erro ao processar dados do usuário:", error);
     }
