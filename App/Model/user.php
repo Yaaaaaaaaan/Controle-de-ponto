@@ -432,23 +432,31 @@ if (!defined('APP_RAN')) {
 
 
 
-    /*public function insertUserProfilePicture($profilePicture, $directory) {
-      $this->profilePicture = $profilePicture;
-      $this->directory = $directory;
-      $this->id = $_SESSION['id'];
+    public function insertUserProfilePicture($profilePicture, $directory, $verifyUpload) {
+        $this->profilePicture = $profilePicture;
+        $this->directory = $directory;
+        $this->verifyUpload = $verifyUpload;
+        $this->id = $_SESSION['id'];
+        $sql = "INSERT INTO pictures (path, description, uidUserFK) 
+        VALUES (:directory, :profilePicture, :id);        
+        SET @newPictureId = LAST_INSERT_ID();
+        INSERT INTO profilepictures (uidUserFK, uimageFK) 
+        VALUES (:id, @newPictureId)
+        ON DUPLICATE KEY UPDATE
+            uimageFK = VALUES(uimageFK);";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue(':id', $this->id);
+        $stmt->bindValue(':profilePicture', $this->profilePicture);
+        $stmt->bindValue(':directory', $this->directory);
 
-      $sql = "UPDATE " . $this->tableNames['pps'] . " SET uimage = :profilePicture WHERE uidUserFK = :id";
-      $stmt = $this->conn->prepare($sql);
-      $stmt->bindValue(':id', $this->id);
-      $stmt->bindValue(':profilePicture', $this->directory);
+        if ($stmt->execute()) {
+            $_SESSION['lastImageProfileUser'] = $this->directory;
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-      if ($stmt->execute()) {
-          $_SESSION['lastImageProfileUser'] = $this->directory;
-          return true;
-      } else {
-          return false;
-      }
-  }*/
      public function insertPointControl($id, $descricao) {
         $this->descricao = $descricao;
         $this->id = $id;

@@ -536,7 +536,52 @@ echo "<script>//console.log('Formato de daysData:', " . json_encode($daysData) .
             }
         }, 0);
     }
+    document.addEventListener('DOMContentLoaded', function() {
+        updateUIElements();
+    });
 
+    function updateUIElements() {
+        // Recupera os dados do localStorage
+        const userDataString = localStorage.getItem("userData");
+        if (!userDataString) {
+            console.log("Dados de usuário não encontrados no localStorage");
+            return;
+        }
+
+        try {
+            // Tenta processar os dados como JSON primeiro
+            let userData = JSON.parse(userDataString);
+            console.log("Processando dados do formulário:", userData);
+
+            // Verifica se os dados são um objeto JavaScript (formato novo)
+            if (typeof userData === 'object' && !Array.isArray(userData)) {
+                // Preenche os campos do formulário com o formato de objeto
+                document.getElementById("floatingInputName").value = userData.name || '';
+                document.getElementById("floatingInputEmail").value = userData.email || '';
+                document.getElementById("floatingInputNickname").value = userData.nickname || '';
+
+                // Atualiza o tema se necessário
+                const themeSwitch = document.getElementById("themeSwitch");
+                if (themeSwitch && userData.theme) {
+                    themeSwitch.checked = (userData.theme == 1);
+                    document.body.dataset.bsTheme = userData.theme == 1 ? 'dark' : 'light';
+                }
+            } else {
+                // Formato antigo (string com valores separados por vírgulas)
+                let userdata = userData.split(",");
+                let name = (userdata[1]).slice(8, -1);
+                let email = (userdata[2]).slice(9, -1);
+                let nickname = (userdata[4]).slice(12, -1);
+                // Preenche os campos do formulário
+                document.getElementById("floatingInputName").value = name;
+                document.getElementById("floatingInputEmail").value = email;
+                document.getElementById("floatingInputNickname").value = nickname;
+            }
+        } catch (error) {
+            console.error("Erro ao processar dados do usuário para o formulário:", error);
+            console.error("String que causou o erro:", userDataString);
+        }
+    }
 </script>
 <img hidden id="pPictureModal">
 </body>
