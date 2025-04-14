@@ -50,9 +50,9 @@ foreach ($pointControlData as $row) {
         }
     }
 }
-echo $_SESSION['profileImagePath'];
-echo $_SESSION['userData'];
-echo $_SESSION['lastProfilePictures'];
+echo "profileImagePath: (à fazer) <br>".$_SESSION['profileImagePath'];
+echo "UserData: <br>".$_SESSION['userData'];
+echo "LastProfiles: <br>".$_SESSION['lastProfilePictures'];
 
 echo "<script>//console.log('Formato de daysData:', " . json_encode($daysData) . ");</script>";
 
