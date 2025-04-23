@@ -158,6 +158,7 @@ function updateUIElements(name, userToken, email, rank, nickname, theme, id, nam
     const responseTheme = document.getElementById("responseTheme");
     if (responseTheme) {
         responseTheme.textContent = theme;
+        document.body.dataset.bsTheme = responseTheme == 1 ? 'dark' : 'light';
     }
 
     const responseId = document.getElementById("responseId");

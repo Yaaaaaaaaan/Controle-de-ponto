@@ -69,65 +69,6 @@ echo '</pre>';*/
 ?>
 
 
-<style>
-   .image-radio-container {
-        position: relative;
-        width: 30%;
-        margin: 5px; /* Adiciona margem para espaçamento */
-    }
-
-    .image-radio-container img {
-        max-width: 100%;
-        max-height: 125px;
-        object-fit: contain;
-        cursor: pointer;
-        border: 2px solid transparent;
-    }
-
-    .image-radio-container input[type="radio"] {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        opacity: 0;
-        cursor: pointer;
-        z-index: 1;
-    }
-
-    .image-radio-container input[type="radio"]:checked + img {
-        border-color: #007bff;
-    }
-
-    .image-container {
-        display: flex;
-        flex-wrap: nowrap; /* Impede a quebra de linha */
-        justify-content: center;
-    }
-
-    .d-flex.justify-content-center.mt-3 button {
-        z-index: 1;
-    }
-
-    @media (max-width: 576px) {
-        .image-radio-container {
-            width: 95%;
-        }
-    }
-
-    @media (max-width: 375px) {
-        .image-container {
-            flex-direction: row; /* Alinha as imagens em linha */
-        }
-
-        .image-radio-container {
-            width: 30%;
-        }
-    }
-
-
-
-</style>
 <div class="container">
   <main>
   <div data-bs-spy="scroll" data-bs-target="#navbar-example2"  data-bs-smooth-scroll="true" tabindex="0">

@@ -50,201 +50,86 @@ foreach ($pointControlData as $row) {
         }
     }
 }
-echo "profileImagePath: (à fazer) <br>".$_SESSION['profileImagePath'];
-echo "UserData: <br>".$_SESSION['userData'];
-echo "LastProfiles: <br>".$_SESSION['lastProfilePictures'];
+//echo "profileImagePath: (à fazer) <br>".$_SESSION['profileImagePath'];
+//echo "UserData: <br>".$_SESSION['userData'];
+//echo "LastProfiles: <br>".$_SESSION['lastProfilePictures'];
 
-echo "<script>//console.log('Formato de daysData:', " . json_encode($daysData) . ");</script>";
+//echo "<script>//console.log('Formato de daysData:', " . json_encode($daysData) . ");</script>";
 
 ?>
 
 <html>
-<head>
-    <style>
-        #chartContainer {
-            width: auto;
-            height: 60vh;
-            margin: auto;
-            position: relative;
-        }
+    <head>
 
-        canvas {
-            max-width: 100%;
-        }
+    </head>
 
-        body {
-            font-family: Arial, sans-serif;
-            margin: 50px;
-        }
+    <body>
+        <div class="dashboard-wrapper">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-12 col-md-8">
 
-        #chartContainer {
-            width: auto;
-            height: 60vh;
-            margin: auto;
-        }
+                        <h4 class="mt-3">Histórico recente</h4>
+                        <div id="chartContainer">
+                            <canvas id="attendance"></canvas>
+                        </div>
+                    </div>
 
-        canvas {
-            max-width: 100%;
-        }
+                    <div class="col-12 col-md-4 mt-5">
+                        <!-- Card do usuário -->
+                        <div id="userCard" class="badge-card mt-5">
+                            <!-- Foto do perfil -->
+                            <img id="pPicture" alt="Foto do perfil" class="profile-pic">
 
-        @media (max-width: 375px}) {
-            #chartContainer {
-                width: 100%;
-                height: 75vh;
-                padding: 0;
-            }
-            .mt-6{margin-top:2rem;}
-        }
+                            <!-- Informações do usuário -->
+                            <h3 id="responseName" class="user-full-name">@nome completo.</h3>
+                            <div id="responseNickname" class="user-nickname">@nickname</div>
+                            <div id="responseEmail" class="user-email">usuario@email.com</div>
 
-        /* Estilo personalizado para o crachá */
-        .badge-card {
-            border-radius: 12px;
-            border: 1px solid #ddd;
-            padding: 20px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            background-color: #f8f9fa;
-            transition: transform 0.3s ease, opacity 0.3s ease;
-            max-width: 100%;
-            margin: 0 auto;
-            height: 350px;
-        }
+                            <!-- Botão de ação -->
+                            <form action="index.php" method="post" name="insertPointControl">
+                                <input hidden value="1" name="insertPointControl">
+                                <input hidden value="<?= $_SESSION['id'] ?>" name="id">
+                                <input hidden value="Verificação pendente" name="description">
+                                <button type="submit" class="btn btn-success badge-action-btn">Confirmar Presença</button>
+                            </form>
+                            <p hidden id="responseUserToken"></p>
+                            <p hidden id="responseId"></p>
+                            <p hidden id="responseTheme"></p>
+                            <p hidden id="rank"></p>
+                        </div>
 
-        .badge-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-        }
+                        <!-- Card de detalhes - mesma aparência que o badge-card -->
+                        <div id="detailCard" class="detailCard">
+                            <!-- Botão para voltar - posicionado fora da área de overflow -->
+                            <div class="headerDetailCard">
+                                <button class="btn-close" onclick="voltarParaUsuario()"></button>
+                                <!-- Título do mês -->
+                                <div class="py-1 text-center">
+                                    <h3 id="monthName"></h3>
+                                    <!-- Total de registros do mês vigente -->
+                                    <h6>Total de registros: <text id="monthTotal">0</text></h6>
+                                </div>
+                            </div>
 
-        .badge-card .profile-pic {
-            width: 140px;
-            height: 140px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 4px solid #fff;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-            margin: 0 auto 15px;
-            display: block;
-        }
-
-        .badge-card .user-full-name {
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 700;
-            font-size: 20px;
-            margin-bottom: 6px;
-            text-align: center;
-        }
-
-        .badge-card .user-nickname {
-            font-family: 'Roboto', sans-serif;
-            font-size: 16px;
-            color: #6c757d;
-            text-align: center;
-            margin-bottom: 6px;
-        }
-
-        .badge-card .user-email {
-            font-family: 'Roboto', sans-serif;
-            font-size: 14px;
-            color: #495057;
-            text-align: center;
-            margin-bottom: 20px;
-            word-break: break-all;
-        }
-
-        .badge-action-btn {
-            width: 100%;
-            padding: 10px;
-            font-weight: 500;
-        }
-
-        /* Estilos para o card de detalhes */
-        #detailCard {
-            display: none;
-        }
-        .detailCard{
-            border-radius: 12px;
-            border: 1px solid #ddd;
-            padding: 0 20px 20px 20px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            background-color: #f8f9fa;
-            transition: transform 0.3s ease, opacity 0.3s ease;
-            max-width: 100%;
-            margin: 0 auto;
-            overflow-y: auto;
-            height: 350px;
-        }
-
-        .detailCard:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-        }
-    </style>
-</head>
-
-<body>
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12 col-md-8">
-            <div id="chartContainer">
-                <canvas id="attendance"></canvas>
-            </div>
-        </div>
-
-        <div class="mt-5 col-12 col-md-4">
-            <!-- Card do usuário -->
-            <div id="userCard" class="badge-card">
-                <!-- Foto do perfil -->
-                <img id="pPicture" alt="Foto do perfil" class="profile-pic">
-
-                <!-- Informações do usuário -->
-                <h3 id="responseName" class="user-full-name">@nome completo.</h3>
-                <div id="responseNickname" class="user-nickname">@nickname</div>
-                <div id="responseEmail" class="user-email">usuario@email.com</div>
-
-                <!-- Botão de ação -->
-                <form action="index.php" method="post" name="insertPointControl">
-                    <input hidden value="1" name="insertPointControl">
-                    <input hidden value="<?= $_SESSION['id'] ?>" name="id">
-                    <input hidden value="Verificação pendente" name="description">
-                    <button type="submit" class="btn btn-success badge-action-btn">Confirmar Presença</button>
-                </form>
-                <p hidden id="responseUserToken"></p>
-                <p hidden id="responseId"></p>
-                <p hidden id="theme"></p>
-                <p hidden id="rank"></p>
-            </div>
-
-            <!-- Card de detalhes - mesma aparência que o badge-card -->
-            <div id="detailCard" class="detailCard" style="position: relative;">
-                <!-- Botão para voltar - posicionado fora da área de overflow -->
-                <div style="position: sticky; top: 0; right: 0; text-align: right; z-index: 1000; background-color: #f8f9fa; padding: 10px;">
-                    <button class="btn-close" onclick="voltarParaUsuario()"></button>
-                    <!-- Título do mês -->
-                    <div class="py-1 text-center">
-                        <h3 id="monthName"></h3>
-                        <!-- Total de registros do mês vigente -->
-                        <h6>Total de registros: <text id="monthTotal">0</text></h6>
+                            <!-- Área para informações detalhadas -->
+                            <div class="contentDetailCard" id="detailContent">
+                                <!-- Aqui serão inseridos os detalhes do mês via JavaScript -->
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-                <!-- Área para informações detalhadas -->
-                <div id="detailContent">
-                    <!-- Aqui serão inseridos os detalhes do mês via JavaScript -->
-                </div>
             </div>
         </div>
-    </div>
-</div>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            //chama daysData por fora, pelo simples fato de se estar sendo feita a consulta independente do chart.js.
+            const daysData = <?php echo json_encode($daysData); ?>;
+            const labels = <?php echo json_encode($labels); ?>;
+            const dataPoints = <?php echo json_encode($dataPoints); ?>;
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    //chama daysData por fora, pelo simples fato de se estar sendo feita a consulta independente do chart.js.
-    const daysData = <?php echo json_encode($daysData); ?>;
-    const labels = <?php echo json_encode($labels); ?>;
-    const dataPoints = <?php echo json_encode($dataPoints); ?>;
-    
-
-</script>
-<script src="../../JS/dashboard.js"></script> <!-- Dashboard de visualização de dados -->
-<img hidden id="pPictureModal">
-</body>
+        </script>
+        <script src="../../JS/dashboard.js"></script> <!-- Dashboard de visualização de dados -->
+        <img hidden id="pPictureModal">
+    </body>
 </html>

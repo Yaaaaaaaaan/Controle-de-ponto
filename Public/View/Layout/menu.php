@@ -98,7 +98,6 @@
     </div>
   </div>
 </nav>
-<br><br><br>
   <p id="responseNameCompleto"></p>
 <!-- Modal -->
 <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
@@ -119,6 +118,13 @@
       </div>
     </div>
   </div>
-</div>     
+</div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const responseTheme = document.getElementById('responseTheme');
+                const themeValue = responseTheme ? parseInt(responseTheme.textContent, 10) : 0;
+                document.body.dataset.bsTheme = themeValue === 1 ? 'dark' : 'light';
+            });
+        </script>
       </body>
     </html>
