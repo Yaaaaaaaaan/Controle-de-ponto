@@ -282,4 +282,7 @@
      }
  }
 
-body
+ body[data-bs-theme="dark"] .polaroid{
+     background-color: #343a40;
+     color: #f8f9fa;
+ }

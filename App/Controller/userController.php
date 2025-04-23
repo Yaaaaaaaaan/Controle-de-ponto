@@ -229,10 +229,9 @@ class UserController {
         $userHistory = $this->user->getUserHistory(userId: $_SESSION['id'], registro: $registro);
         return $userHistory;
     }
-    public function insertPointControl($id, $descricao){
-        $this->user->descricao = $descricao;
+    public function insertPointControl($id){
         $this->user->id = $id;
-        $insertPointControl = $this->user->insertPointControl( $id, $descricao);
+        $insertPointControl = $this->user->insertPointControl( $id);
         return $insertPointControl;
        }
 }

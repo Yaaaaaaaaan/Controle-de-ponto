@@ -158,13 +158,14 @@ function updateUIElements(name, userToken, email, rank, nickname, theme, id, nam
     const responseTheme = document.getElementById("responseTheme");
     if (responseTheme) {
         responseTheme.textContent = theme;
-        document.body.dataset.bsTheme = responseTheme == 1 ? 'dark' : 'light';
     }
 
     const responseId = document.getElementById("responseId");
     if (responseId) {
-        responseId.textContent = id;
+        responseId.textContent = id; //sem uso.
     }
+
+    const responseIdInput = document.getElementById("responseIdInput").value = id;
 
     // Atualiza campos de formulário se estamos na página de configurações
     if (window.location.href.includes('../View/User/settings.php')) {

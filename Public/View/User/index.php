@@ -10,7 +10,7 @@ if ($_POST) {
     $userController = new UserController();
 
     if (isset($_POST['insertPointControl'])) {
-        $insertPointControl = $userController->insertPointControl($_POST['id'], $_POST['description']);
+        $insertPointControl = $userController->insertPointControl($_POST['id']);
     }
 }
 
@@ -69,52 +69,53 @@ foreach ($pointControlData as $row) {
                 <div class="row">
                     <div class="col-12 col-md-8">
 
-                        <h4 class="mt-3">Histórico recente</h4>
+                        <h2 class="mt-1">Meu histórico</h2>
+                        <p class="lead">Minhas visitas</p>
                         <div id="chartContainer">
                             <canvas id="attendance"></canvas>
                         </div>
                     </div>
 
                     <div class="col-12 col-md-4 mt-5">
-                        <!-- Card do usuário -->
-                        <div id="userCard" class="badge-card mt-5">
-                            <!-- Foto do perfil -->
-                            <img id="pPicture" alt="Foto do perfil" class="profile-pic">
+                        <div class="row mt-5">
+                            <!-- Card do usuário -->
+                            <div id="userCard" class="badge-card mt-5">
+                                <!-- Foto do perfil -->
+                                <img id="pPicture" alt="Foto do perfil" class="profile-pic">
 
-                            <!-- Informações do usuário -->
-                            <h3 id="responseName" class="user-full-name">@nome completo.</h3>
-                            <div id="responseNickname" class="user-nickname">@nickname</div>
-                            <div id="responseEmail" class="user-email">usuario@email.com</div>
+                                <!-- Informações do usuário -->
+                                <h3 id="responseName" class="user-full-name">@nome completo.</h3>
+                                <div id="responseNickname" class="user-nickname">@nickname</div>
+                                <div id="responseEmail" class="user-email">usuario@email.com</div>
 
-                            <!-- Botão de ação -->
-                            <form action="index.php" method="post" name="insertPointControl">
-                                <input hidden value="1" name="insertPointControl">
-                                <input hidden value="<?= $_SESSION['id'] ?>" name="id">
-                                <input hidden value="Verificação pendente" name="description">
-                                <button type="submit" class="btn btn-success badge-action-btn">Confirmar Presença</button>
-                            </form>
-                            <p hidden id="responseUserToken"></p>
-                            <p hidden id="responseId"></p>
-                            <p hidden id="responseTheme"></p>
-                            <p hidden id="rank"></p>
-                        </div>
-
-                        <!-- Card de detalhes - mesma aparência que o badge-card -->
-                        <div id="detailCard" class="detailCard">
-                            <!-- Botão para voltar - posicionado fora da área de overflow -->
-                            <div class="headerDetailCard">
-                                <button class="btn-close" onclick="voltarParaUsuario()"></button>
-                                <!-- Título do mês -->
-                                <div class="py-1 text-center">
-                                    <h3 id="monthName"></h3>
-                                    <!-- Total de registros do mês vigente -->
-                                    <h6>Total de registros: <text id="monthTotal">0</text></h6>
-                                </div>
+                                <!-- Botão de ação -->
+                                <form action="index.php" method="post" name="insertPointControl">
+                                    <input hidden value="1" name="insertPointControl">
+                                    <input hidden name="id" id="responseIdInput" value="">
+                                    <button type="submit" class="btn btn-success badge-action-btn">Confirmar Presença</button>
+                                </form>
+                                <p hidden id="responseUserToken"></p>
+                                <p hidden id="responseTheme"></p>
+                                <p hidden id="rank"></p>
                             </div>
 
-                            <!-- Área para informações detalhadas -->
-                            <div class="contentDetailCard" id="detailContent">
-                                <!-- Aqui serão inseridos os detalhes do mês via JavaScript -->
+                            <!-- Card de detalhes - mesma aparência que o badge-card -->
+                            <div id="detailCard" class="detailCard mt-5">
+                                <!-- Botão para voltar - posicionado fora da área de overflow -->
+                                <div class="headerDetailCard">
+                                    <button class="btn-close" onclick="voltarParaUsuario()"></button>
+                                    <!-- Título do mês -->
+                                    <div class="py-1 text-center">
+                                        <h3 id="monthName"></h3>
+                                        <!-- Total de registros do mês vigente -->
+                                        <h6>Total de registros: <text id="monthTotal">0</text></h6>
+                                    </div>
+                                </div>
+
+                                <!-- Área para informações detalhadas -->
+                                <div class="contentDetailCard" id="detailContent">
+                                    <!-- Aqui serão inseridos os detalhes do mês via JavaScript -->
+                                </div>
                             </div>
                         </div>
                     </div>

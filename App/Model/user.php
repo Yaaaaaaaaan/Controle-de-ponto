@@ -457,8 +457,9 @@ if (!defined('APP_RAN')) {
         }
     }
 
-     public function insertPointControl($id, $descricao) {
-        $this->descricao = $descricao;
+     public function insertPointControl($id): bool
+     {
+        $this->descricao = 'Verificação pendente';
         $this->id = $id;
 
         $query = "INSERT INTO pointControl (description, uidUserFK) VALUES (:description, :id)";
