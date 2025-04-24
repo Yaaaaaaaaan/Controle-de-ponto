@@ -77,7 +77,7 @@ echo '</pre>';*/
             <main>
                 <div data-bs-spy="scroll" data-bs-target="#navbar-example2"  data-bs-smooth-scroll="true" tabindex="0">
                     <div class="py-4 text-center mt-2 pt-2">
-                        <h2>Configurações</h2>
+                        <h2 class="mt-4">Configurações</h2>
                         <p class="lead">Informações de usuário</p>
                     </div>
                     <div class="row">
