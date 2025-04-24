@@ -15,7 +15,7 @@
                 <p class="span">Total de presenças no sistema</p>
                 <canvas id="myChart"></canvas>
 
-                <!-- TODO: fazer gráfico de pizza -->
+                <!-- TODO: fazer gráfico de pizza com o total de presenças dos últimos 03 meses de todos os usuários-->
             </div>
 
             <div class="col-md-4">
