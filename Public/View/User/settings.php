@@ -373,6 +373,17 @@ echo '</pre>';*/
                             themeSwitch.checked = (userData.theme == 1);
                             document.body.dataset.bsTheme = userData.theme == 1 ? 'dark' : 'light';
                         }
+                        themeSwitch.addEventListener('click', function() {
+                            // Verifica se o switch está marcado para definir o novo tema
+                            const novoTema = themeSwitch.checked ? 'dark' : 'light';
+                            document.body.dataset.bsTheme = novoTema;
+
+                            // Opcional: atualizar o valor no localStorage ou enviar esse dado para o backend
+                            localStorage.setItem('theme', themeSwitch.checked ? 1 : 0);
+
+                            // Caso você queira, pode atualizar a variável userData ou fazer uma chamada AJAX pra persistir o tema
+                        });
+
                     } else {
                         // Formato antigo (string com valores separados por vírgulas)
                         let userdata = userData.split(",");
