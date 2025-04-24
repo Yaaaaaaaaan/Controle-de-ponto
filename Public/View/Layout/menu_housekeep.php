@@ -29,63 +29,70 @@ if (isset($_SESSION['userData']) && $_SESSION['userData'] != null) {
         <script src="../../JS/localStorage.js"></script>
     </head>
         <body>
-        <nav class="navbar navbar-dark bg-dark fixed-top">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="#">Controle de ponto - Housekeeping</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasDarkNavbar" aria-controls="offcanvasDarkNavbar">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="offcanvas offcanvas-end text-bg-dark" tabindex="-1" id="offcanvasDarkNavbar" aria-labelledby="offcanvasDarkNavbarLabel">
-      <div class="offcanvas-header">
-        <h5 class="offcanvas-title"><p id="responseNameCurto"></p></h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-      </div>
-      <div class="offcanvas-body">
-        <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
-          <li class="nav-item">
-            <a class="nav-link active" aria-current="page" href="#">Inicial</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" aria-current="page" href="../User/index.php">Sair do admin</a>
-          </li>
-          <?php if($_SESSION['rank']=1){
-            echo'<li class="nav-item">
-                    <a class="nav-link" href="../Housekeeping/index.php">Admin</a>
-                </li>';
-          }?>
-            <li class="nav-item">
-            <?php 
-            if ($_SESSION['logged'] != true){
-                header("Location:../Index/index.php"); 
-            }
+            <nav class="navbar navbar-dark bg-dark fixed-top">
+                <div class="container-fluid">
+                    <a class="navbar-brand" href="#">Controle de ponto - Housekeeping</a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasDarkNavbar" aria-controls="offcanvasDarkNavbar">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="offcanvas offcanvas-end text-bg-dark" tabindex="-1" id="offcanvasDarkNavbar" aria-labelledby="offcanvasDarkNavbarLabel">
+                        <div class="offcanvas-header">
+                            <h5 class="offcanvas-title"><p id="responseNameCurto"></p></h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                            </div>
+                        <div class="offcanvas-body">
+                            <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
+                                <li class="nav-item">
+                                    <a class="nav-link active" aria-current="page" href="#">Inicial</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" aria-current="page" href="../User/index.php">Sair do admin</a>
+                                </li>
+                                <?php if($_SESSION['rank']=1){
+                                    echo'<li class="nav-item">
+                                            <a class="nav-link" href="../Housekeeping/index.php">Admin</a>
+                                        </li>';
+                                }?>
+                                <li class="nav-item">
+                                    <?php
+                                    if ($_SESSION['logged'] != true){
+                                        header("Location:../Index/index.php");
+                                    }
 
-                
-            ?>
-            <form action="<?php $_SERVER['PHP_SELF']; ?>" method="post">
-                <input class="btn btn-link nav-link" type="submit" name="logout" value="Logout">
-            </form>
-          </li>
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-              Dropdown
-            </a>
-            <ul class="dropdown-menu dropdown-menu-dark">
-              <li><a class="dropdown-item" href="#">Action</a></li>
-              <li><a class="dropdown-item" href="#">Another action</a></li>
-              <li>
-                <hr class="dropdown-divider">
-              </li>
-              <li><a class="dropdown-item" href="#">Something else here</a></li>
-            </ul>
-          </li>
-        </ul>
-        <form class="d-flex mt-3" role="search">
-          <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-          <button class="btn btn-success" type="submit">Search</button>
-        </form>
-      </div>
-    </div>
-  </div>
-</nav>      
+
+                                    ?>
+                                    <form action="<?php $_SERVER['PHP_SELF']; ?>" method="post">
+                                        <input class="btn btn-link nav-link" type="submit" name="logout" value="Logout">
+                                    </form>
+                                </li>
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Dropdown
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-dark">
+                                        <li><a class="dropdown-item" href="#">Action</a></li>
+                                        <li><a class="dropdown-item" href="#">Another action</a></li>
+                                        <li>
+                                            <hr class="dropdown-divider">
+                                        </li>
+                                        <li><a class="dropdown-item" href="#">Something else here</a></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                            <form class="d-flex mt-3" role="search">
+                                <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+                                <button class="btn btn-success" type="submit">Search</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const responseTheme = document.getElementById('responseTheme');
+                const themeValue = responseTheme ? parseInt(responseTheme.textContent, 10) : 0;
+                document.body.dataset.bsTheme = themeValue === 1 ? 'dark' : 'light';
+            });
+        </script>
     </body>
 </html>
