@@ -13,8 +13,8 @@ if ($_POST) {
     }
     // Verifica se o botão de salvar foi clicado
     if (isset($_POST['salvar']) && $_POST['salvar'] === 'salvar') {
-        if (isset($_FILES['profilepic']) && $_FILES['profilepic']['error'] !== UPLOAD_ERR_NO_FILE) {
-            $userController->insertUserProfilePicture($_FILES['profilepic']);
+        if (isset($_FILES['userPicture']) && $_FILES['userPicture']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $userController->insertUserProfilePicture($_FILES['userPicture']);
             $_SESSION['userData_updated'] = true;
         }
     }
@@ -98,23 +98,23 @@ echo '</pre>';*/
                         </div>
                         <div class="col-md-7 col-lg-8">
                             <h4 class="mb-3">Meus dados</h4>
-                            <form action="settings.php" method="post" class="needs-validation" novalidate>
-                                <div class="row g-3">
+
+                            <div class="row g-3">
                                     <div class="col-sm-6">
                                         <div class="form-floating mb-3">
-                                            <input type="email" class="form-control" name="email" id="floatingInputEmail" value="" placeholder="name@example.com">
+                                            <input form="formUserData" type="email" class="form-control" name="email" id="floatingInputEmail" value="" placeholder="name@example.com">
                                             <label for="floatingInputEmail">Email</label>
                                         </div>
                                     </div>
                                     <div class="col-sm-6">
                                         <div class="form-floating mb-3">
-                                            <input type="text" name="nickname" class="form-control" id="floatingInputNickname" value="" placeholder="Username">
+                                            <input form="formUserData" type="text" name="nickname" class="form-control" id="floatingInputNickname" value="" placeholder="Username">
                                             <label for="floatingInputNickname">Username</label>
                                         </div>
                                     </div>
                                     <div class="col-12">
                                         <div class="form-floating mb-3">
-                                            <input type="text" name="name" class="form-control" id="floatingInputName" placeholder="Name" value="">
+                                            <input form="formUserData" type="text" name="name" class="form-control" id="floatingInputName" placeholder="Name" value="">
                                             <label for="floatingInputName">Nome</label>
                                         </div>
                                     </div>
@@ -132,19 +132,19 @@ echo '</pre>';*/
                                                     <div class="row mt-3">
                                                         <div class="col-sm-12">
                                                             <div class="form-floating mb-3">
-                                                                <input type="password" name="oldPassword" class="form-control" id="floatingInputCurrentPassword" placeholder="password">
+                                                                <input form="formUserData" type="password" name="oldPassword" class="form-control" id="floatingInputCurrentPassword" placeholder="password">
                                                                 <label for="floatingInputCurrentPassword">Senha atual</label>
                                                             </div>
                                                         </div>
                                                         <div class="col-sm-6">
                                                             <div class="form-floating mb-3">
-                                                                <input type="password" name="newPassword" class="form-control" id="floatingInputNewPassword" placeholder="password">
+                                                                <input form="formUserData" type="password" name="newPassword" class="form-control" id="floatingInputNewPassword" placeholder="password">
                                                                 <label for="floatingInputNewPassword">Nova senha</label>
                                                             </div>
                                                         </div>
                                                         <div class="col-sm-6">
                                                             <div class="form-floating mb-3">
-                                                                <input type="password" name="confirmPassword" class="form-control" id="floatingInputConfirmNewPassword" placeholder="Password confirmation">
+                                                                <input form="formUserData" type="password" name="confirmPassword" class="form-control" id="floatingInputConfirmNewPassword" placeholder="Password confirmation">
                                                                 <label for="floatingInputConfirmNewPassword">Confirmação de nova senha</label>
                                                             </div>
                                                         </div>
@@ -152,6 +152,7 @@ echo '</pre>';*/
                                                 </div>
                                             </div>
                                         </div>
+
                                         <div class="accordion-item">
                                             <h2 class="accordion-header">
                                                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
@@ -165,7 +166,7 @@ echo '</pre>';*/
                                                     <div class="row">
                                                         <div class="col-md-12">
                                                             <div class="form-check form-switch ms-3">
-                                                                <input name="defaultTheme" class="form-check-input" type="checkbox" role="switch" id="themeSwitch" <?php if($_SESSION['defaultTheme'] == 1){echo "checked";} ?>>
+                                                                <input form="formUserData" name="defaultTheme" class="form-check-input" type="checkbox" role="switch" id="themeSwitch" <?php if($_SESSION['defaultTheme'] == 1){echo "checked";} ?>>
                                                                 <label class="form-check-label" for="themeSwitch">Modo escuro</label>
                                                             </div>
                                                             <div class="row">
@@ -174,9 +175,10 @@ echo '</pre>';*/
                                                                     <p class="lead text-body-secondary">Upload de novas fotos</p>
                                                                     <form action="settings.php" method="post" enctype="multipart/form-data">
                                                                         <div class="input-group">
-                                                                            <input type="file" name="profilepic" class="form-control" id="inputGroupFile04"
+                                                                            <input type="file" name="userPicture" class="form-control" id="inputGroupFile04"
                                                                                 aria-describedby="inputGroupFileAddon04" aria-label="Upload" accept="image/*">
-                                                                            <button class="btn btn-outline-secondary" type="submit">Salvar</button>
+                                                                            <button  name="salvar" value="salvar" class="btn btn-outline-secondary" type="submit">Salvar</button>
+
                                                                         </div>
                                                                     </form>
                                                                 </div>
@@ -247,9 +249,10 @@ echo '</pre>';*/
                                             unset($_SESSION['response']);
                                         }
                                     ?>
-                                    <button class="w-100 btn-lg btn btn-success" type="submit">Submeter</button>
-                                </div>
-                            </form>
+                                <form action="settings.php" id="formUserData" method="post" class="needs-validation" novalidate>
+                                    <button name="submeter" value="submeter" class="w-100 btn-lg btn btn-success" type="submit">Submeter</button>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>

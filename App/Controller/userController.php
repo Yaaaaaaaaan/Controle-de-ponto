@@ -98,10 +98,10 @@ class UserController {
 
 
 
-    public function insertUserProfilePicture($profilePicture): void
+    public function insertUserProfilePicture($userPicture): void
     {
         $targetDirectory = '/Controle-de-ponto/App/Persistence/userProfileImages/';
-        $nameOld = $targetDirectory . basename($_FILES["profilepic"]);
+        $nameOld = $targetDirectory . basename($userPicture['name']);
         $uploadOk = 1;
         $fileTypeImage = strtolower(pathinfo($nameOld, PATHINFO_EXTENSION));
         // Gera um novo nome de arquivo baseado na data e hora atual
@@ -110,7 +110,7 @@ class UserController {
         // Caminho completo no servidor
         $targetFile = __DIR__ . '/../Persistence/userProfileImages/' . $newFileName;
         // Verifica se o arquivo é uma imagem
-        $check = getimagesize($profilePicture['tmp_name']);
+        $check = getimagesize($userPicture['tmp_name']);
         if ($check === false) {
             $_SESSION['response'] = "O arquivo não é uma imagem.";
             $uploadOk = 0;
@@ -123,7 +123,7 @@ class UserController {
         }
 
         // Verifica o tamanho do arquivo
-        if ($profilePicture['size'] > 500000) { // Limite de 500KB
+        if ($userPicture['size'] > 500000) { // Limite de 500KB
             $_SESSION['response'] = "Arquivo muito grande.";
             $uploadOk = 0;
         }
@@ -136,9 +136,9 @@ class UserController {
 
         // Se estiver tudo ok, tenta fazer o upload
         if ($uploadOk == 1) {
-            if (move_uploaded_file($profilePicture['tmp_name'], $targetFile)) {
+            if (move_uploaded_file($userPicture['tmp_name'], $targetFile)) {
                 if($this->user->insertUserProfilePicture($newFileName, $arch,  $uploadOk)){
-                    $_SESSION['response'] = '<p>Imagem alterada com sucesso!.</p>';
+                    $_SESSION['response'] = 'Imagem carregada com sucesso.';
                 }
             } else {
                 $_SESSION['response'] = '<p>Erro ao alterar imagem de perfil.</p>';
