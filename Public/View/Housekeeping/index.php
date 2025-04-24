@@ -1,13 +1,30 @@
-<?php    
-    include "../layout/menu_housekeep.php";
+<?php
+    require '../layout/menu_housekeep.php';
          ?>
 
+<html>
+    <head>
 
-<script>
-  document.body.dataset.bsTheme = <?php echo $_SESSION['defaultTheme'] == 1 ? "'dark'" : "'light'"; ?>;
-  const themeSwitch = document.getElementById('themeSwitch');
-  themeSwitch.addEventListener('change', () => {
-    const newTheme = themeSwitch.checked ? 'dark' : 'light';
-    document.body.dataset.bsTheme = newTheme;
-  });
-</script>
+    </head>
+    <body>
+    <div class="container-fluid">
+        <div class="row mt-5">
+            <div class="col-md-12 mt-3">
+                Olá mundo!
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const responseTheme = document.getElementById('responseTheme');
+            const themeValue = responseTheme ? parseInt(responseTheme.textContent, 10) : 0;
+            document.body.dataset.bsTheme = themeValue === 1 ? 'dark' : 'light';
+        });
+        </script>
+    </body>
+</html>
