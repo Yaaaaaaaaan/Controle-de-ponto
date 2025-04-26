@@ -21,10 +21,14 @@ class PointController
         return $this->pointControl->getPointControlData($id);
     }
 
-    public function getDetailedPointControlData($id): array
+    public function getPointControlUsers(): array{
+        return $this->pointControl->getPointControlUsersData();
+    }
+
+    /*public function getDetailedPointControlData($id): array //Ainda não existe.
     {
         return $this->pointControl->getDetailedPointControlData($id);
-    }
+    }*/
 
 
 

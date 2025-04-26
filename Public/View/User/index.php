@@ -130,7 +130,7 @@ foreach ($pointControlData as $row) {
             const dataPoints = <?php echo json_encode($dataPoints); ?>;
 
         </script>
-        <script src="../../JS/dashboard.js"></script> <!-- Dashboard de visualização de dados -->
+        <script src="../../JS/USR/dashboard.js"></script> <!-- Dashboard de visualização de dados -->
         <img hidden id="pPictureModal">
     </body>
 </html>

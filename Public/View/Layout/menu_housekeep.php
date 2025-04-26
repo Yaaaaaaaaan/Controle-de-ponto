@@ -50,7 +50,7 @@ if (isset($_SESSION['userData']) && $_SESSION['userData'] != null) {
                             </li>
                             <?php if($_SESSION['rank']=1){
                                 echo'<li class="nav-item">
-                                        <a class="nav-link" href="../Housekeeping/index.php">Admin</a>
+                                        <a class="nav-link" href="../HKG/index.php">Admin</a>
                                     </li>';
                             }?>
                             <li class="nav-item">

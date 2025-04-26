@@ -90,6 +90,25 @@
 
             return $resultMeses;
         }
+
+        public function getPointControlUsersData(): array
+        {
+            //TODO: Criar query para exibição dos dados em pizza em housekeeping. a lógica basicamente seria select date com count das datas limitando 03 meses
+
+            // Consulta para obter os meses (para o gráfico)
+            $query = "SELECT DATE_FORMAT(dateIn, '%Y-%m') as month, 
+                     description, 
+                     COUNT(*) as count
+              FROM pointControl
+              WHERE dateIn >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
+              GROUP BY description, month
+              ORDER BY month DESC, count DESC";
+
+
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
     }
 
     ?>
