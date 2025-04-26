@@ -253,6 +253,3 @@ processUserData();
 lastProfilePictures();
 checkForUserDataUpdates();
 });
-
-
-

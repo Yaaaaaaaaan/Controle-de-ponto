@@ -3,7 +3,7 @@
         die('Acesso não permitido');
     }
 
-    #[AllowDynamicProperties] class pointControl
+    /*#[AllowDynamicProperties] //para classes com propriedades dinâmicas*/ class pointControl
     {
         private $conn;
         private $tableNames = [
@@ -14,6 +14,7 @@
         ];
 
         public $id;
+        public $descricao;
         public $userToken;
         public $name;
         public $email;
