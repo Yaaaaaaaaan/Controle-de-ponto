@@ -30,7 +30,7 @@ $dataPoints = $dados['dataPoints'];
         <div class="col-md-8">
             <div id="detailCard" style="display:none;">
                 <div class="detailCard mt-5">
-                    <div class="headerDetailCard py-1 text-center">
+                    <div class="headerDetailCard mt-4 mb-4 py-1 text-center">
                         <h4 id="detailTitle" class=""></h4>
                         <small>Total de registros: <span id="detailTotal">0</span></small>
                     </div>
@@ -63,5 +63,6 @@ $dataPoints = $dados['dataPoints'];
     const detalhes = <?php echo json_encode($dados['detalhes']); ?>;
 </script>
 <script src="../../JS/HKG/dashboard.js"></script>
+<p hidden id="responseTheme"></p>
 </body>
 </html>
