@@ -70,8 +70,7 @@ function processUserDataFromString(userDataString) {
 
             // Atualiza elementos na página
             updateUIPicture(profileUser);
-            updateUIElements(name, userToken, email, rank, nickname, theme, id);
-            updateUIMenu(nameCurto);
+            updateUIElements(name, userToken, email, rank, nickname, theme, id, nameCurto);
         } else {
             // Se os dados são uma string JSON formatada (como no código original)
             let userdata = UserData.split(",");
@@ -93,19 +92,12 @@ function processUserDataFromString(userDataString) {
             }
 
             // Atualiza elementos na página
-            updateUIElements(name, userToken, email, rank, nickname, theme, id);
+            updateUIElements(name, userToken, email, rank, nickname, theme, id, nameCurto);
             updateUIPicture(profileUser);
-            updateUIMenu(nameCurto);
         }
     } catch (error) {
         console.error("Erro ao processar string de dados:", error);
         console.error("String que causou o erro:", userDataString);
-    }
-}
-function updateUIMenu(nameCurto){
-    const responseNameCurto = document.getElementById("responseNameCurto");
-    if (responseNameCurto) {
-        responseNameCurto.textContent = "Olá, "+nameCurto;
     }
 }
 function updateUIPicture(profileUser){
@@ -133,6 +125,11 @@ function updateUIElements(name, userToken, email, rank, nickname, theme, id, nam
     const responseName = document.getElementById("responseName");
     if (responseName) {
         responseName.textContent = name;
+    }
+
+    const responseNameCurto = document.getElementById("responseNameCurto");
+    if (responseNameCurto) {
+        responseNameCurto.textContent = "Olá, "+nameCurto;
     }
 
     const responseUserToken = document.getElementById("responseUserToken");

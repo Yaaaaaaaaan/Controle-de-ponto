@@ -1,79 +1,67 @@
 <?php
-        define('APP_RAN', true);
-        require '../layout/menu_housekeep.php';
-        include_once __DIR__ . '/../../../App/controller/pointController.php';
-    // No arquivo que precisa usar estes dados
-    $pointController = new PointController();
-    $pointControlUsersData = $pointController->getPointControlUsers();
+define('APP_RAN', true);
+require '../layout/menu_housekeep.php';
+include_once __DIR__ . '/../../../App/controller/pointController.php';
 
-    // Inicializa as variáveis antes do loop
-    $labels = [];
-    $dataPoints = [];
+$pointController = new PointController();
+$dados = $pointController->getPointControlUsers();
 
-    // Preparar dados para o gráfico
-    foreach ($pointControlUsersData as $row) {
-        $description = $row['description'];
-        $count = $row['count'];
-
-        // Adiciona a descrição aos rótulos se ainda não existir
-        if (!in_array($description, $labels)) {
-            $labels[] = $description;
-        }
-
-        // Soma os totais para cada descrição
-        if (!isset($totalCounts[$description])) {
-            $totalCounts[$description] = 0;
-        }
-        $totalCounts[$description] += $count;
-    }
-
-    // Converte o array associativo em um array simples mantendo a ordem das labels
-    $dataPoints = array_map(function($label) use ($totalCounts) {
-        return $totalCounts[$label];
-    }, $labels);
-
+$labels = $dados['labels'];
+$dataPoints = $dados['dataPoints'];
 ?>
 
 <html>
-    <head>
+<head></head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+        <h3 class="mt-5">Estatísticas</h3>
+        <p class="span">Total de presenças no sistema</p>
+        </div>
+    </div>
+    <div class="row">
+        <!-- Coluna do Gráfico -->
+        <div class="col-md-4">
+            <canvas id="pointControlUsersData"></canvas>
+        </div>
 
-    </head>
-    <body>
-    <div class="container-fluid">
-        <div class="row mt-5">
-            <div class="col-md-4 mt-3">
-                <h3 class="mt-5">Estatísticas</h3>
-                <p class="span">Total de presenças no sistema</p>
-                <canvas id="pointControlUsersData"></canvas>
-
-                <!-- TODO: fazer gráfico de pizza com o total de presenças dos últimos 03 meses de todos os usuários-->
-            </div>
-
-            <div class="col-md-4">
-
-
+        <!-- Coluna dos Detalhes -->
+        <div class="col-md-8">
+            <div id="detailCard" style="display:none;">
+                <div class="detailCard mt-5">
+                    <div class="headerDetailCard py-1 text-center">
+                        <h4 id="detailTitle" class=""></h4>
+                        <small>Total de registros: <span id="detailTotal">0</span></small>
+                    </div>
+                    <div class="contentDetailCard">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Descrição</th>
+                                    <th>Nome</th>
+                                    <th>Ações</th>
+                                </tr>
+                                </thead>
+                                <tbody id="detailContent">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        //chama daysData por fora, pelo simples fato de se estar sendo feita a consulta independente do chart.js.
-        const labels = <?php echo json_encode($labels); ?>;
-        const dataPoints = <?php echo json_encode($dataPoints); ?>;
-
-    </script>
-    <script src="../../JS/HKG/dashboard.js"></script> <!-- Dashboard de visualização de dados -->
-
-        <script>
-
-
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const responseTheme = document.getElementById('responseTheme');
-            const themeValue = responseTheme ? parseInt(responseTheme.textContent, 10) : 0;
-            document.body.dataset.bsTheme = themeValue === 1 ? 'dark' : 'light';
-        });
-        </script>
-    </body>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const labels = <?php echo json_encode($labels); ?>;
+    const dataPoints = <?php echo json_encode($dataPoints); ?>;
+    const detalhes = <?php echo json_encode($dados['detalhes']); ?>;
+</script>
+<script src="../../JS/HKG/dashboard.js"></script>
+</body>
 </html>

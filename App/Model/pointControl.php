@@ -91,24 +91,40 @@
             return $resultMeses;
         }
 
-        public function getPointControlUsersData(): array
-        {
-            //TODO: Criar query para exibição dos dados em pizza em housekeeping. a lógica basicamente seria select date com count das datas limitando 03 meses
+    public function getPointControlUsersData(): array
+    {
+        try{
+        $query = "SELECT 
+        pc.description,
+        COUNT(*) as count,
+        GROUP_CONCAT(
+            JSON_OBJECT(
+                'data', DATE_FORMAT(pc.dateIn, '%d/%m/%Y %H:%i'),
+                'nome', ud.uname,
+                'id', pc.uidUserFK
+            )
+        ) as detalhes
+    FROM pointControl pc
+    INNER JOIN userdata ud ON pc.uidUserFK = ud.uid
+    WHERE pc.dateIn >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
+    GROUP BY pc.description
+    ORDER BY count DESC";
 
-            // Consulta para obter os meses (para o gráfico)
-            $query = "SELECT DATE_FORMAT(dateIn, '%Y-%m') as month, 
-                     description, 
-                     COUNT(*) as count
-              FROM pointControl
-              WHERE dateIn >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
-              GROUP BY description, month
-              ORDER BY month DESC, count DESC";
-
-
-            $stmt = $this->conn->prepare($query);
-            $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        // Debug direto do resultado da query
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $result;
+    } catch (PDOException $e) {
+        echo "<pre>";
+        echo "Erro na query: " . $e->getMessage();
+        echo "</pre>";
+        return [];
         }
-    }
+
+
+}
+
+}
 
     ?>

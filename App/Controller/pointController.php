@@ -22,7 +22,33 @@ class PointController
     }
 
     public function getPointControlUsers(): array{
-        return $this->pointControl->getPointControlUsersData();
+        try {
+            $resultados = $this->pointControl->getPointControlUsersData();
+
+            $labels = [];
+            $dataPoints = [];
+            $detalhes = [];
+
+            foreach ($resultados as $row) {
+                $labels[] = $row['description'];
+                $dataPoints[] = (int)$row['count'];
+                $detalhes[$row['description']] = json_decode('[' . $row['detalhes'] . ']', true);
+            }
+
+            return [
+                'labels' => $labels,
+                'dataPoints' => $dataPoints,
+                'detalhes' => $detalhes
+            ];
+
+        } catch (Exception $e) {
+            error_log("Erro no controller ao processar dados: " . $e->getMessage());
+            return [
+                'labels' => [],
+                'dataPoints' => [],
+                'detalhes' => []
+            ];
+        }
     }
 
     /*public function getDetailedPointControlData($id): array //Ainda não existe.
