@@ -81,11 +81,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Função global para editar registro
     window.editarRegistro = function(id) {
-        // Implementar a lógica de edição conforme necessário
+        // TODO: Implementar a lógica de edição futuramente.
         console.log('Editar registro:', id);
     };
-    console.log('Labels:', labels);
-    console.log('DataPoints:', dataPoints);
-    console.log('Detalhes:', detalhes);
 
 });

@@ -99,7 +99,7 @@
         COUNT(*) as count,
         GROUP_CONCAT(
             JSON_OBJECT(
-                'data', DATE_FORMAT(pc.dateIn, '%d/%m/%Y %H:%i'),
+                'data', DATE_FORMAT(pc.dateIn, '%d/%m/%Y'),
                 'nome', ud.uname,
                 'id', pc.uidUserFK
             )
