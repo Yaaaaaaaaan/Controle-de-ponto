@@ -1,11 +1,11 @@
 <?php
-error_reporting(0);
-define('APP_RAN', true);
-include_once '../../../App/Controller/UserController.php';
-session_start();
-if($_SESSION['logged'] != null){
-    header('Location:../User/index.php');
-}
+    error_reporting(0);
+    define('APP_RAN', true);
+    include_once '../../../App/Controller/UserController.php';
+    session_start();
+    if($_SESSION['logged'] != null){
+        header('Location:../User/index.php');
+    }
 ?>
 
 <!DOCTYPE html>
