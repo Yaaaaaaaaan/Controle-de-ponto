@@ -44,16 +44,18 @@
                         <div class="offcanvas-body">
                             <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
                                 <li class="nav-item">
-                                    <a class="nav-link <?php if($_SERVER['REQUEST_URI'] == '/Estudos/Public/View/User/index.php'){echo 'active';} ?>" aria-current="page" href="../User/index.php">Inicial</a>
+                                    <a class="nav-link <?php if($_SERVER['REQUEST_URI'] == '/controle-de-ponto/Public/View/User/index.php'){echo 'active';} ?>" aria-current="page" href="../User/index.php">Inicial</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link <?php if($_SERVER['REQUEST_URI'] == '/Estudos/Public/View/User/settings.php'){echo 'active';} ?>" aria-current="page" href="../User/settings.php">Configurações</a>
+                                    <a class="nav-link <?php if($_SERVER['REQUEST_URI'] == '/controle-de-ponto/Public/View/User/settings.php'){echo 'active';} ?>" aria-current="page" href="../User/settings.php">Configurações</a>
                                 </li>
-                                <?php //if(){
-                                    echo'<li class="nav-item">
+                                <li class="nav-item">
+                                    <a class="nav-link <?php if($_SERVER['REQUEST_URI'] == '/controle-de-ponto/Public/View/User/community.php'){echo 'active';} ?>" aria-current="page" href="../User/community.php">Comunidade</a>
+                                </li>
+                                    <li class="nav-item">
                                             <a class="nav-link" href="../Housekeeping/index.php">Admin</a>
-                                        </li>';
-                                //}?>
+                                    </li>
+
                                 <li class="nav-item">
                                     <?php
                                         if ($_SESSION['logged'] != true){

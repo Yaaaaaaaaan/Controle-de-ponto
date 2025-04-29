@@ -43,16 +43,14 @@
                     <div class="offcanvas-body">
                         <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
                             <li class="nav-item">
-                                <a class="nav-link active" aria-current="page" href="#">Inicial</a>
+                                <a class="nav-link <?php if($_SERVER['REQUEST_URI'] == '/controle-de-ponto/Public/View/Housekeeping/index.php'){echo 'active';} ?>" aria-current="page" href="../Housekeeping/index.php">Inicial</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" aria-current="page" href="../User/index.php">Sair do admin</a>
                             </li>
-                            <?php if($_SESSION['rank']=1){
-                                echo'<li class="nav-item">
-                                        <a class="nav-link" href="../HKG/index.php">Admin</a>
-                                    </li>';
-                            }?>
+                            <li class="nav-item">
+                                <a class="nav-link <?php if($_SERVER['REQUEST_URI'] == '/controle-de-ponto/Public/View/Housekeeping/users.php'){echo 'active';} ?>" href="../Housekeeping/users.php">Users</a>
+                            </li>
                             <li class="nav-item">
                                 <?php
                                 if ($_SESSION['logged'] != true){
