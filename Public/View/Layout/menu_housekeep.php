@@ -1,19 +1,19 @@
 <?php
-session_start();
-error_reporting(0);
-ini_set('display_errors', 'Off');
-if ($_POST) {
-    define('APP_RAN', true);
-    include_once '../../../App/controller/UserController.php';
-    if(isset($_POST['logout'])){$controller = new UserController();
-        $controller->unAuthenticateUser();
-    }}
-//validação de token e dados comuns de usuário
-if (isset($_SESSION['userData']) && $_SESSION['userData'] != null) {
-    $userData = $_SESSION['userData'];
-} else {
-    $userData = false;
-}
+    session_start();
+    error_reporting(0);
+    ini_set('display_errors', 'Off');
+    if ($_POST) {
+        define('APP_RAN', true);
+        include_once '../../../App/controller/UserController.php';
+        if(isset($_POST['logout'])){$controller = new UserController();
+            $controller->unAuthenticateUser();
+        }}
+    //validação de token e dados comuns de usuário
+    if (isset($_SESSION['userData']) && $_SESSION['userData'] != null) {
+        $userData = $_SESSION['userData'];
+    } else {
+        $userData = false;
+    }
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">

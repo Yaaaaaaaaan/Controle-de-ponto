@@ -4,4 +4,4 @@ Deny from all
 
 
 # Redirecionar quando o acesso for negado
-ErrorDocument 403 /estudos/public/view/errors/forbidden.php
+ErrorDocument 403 /controle-de-ponto/public/view/errors/forbidden.php
