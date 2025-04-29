@@ -1,0 +1,6 @@
+# Acesso negado para esse diretório.
+Order Allow,Deny
+Deny from all
+
+# Redirecionar quando o acesso for negado
+ErrorDocument 403 /estudos/public/view/errors/forbidden.php

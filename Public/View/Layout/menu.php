@@ -29,102 +29,106 @@
         <script src="../../JS/localStorage.js"></script>
       </head>
         <body>       
-        <nav class="navbar navbar-dark bg-dark fixed-top">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="#">Controle de ponto</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasDarkNavbar" aria-controls="offcanvasDarkNavbar">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="offcanvas offcanvas-end text-bg-dark" tabindex="-1" id="offcanvasDarkNavbar" aria-labelledby="responseName">
-      <div class="offcanvas-header">
-        <h5 class="offcanvas-title"><span id="responseNameCurto"></span></h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-      </div>
-      <div class="offcanvas-body">
-        <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
-          <li class="nav-item">
-            <a class="nav-link <?php if($_SERVER['REQUEST_URI'] == '/Estudos/Public/View/User/index.php'){echo 'active';} ?>" aria-current="page" href="../User/index.php">Inicial</a>
-          </li>
-          <li class="nav-item">
-          <a class="nav-link <?php if($_SERVER['REQUEST_URI'] == '/Estudos/Public/View/User/settings.php'){echo 'active';} ?>" aria-current="page" href="../User/settings.php">Configurações</a>
-          </li>
-          <?php if($_SESSION['rank']=1){
-            echo'<li class="nav-item">
-                   <a class="nav-link" href="../Housekeeping/index.php">Admin</a>
-                </li>';
-          }?>
-            <li class="nav-item">
-            <?php 
-            if ($_SESSION['logged'] != true){
-                header("Location:../Index/index.php"); 
-            }
+            <nav class="navbar navbar-dark bg-dark fixed-top">
+                <div class="container-fluid">
+                    <a class="navbar-brand" href="#">Controle de ponto</a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasDarkNavbar" aria-controls="offcanvasDarkNavbar">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="offcanvas offcanvas-end text-bg-dark" tabindex="-1" id="offcanvasDarkNavbar" aria-labelledby="responseName">
+                        <div class="offcanvas-header">
+                            <h5 class="offcanvas-title"><span id="responseNameCurto"></span></h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                        </div>
+                        <div class="offcanvas-body">
+                            <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
+                                <li class="nav-item">
+                                    <a class="nav-link <?php if($_SERVER['REQUEST_URI'] == '/Estudos/Public/View/User/index.php'){echo 'active';} ?>" aria-current="page" href="../User/index.php">Inicial</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link <?php if($_SERVER['REQUEST_URI'] == '/Estudos/Public/View/User/settings.php'){echo 'active';} ?>" aria-current="page" href="../User/settings.php">Configurações</a>
+                                </li>
+                                <?php //if(){
+                                    echo'<li class="nav-item">
+                                            <a class="nav-link" href="../Housekeeping/index.php">Admin</a>
+                                        </li>';
+                                //}?>
+                                <li class="nav-item">
+                                    <?php
+                                        if ($_SESSION['logged'] != true){
+                                            header("Location:../Index/index.php");
+                                        }
+                                    ?>
+                                    <button type="button" class="btn btn-link nav-link" data-bs-toggle="modal" data-bs-target="#staticBackdrop">
+                                        Logout
+                                    </button>
+                                </li>
+                                <li class="nav-item dropdown" style="<?php /*
+                                    if (preg_match('/^.*\/settings\.php/', $_SERVER['REQUEST_URI'])) {
+                                        echo 'display:none;';
+                                    } */
+                                    ?>
+                                ">
+                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Outras configurações
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-dark">
+                                        <li>
+                                            <div class="form-check form-switch ms-3">
+                                               <input class="form-check-input" type="checkbox" role="switch" id="themeSwitch">
+                                               <label class="form-check-label" for="themeSwitch">Modo Escuro</label>
+                                            </div>
+                                        </li>
+                                        <p hidden id="responseTheme"><?php echo isset($userData['theme']) ? $userData['theme'] : 0; ?></p>
+                                        <li>
+                                            <hr class="dropdown-divider">
+                                        </li>
+                                        <li><a class="dropdown-item" href="#">Something else here</a></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                            <form class="d-flex mt-3" role="search">
+                                <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+                                <button class="btn btn-success" type="submit">Search</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+            <p id="responseNameCompleto"></p>
+            <!-- Modal -->
+            <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="staticBackdropLabel">Tem certeza que desejas sair?</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            Caso saia, será necessário efetuar o login novamente mais tarde.
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Voltar</button>
+                            <form action="<?php $_SERVER['PHP_SELF']; ?>" method="post">
+                                <input class="btn btn-success" type="submit" name="logout" value="Sim, desejo sair.">
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <script type="module" src="../../JS/localStorage.js"></script>
+            <script type="module" src="../../JS/USR/userInterface.js"></script>
+            <script type="module">
+                import { processUserData } from '../../JS/localStorage.js';
+                import { updateUIElements } from '../../JS/USR/userInterface.js';
 
-                
-            ?>
-            <button type="button" class="btn btn-link nav-link" data-bs-toggle="modal" data-bs-target="#staticBackdrop">
-                Logout
-            </button>
-          </li>
-          <li class="nav-item dropdown" style="<?php
-              if (preg_match('/^.*\/settings\.php/', $_SERVER['REQUEST_URI'])) {
-                  echo 'display:none;';
-              }
-          ?>">
-           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-               Outras configurações
-           </a>
-           <ul class="dropdown-menu dropdown-menu-dark">
-               <li> 
-                   <div class="form-check form-switch ms-3">
-                    
-                       <input class="form-check-input" type="checkbox" role="switch" id="themeSwitchShow" disabled>
-                       <label class="form-check-label" for="themeSwitchShow">Dark mode</label>
-                   </div>
-               </li>
-               <li><a href="../User/settings.php?darkMode#scrollspyHeading2" class="dropdown-item" href="#">Click to update</a></li>
-               <li>
-                   <hr class="dropdown-divider">
-               </li>
-               <li><a class="dropdown-item" href="#">Something else here</a></li>
-           </ul>
-       
-       </li>
-        </ul>
-        <form class="d-flex mt-3" role="search">
-          <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-          <button class="btn btn-success" type="submit">Search</button>
-        </form>
-      </div>
-    </div>
-  </div>
-</nav>
-  <p id="responseNameCompleto"></p>
-<!-- Modal -->
-<div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h1 class="modal-title fs-5" id="staticBackdropLabel">Tem certeza que desejas sair?</h1>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        Caso saia, será necessário efetuar o login novamente mais tarde.
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Voltar</button>
-        <form action="<?php $_SERVER['PHP_SELF']; ?>" method="post">
-                <input class="btn btn-success" type="submit" name="logout" value="Sim, desejo sair.">
-            </form>
-      </div>
-    </div>
-  </div>
-</div>
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const responseTheme = document.getElementById('responseTheme');
-                const themeValue = responseTheme ? parseInt(responseTheme.textContent, 10) : 0;
-                document.body.dataset.bsTheme = themeValue === 1 ? 'dark' : 'light';
-            });
-        </script>
-      </body>
+                document.addEventListener('DOMContentLoaded', async () => {
+                    const userData = await processUserData();
+                    if (userData) {
+                        updateUIElements(userData);
+                    }
+                });
+            </script>
+
+        </body>
     </html>

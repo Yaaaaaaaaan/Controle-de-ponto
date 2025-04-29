@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td>${description}</td>
                 <td>${registro.nome}</td>
                 <td>
-                    <button class="btn btn-primary btn-sm" onclick="editarRegistro(${registro.id})">
+                    <button class="btn btn-primary btn-sm" onclick="editarRegistro(${registro.id}, ${registro.cod})">
                         <i class="fas fa-edit"></i> Editar
                     </button>
                 </td>
@@ -80,9 +80,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Função global para editar registro
-    window.editarRegistro = function(id) {
+    window.editarRegistro = function(id, cod) {
         // TODO: Implementar a lógica de edição futuramente.
-        console.log('Editar registro:', id);
+        console.log('Usuário:', id, ' Cod: ', cod);
     };
 
 });

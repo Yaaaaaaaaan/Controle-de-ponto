@@ -122,6 +122,19 @@ foreach ($pointControlData as $row) {
                 </div>
             </div>
         </div>
+        <script type="module" src="../../JS/localStorage.js"></script>
+        <script type="module" src="../../JS/USR/userInterface.js"></script>
+        <script type="module">
+            import { processUserData } from '../../JS/localStorage.js';
+            import { updateUIElements } from '../../JS/USR/userInterface.js';
+
+            document.addEventListener('DOMContentLoaded', async () => {
+                const userData = await processUserData();
+                if (userData) {
+                    updateUIElements(userData);
+                }
+            });
+        </script>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
             //chama daysData por fora, pelo simples fato de se estar sendo feita a consulta independente do chart.js.

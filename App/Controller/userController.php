@@ -7,6 +7,7 @@ include_once '../../../App/Model/user.php';
 if (!defined('APP_RAN')) {
     die('Acesso não permitido.');
 }
+
 class UserController {
     private $db;
     private $user;
@@ -39,6 +40,7 @@ class UserController {
     /**
      * @throws RandomException
      */
+
     public function authenticateUser($nickname, $password): void
     {
         $this->user->nickname = $nickname;
@@ -49,6 +51,7 @@ class UserController {
             echo '<p>Usuário ou senha incorreto. </p>';
             }
     }
+
     public function updateUser($name, $id, $email, $nickname, $oldPassword, $newPassword, $confirmPassword, $defaultTheme): void
     {
         $this->user->name = $name;
@@ -79,9 +82,6 @@ class UserController {
         }
     }
 
-
-
-
     public function updateProfilePicture($pictureId): void
     {
         if (isset($_SESSION['id'])) {
@@ -94,9 +94,6 @@ class UserController {
             $_SESSION['response'] = '<p>Usuário não autenticado.</p>';
         }
     }
-
-
-
 
     public function insertUserProfilePicture($userPicture): void
     {
@@ -145,7 +142,6 @@ class UserController {
             }
         }
     }
-
 
     public function unAuthenticateUser() {
         // Remove dados da sessão
@@ -222,17 +218,28 @@ class UserController {
         exit();
     }
 
-
-
     public function showUserHistory($registro) {
         $this->user->registro = $registro;
         $userHistory = $this->user->getUserHistory(userId: $_SESSION['id'], registro: $registro);
         return $userHistory;
     }
+
     public function insertPointControl($id){
         $this->user->id = $id;
         $insertPointControl = $this->user->insertPointControl( $id);
         return $insertPointControl;
        }
+
+    public function updateUserTheme($userId, $theme) {
+        try {
+            return $this->user->updateTheme($userId, $theme);
+        } catch (Exception $e) {
+            error_log($e->getMessage());
+            return false;
+        }
+    }
+
+
+
 }
 ?>

@@ -337,7 +337,9 @@ if (!defined('APP_RAN')) {
     }
     public function getUserHistory($userId, $registro) {
         
-        $query = "SELECT u.uname, u.username, h.description, h.dateIn FROM " . $this->tableNames['ud'] . " u inner join ".$this->tableNames['hs']." h ON u.uid = h.uidUserFK WHERE u.uid = :id ORDER BY h.cod desc LIMIT " . $registro . ";";
+        $query = "SELECT u.uname, u.username, h.description, h.dateIn FROM " . $this->tableNames['ud'] .
+            " u inner join ".$this->tableNames['hs'].
+            " h ON u.uid = h.uidUserFK WHERE u.uid = :id ORDER BY h.cod desc LIMIT " . $registro . ";";
         
         try {
           $stmt = $this->conn->prepare($query);
@@ -478,8 +480,18 @@ if (!defined('APP_RAN')) {
             }
         }   
     }
+    public function updateTheme($userId, $theme) {
+        try {
+            $sql = "UPDATE userdata SET udefaultTheme = :theme WHERE uid = :id";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindParam(':theme', $theme, PDO::PARAM_INT);
+            $stmt->bindParam(':id', $userId, PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log($e->getMessage());
+            return false;
+        }
+    }
 
 }
-
-
 ?>

@@ -78,6 +78,29 @@ if (isset($_SESSION['userData']) && $_SESSION['userData'] != null) {
                                     <li><a class="dropdown-item" href="#">Something else here</a></li>
                                 </ul>
                             </li>
+                            <li class="nav-item dropdown" style="<?php
+                            if (preg_match('/^.*\/settings\.php/', $_SERVER['REQUEST_URI'])) {
+                                echo 'display:none;';
+                            }
+                            ?>">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Outras configurações
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-dark">
+                                    <li>
+                                        <div class="form-check form-switch ms-3">
+                                            <input class="form-check-input" type="checkbox" role="switch" id="themeSwitch">
+                                            <label class="form-check-label" for="themeSwitch">Modo Escuro</label>
+                                        </div>
+                                    </li>
+                                    <p hidden id="responseTheme"><?php echo isset($userData['theme']) ? $userData['theme'] : 0; ?></p>
+                                    <li><a href="../User/settings.php?darkMode#scrollspyHeading2" class="dropdown-item" href="#">Click to update</a></li>
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+                                    <li><a class="dropdown-item" href="#">Something else here</a></li>
+                                </ul>
+                            </li>
                         </ul>
                         <form class="d-flex mt-3" role="search">
                             <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
@@ -87,11 +110,17 @@ if (isset($_SESSION['userData']) && $_SESSION['userData'] != null) {
                 </div>
             </div>
         </nav>
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const responseTheme = document.getElementById('responseTheme');
-                const themeValue = responseTheme ? parseInt(responseTheme.textContent, 10) : 0;
-                document.body.dataset.bsTheme = themeValue === 1 ? 'dark' : 'light';
+        <script type="module" src="../../JS/localStorage.js"></script>
+        <script type="module" src="../../JS/USR/userInterface.js"></script>
+        <script type="module">
+            import { processUserData } from '../../JS/localStorage.js';
+            import { updateUIElements } from '../../JS/USR/userInterface.js';
+
+            document.addEventListener('DOMContentLoaded', async () => {
+                const userData = await processUserData();
+                if (userData) {
+                    updateUIElements(userData);
+                }
             });
         </script>
     </body>

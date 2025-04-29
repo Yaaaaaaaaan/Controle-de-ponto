@@ -1,6 +1,7 @@
-RewriteEngine On
-RewriteBase /Estudos/Public/View/Index/
-RewriteRule ^$ / [L]
+# Acesso negado para esse diretório.
+Order Allow,Deny
+Deny from all
+
 
 # Redirecionar quando o acesso for negado
 ErrorDocument 403 /controle-de-ponto/public/view/errors/forbidden.php

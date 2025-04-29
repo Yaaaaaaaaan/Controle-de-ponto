@@ -240,7 +240,7 @@ echo '</pre>';*/
                                                                 // Primeiro atualiza o localStorage
                                                                 processUserData().then(() => {
                                                                     // Depois preenche os campos do formulário
-                                                                    preencherCamposFormulario();
+                                                                    updateUIElements();
                                                                 });
                                                             });
                                                         </script>
@@ -317,96 +317,5 @@ echo '</pre>';*/
         </div>
     </div>
 </div>
-        <script>
-            document.getElementById('updateProfilePicBtn').addEventListener('click', function() {
-                const form = document.getElementById('profilePicForm');
-                const formData = new FormData(form);
-
-                fetch('settings.php', {
-                    method: 'POST',
-                    body: formData
-                })
-                    .then(response => response.text())
-                    .then(data => {
-                        // Atualize a imagem do perfil na página sem recarregar
-                        const profilePicContainer = document.querySelectorAll('.settings img, .modal-body .row .text-center img');
-                        const selectedPicture = document.querySelector('input[name="selectedPicture"]:checked');
-                        if (selectedPicture) {
-                            const newSrc = selectedPicture.nextElementSibling.src;
-                            profilePicContainer.forEach(image => {
-                                image.src = newSrc;
-                            });
-                        }
-                        // Exiba alguma mensagem de sucesso ou erro
-                        //console.log(data); // Você pode analisar a resposta do servidor aqui.
-                    })
-                    .catch(error => {
-                        console.error('Erro ao atualizar a foto de perfil:', error);
-                        // Exiba alguma mensagem de erro para o usuário
-                    });
-            });
-
-            document.addEventListener('DOMContentLoaded', function() {
-                updateUIElements();
-            });
-
-            function updateUIElements() {
-                // Recupera os dados do localStorage
-                const userDataString = localStorage.getItem("userData");
-                if (!userDataString) {
-                    console.log("Dados de usuário não encontrados no localStorage");
-                    return;
-                }
-
-                try {
-                    // Tenta processar os dados como JSON primeiro
-                    let userData = JSON.parse(userDataString);
-                    console.log("Processando dados do formulário:", userData);
-
-                    // Verifica se os dados são um objeto JavaScript (formato novo)
-                    if (typeof userData === 'object' && !Array.isArray(userData)) {
-                        // Preenche os campos do formulário com o formato de objeto
-                        document.getElementById("floatingInputName").value = userData.name || '';
-                        document.getElementById("floatingInputEmail").value = userData.email || '';
-                        document.getElementById("floatingInputNickname").value = userData.nickname || '';
-
-                        // Atualiza o tema se necessário
-                        const themeSwitch = document.getElementById("themeSwitch");
-                        if (themeSwitch && userData.theme) {
-                            themeSwitch.checked = (userData.theme == 1);
-                            document.body.dataset.bsTheme = userData.theme == 1 ? 'dark' : 'light';
-                        }
-                        themeSwitch.addEventListener('click', function() {
-                            // Verifica se o switch está marcado para definir o novo tema
-                            const novoTema = themeSwitch.checked ? 'dark' : 'light';
-                            document.body.dataset.bsTheme = novoTema;
-
-                            // Opcional: atualizar o valor no localStorage ou enviar esse dado para o backend
-                            localStorage.setItem('theme', themeSwitch.checked ? 1 : 0);
-
-                            // Caso você queira, pode atualizar a variável userData ou fazer uma chamada AJAX pra persistir o tema
-                        });
-
-                    } else {
-                        // Formato antigo (string com valores separados por vírgulas)
-                        let userdata = userData.split(",");
-                        let name = (userdata[1]).slice(8, -1);
-                        let email = (userdata[2]).slice(9, -1);
-                        let nickname = (userdata[4]).slice(12, -1);
-                        // Preenche os campos do formulário
-                        document.getElementById("floatingInputName").value = name;
-                        document.getElementById("floatingInputEmail").value = email;
-                        document.getElementById("floatingInputNickname").value = nickname;
-                    }
-                } catch (error) {
-                    console.error("Erro ao processar dados do usuário para o formulário:", error);
-                    console.error("String que causou o erro:", userDataString);
-                }
-            }
-
-            // Event listener para o botão de atualização de foto de perfil
-            document.getElementById('updateProfilePicBtn').addEventListener('click', function() {
-            });
-        </script>
     </body>
 </html>

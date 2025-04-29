@@ -95,10 +95,11 @@
     {
         try{
         $query = "SELECT 
-        pc.description,
+        pc.description, pc.cod,
         COUNT(*) as count,
         GROUP_CONCAT(
             JSON_OBJECT(
+                'cod', pc.cod,
                 'data', DATE_FORMAT(pc.dateIn, '%d/%m/%Y'),
                 'nome', ud.uname,
                 'id', pc.uidUserFK
