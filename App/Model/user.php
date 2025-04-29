@@ -480,6 +480,7 @@ if (!defined('APP_RAN')) {
             }
         }   
     }
+    //TODO: Verificar possibilidades de fazer o theme chegar ao banco de dados via menu. Mas, sem ser via AJAX. Precisa ser na padronização atual, e/ou via javascript.
     public function updateTheme($userId, $theme) {
         try {
             $sql = "UPDATE userdata SET udefaultTheme = :theme WHERE uid = :id";
@@ -492,6 +493,17 @@ if (!defined('APP_RAN')) {
             return false;
         }
     }
+
+//TODO: Criar função para um usuário validar a presença de outro usuário, mas, com a condição de; o usuário avaliador deverá estar com a presença confirmada no dia ao qual está sendo feita a validação do outro usuário e, tal ato deverá ocorrer no dia corrido.
+    public function validatePresence($userId, $userIdToValidate, $description, $code) {
+        $query = "";
+    }
+//TODO: Criar função para atualizar dados no housekeeping
+    public function updateHousekeeping($userIdToValidate, $description, $code) {
+        $query = "";
+    }
+
+
 
 }
 ?>
