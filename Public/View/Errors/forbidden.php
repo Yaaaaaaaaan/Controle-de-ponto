@@ -1,11 +1,16 @@
 <?php
 
-echo "Acesso negado a esta página, <a href='../../../index.php'>clique aqui</a> para retornar a página inicial.";
+echo "";
 
 
 
 ?>
-
+<div class="container-info">
+    <h1>Acesso negado</h1>
+    <h3>Acesso negado a esta página.</h3>
+    <h6>Para retornar a página inicial, clique no botão abaixo.</h6>
+    <a href='../index.php'><button>clique aqui</button></a>
+</div>
 <style>
     body {
         font-family: sans-serif;
@@ -15,14 +20,7 @@ echo "Acesso negado a esta página, <a href='../../../index.php'>clique aqui</a>
         min-height: 100vh;
         background-color: #f0f0f0;
     }
-    .container-userlogin2 {
-        width:760px;
-        background-color: #fff;
-        padding: 20px;
-        border-radius: 5px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-    }
-    .container-userlogin {
+    .container-info {
         width:380px;
         background-color: #fff;
         padding: 20px;
@@ -32,27 +30,11 @@ echo "Acesso negado a esta página, <a href='../../../index.php'>clique aqui</a>
 
     h1 {
         text-align: center;
-        margin-bottom: 20px;
+        margin-bottom: 30px;
     }
-
-    .input-group {
-        margin-bottom: 15px;
-    }
-
-    label {
-        display: block;
-        margin-bottom: 5px;
-    }
-
-    input[type="text"],
-    input[type="email"],
-    input[type="password"] {
-        width: 100%;
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 3px;
-    }
-
+    h3{margin-bottom: -25px;text-align: center;}
+    h6{margin-bottom: 30px;text-align: center;
+    font-size: small;}
     button {
         background-color: #4CAF50;
         color: white;
@@ -60,6 +42,8 @@ echo "Acesso negado a esta página, <a href='../../../index.php'>clique aqui</a>
         border: none;
         border-radius: 4px;
         cursor: pointer;
+        width: 100%;
+        font-size: 16px;
     }
 
     button:hover {
