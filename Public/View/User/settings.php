@@ -286,7 +286,7 @@
                             <div class="image-container">
                                 <?php foreach ($pictures as $picture) : ?>
                                     <label class="image-radio-container">
-                                        <input type="radio" name="selectedPicture" value="<?php echo $picture['cod']; ?>">
+                                        <input type="radio" name="selectedPicture" value="<?= $picture['cod']; ?>">
                                         <img src="<?php echo $picture['path']; ?>" class="d-block w-100" alt="Foto de Perfil">
                                     </label>
                                 <?php endforeach; ?>
@@ -301,8 +301,8 @@
                             <div class="image-container">
                                 <?php foreach ($pictures as $picture) : ?>
                                     <label class="image-radio-container">
-                                        <input type="radio" name="selectedPicture" value="<?php echo $picture['cod']; ?>">
-                                        <img src="<?php echo $picture['path']; ?>" class="d-block w-100" alt="Foto de Perfil">
+                                        <input type="radio" name="selectedPicture" value="<?= $picture['cod']; ?>">
+                                        <img src="<?= $picture['path']; ?>" class="d-block w-100" alt="Foto de Perfil">
                                     </label>
                                 <?php endforeach; ?>
                             </div>
