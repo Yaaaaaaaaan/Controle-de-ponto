@@ -241,11 +241,14 @@ class UserController {
 
     public function validatePresence($userId, $userIdToValidate, $description, $code){ //Tudo aqui é transformação
         $currentDate = date("Y-m-d");
+        $descriptionToValidate = "Já verificado";
         $this->user->validatePresence($userId);
         $this->user->validatePresence($userIdToValidate);
         $this->user->validatePresence($description);
         $this->user->validatePresence($code);
         $this->user->validatePresence($currentDate);
+        $this->user->validatePresence($descriptionToValidate);
+
 
         return true;
     }

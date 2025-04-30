@@ -495,14 +495,21 @@ if (!defined('APP_RAN')) {
     }
 
 //TODO: Criar função para um usuário validar a presença de outro usuário, mas, com a condição de; o usuário avaliador deverá estar com a presença confirmada no dia ao qual está sendo feita a validação do outro usuário e, tal ato deverá ocorrer no dia corrido.
-    public function validatePresence($userId, $userIdToValidate, $description, $code, $currentDate) {
+    public function validatePresence($userId, $userIdToValidate, $description, $code, $currentDate, $descriptionToValidate) {
         $this->userId = $userId;
         $this->userIdToValidate = $userIdToValidate;
         $this->description = $description;
         $this->code = $code;
         $this->currentDate = $currentDate;
+        $this->descriptionToValidate = $descriptionToValidate;
 
-        $query = "";
+        $query = "SELECT 
+        *
+        FROM {$this->tableNames['pc']} 
+        WHERE uidUserFK = :userId
+        AND dateIn = :currentDate
+        AND description = :descriptionToValidate
+        ";
     }
 //TODO: Criar função para atualizar dados no housekeeping
     public function updateHousekeeping($userIdToValidate, $description, $code) {
