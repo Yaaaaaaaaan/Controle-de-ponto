@@ -255,9 +255,8 @@ if (!defined('APP_RAN')) {
           SET uname = :name, 
               uemail = :email,
               username = :nickname,
-              udefaultTheme = :defaultTheme ";  // Corrigido para udefaultTheme com parâmetro
+              udefaultTheme = :defaultTheme ";
 
-        // Adicionar alteração de senha à consulta, se aplicável
         $passwordUpdated = false;
         if (!empty($this->newPassword) && !empty($this->confirmPassword) && !empty($this->oldPassword)) {
             // Verificar se a senha atual está correta antes de permitir a alteração
@@ -271,15 +270,15 @@ if (!defined('APP_RAN')) {
                 $query .= ", upassword = :newPassword";
                 $passwordUpdated = true;
             } else {
-                return false; // Senha atual incorreta ou as novas senhas não coincidem
+                return false;
             }
         }
 
-        // Finalizar a consulta com a condição WHERE
+        // Finaliza a consulta com a condição WHERE
         $query .= " WHERE uid = :id";
 
         try {
-            // Preparar e executar a consulta
+            // Prepara e executa a consulta
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':name', $this->name);
             $stmt->bindParam(':email', $this->email);
@@ -307,8 +306,6 @@ if (!defined('APP_RAN')) {
             }
             return false;
         } catch (PDOException $e) {
-            // Opcional: registre o erro em algum lugar
-            // error_log("Erro ao atualizar usuário: " . $e->getMessage());
             return false;
         }
     }
@@ -387,7 +384,7 @@ if (!defined('APP_RAN')) {
     public function updateProfilePicture($userId, $pictureId): bool
     {
         try {
-            // Inicie uma transação
+            // Inicia uma transação
             $this->conn->beginTransaction();
 
             // Primeiro, atualize a tabela
