@@ -516,7 +516,5 @@ if (!defined('APP_RAN')) {
         $query = "";
     }
 
-
-
 }
 ?>
