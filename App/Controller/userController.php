@@ -253,6 +253,27 @@ class UserController {
         return true;
     }
 
+    public function updatePresenceHousekeeping($userIdToValidate, $code, $description)
+    {
+        if ($description == 1) {
+            $descriptionTranslated = "Verificação pendente";
+        } else if ($description == 2) {
+            $descriptionTranslated = "Já verificado";
+        } else if ($description == 3) {
+            $descriptionTranslated = "Recusado";
+        } else {
+            error_log("Valor inválido para descrição: " . $description);
+            return false;
+        }
+        $result = $this->user->updatePresenceHousekeeping($userIdToValidate, $code, $descriptionTranslated);
+        if ($result) {
+            echo "200 OK.";
+        } else {
+            echo "400 Bad Request.";
+        }
+        return $result;
+    }
+
 
 
 

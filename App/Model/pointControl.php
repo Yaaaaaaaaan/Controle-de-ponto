@@ -102,6 +102,7 @@
                 'cod', pc.cod,
                 'data', DATE_FORMAT(pc.dateIn, '%d/%m/%Y'),
                 'nome', ud.uname,
+                'descricao', pc.description,
                 'id', pc.uidUserFK
             )
         ) as detalhes

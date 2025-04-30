@@ -510,10 +510,30 @@ if (!defined('APP_RAN')) {
         AND dateIn = :currentDate
         AND description = :descriptionToValidate
         ";
+
+        return true;
     }
 //TODO: Criar função para atualizar dados no housekeeping
-    public function updateHousekeeping($userIdToValidate, $description, $code) {
-        $query = "";
+    public function updatePresenceHousekeeping($userIdToValidate, $code, $description) {
+        $this->userIdToValidate = $userIdToValidate;
+        $this->description = $description;
+        $this->code = $code;
+
+        $query = "UPDATE {$this->tableNames['pc']} SET description = :description
+                    WHERE uidUserFK = :userIdToValidate AND cod = :code";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':description', $this->description);
+        $stmt->bindParam(':userIdToValidate', $this->userIdToValidate);
+        $stmt->bindParam(':code', $this->code);
+        $result = $stmt->execute();
+
+        if ($result) {
+            echo "1";
+        } else {
+            echo "0";
+            print_r($stmt->errorInfo());
+        }
+        return $result;
     }
 
 }

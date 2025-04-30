@@ -71,7 +71,7 @@
 
                         <h2 class="mt-1">Meu histórico</h2>
                         <p class="lead">Minhas visitas</p>
-                        <div id="userChartContainer">
+                        <div id="ChartContainer">
                             <canvas id="attendance"></canvas>
                         </div>
                     </div>
