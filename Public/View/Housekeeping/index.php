@@ -62,7 +62,7 @@ $dataPoints = $dados['dataPoints'];
     const dataPoints = <?php echo json_encode($dataPoints); ?>;
     const detalhes = <?php echo json_encode($dados['detalhes']); ?>;
 </script>
-<script src="../../JS/HKG/dashboard.js"></script>
+<script src="../../JS/HKG/indexDashboard.js"></script>
 <p hidden id="responseTheme"></p>
 </body>
 </html>
