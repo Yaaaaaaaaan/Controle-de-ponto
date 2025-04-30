@@ -265,7 +265,7 @@ body[data-bs-theme="dark"] .detailCard .user-email {}
 .d-flex.justify-content-center.mt-3 button {
     z-index: 1;
 }
-
+/**/
 @media (max-width: 576px) {
     .image-radio-container {
         width: 95%;
