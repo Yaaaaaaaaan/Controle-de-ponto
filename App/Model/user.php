@@ -380,7 +380,7 @@ if (!defined('APP_RAN')) {
     }
     public function getUserHistory($userId, $registro) {
         
-        $query = "SELECT u.uname, u.username, h.description, h.dateIn FROM " . $this->tableNames['ud'] .
+        $query = "SELECT h.description, h.dateIn FROM " . $this->tableNames['ud'] .
             " u inner join ".$this->tableNames['hs'].
             " h ON u.uid = h.uidUserFK WHERE u.uid = :id ORDER BY h.cod desc LIMIT " . $registro . ";";
         
@@ -443,7 +443,7 @@ if (!defined('APP_RAN')) {
             // Inicia uma transação
             $this->conn->beginTransaction();
 
-            // Primeiro, atualize a tabela
+            //1. atualize a tabela
             $updateSql = "UPDATE " . $this->tableNames['pps'] . " 
                       SET uimageFK = :pictureId 
                       WHERE uidUserFK = :userId";
@@ -452,7 +452,7 @@ if (!defined('APP_RAN')) {
             $updateStmt->bindParam(':pictureId', $pictureId);
             $updateStmt->execute();
 
-            // Em seguida, realize o SELECT
+            // 2. realize o SELECT
             $selectSql = "SELECT description 
                       FROM " . $this->tableNames['pic'] . " 
                       WHERE cod = :pictureId";
@@ -460,6 +460,15 @@ if (!defined('APP_RAN')) {
             $selectStmt->bindParam(':pictureId', $pictureId);
             $selectStmt->execute();
             $row = $selectStmt->fetch(PDO::FETCH_ASSOC);
+
+            //3. Insere o registro no histórico
+            $ip = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'];
+            $descricao = 'Alterou para a foto de perfil id: '.$pictureId.' , a partir do ip: ' . $ip;
+            $queryHistory = ("INSERT INTO {$this->tableNames['hs']} (description, uidUserFK) VALUES (:descricao, :id)");
+            $stmtHistory = $this->conn->prepare($queryHistory);
+            $stmtHistory->bindValue(':descricao', $descricao);
+            $stmtHistory->bindParam(':id', $userId);
+            $stmtHistory->execute();
 
             // Confirme a transação
             $this->conn->commit();
@@ -469,11 +478,6 @@ if (!defined('APP_RAN')) {
                 $userData = json_decode($_SESSION['userData'], true);
                 $userData['profileUser'] = $row['description'];
                 $_SESSION['userData'] = json_encode($userData);
-
-                /* Depuração, se necessário
-                echo '<pre>';
-                print_r(json_decode($_SESSION['userData'], true));
-                echo '</pre>';*/
             }
 
             return true;
@@ -488,6 +492,28 @@ if (!defined('APP_RAN')) {
 
 
     public function insertUserProfilePicture($profilePicture, $directory, $verifyUpload) {
+        /*try{ //Finalizar o PDO para inserir imagens e histórico no banco de dados.
+            $this->conn->beginTransaction();
+            $query = "INSERT INTO pictures (path, description, uidUserFK)
+            VALUES (:directory, :profilePicture, :id);
+            SET @newPictureId = LAST_INSERT_ID();
+            INSERT INTO profilepictures (uidUserFK, uimageFK)
+            VALUES (:id, @newPictureId)
+            ON DUPLICATE KEY UPDATE
+            uimageFK = VALUES(uimageFK);";
+
+
+            //Inserir registro no histórico
+            $ip = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'];
+            $descricao = 'Inseriu a imagem: '.$this->profilePicture.' ao sistema, a partir do ip: ' . $ip;
+            $queryHistory = ("INSERT INTO {$this->tableNames['hs']} (description, uidUserFK) VALUES (:descricao, :id)");
+            $stmtHistory = $this->conn->prepare($queryHistory);
+            $stmtHistory->bindValue(':descricao', $descricao);
+            $stmtHistory->bindParam(':id', $this->id);
+            $stmtHistory->execute();
+
+            $this->conn->commit();
+        }*/
         $this->profilePicture = $profilePicture;
         $this->directory = $directory;
         $this->verifyUpload = $verifyUpload;
@@ -503,7 +529,7 @@ if (!defined('APP_RAN')) {
         $stmt->bindValue(':id', $this->id);
         $stmt->bindValue(':profilePicture', $this->profilePicture);
         $stmt->bindValue(':directory', $this->directory);
-
+        $stmt->execute();
         if ($stmt->execute()) {
             $_SESSION['lastImageProfileUser'] = $this->directory;
             return true;
@@ -524,6 +550,16 @@ if (!defined('APP_RAN')) {
 
         try {
             $stmt->execute();
+            if($stmt->execute()){
+                //Inserir registro no histórico
+                $ip = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'];
+                $descricao = 'Inserção de presença no controle-de-ponto, a partir do ip: ' . $ip;
+                $queryHistory = ("INSERT INTO {$this->tableNames['hs']} (description, uidUserFK) VALUES (:descricao, :id)");
+                $stmtHistory = $this->conn->prepare($queryHistory);
+                $stmtHistory->bindValue(':descricao', $descricao);
+                $stmtHistory->bindParam(':id', $this->id);
+                $stmtHistory->execute();
+            }
             return true;
         } catch (PDOException $e) {
             if ($e->getCode() == 23000) { 

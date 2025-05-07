@@ -207,8 +207,6 @@
                                                         <table class="table">
                                                             <thead>
                                                                 <tr>
-                                                                    <th>Nome</th>
-                                                                    <th>Username</th>
                                                                     <th>Descrição</th>
                                                                     <th>Data</th>
                                                                 </tr>
@@ -216,8 +214,6 @@
                                                             <tbody>
                                                                 <?php foreach ($userHistory as $history) : ?>
                                                                     <tr>
-                                                                        <td><?php echo htmlspecialchars($history['uname']); ?></td>
-                                                                        <td><?php echo htmlspecialchars($history['username']); ?></td>
                                                                         <td><?php echo htmlspecialchars($history['description']); ?></td>
                                                                         <td><?php echo htmlspecialchars($history['dateIn']); ?></td>
                                                                     </tr>
