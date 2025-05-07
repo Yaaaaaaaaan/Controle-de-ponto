@@ -1,0 +1,19 @@
+#chartContainer {
+    width: auto;
+    height: 60vh;
+    margin: auto;
+    position: relative;
+}
+
+canvas {
+    max-width: 100%;
+    height: calc(100vh - 300px);
+}
+@media (max-width: 375px) {
+    #chartContainer {
+        width: 100%;
+        height: 75vh;
+        padding: 0;
+    }
+    .mt-6{margin-top:2rem;}
+}

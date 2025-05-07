@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Agora as variáveis daysData, labels e dataPoints já foram definidas
-    const ctx = document.getElementById('attendance').getContext('2d');
+    const ctx = document.getElementById('presence').getContext('2d');
 
     const data = {
         labels: labels,
@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    const attendance = new Chart(ctx, config);
+    const presence = new Chart(ctx, config);
 
     // Função para lidar com o clique no gráfico
     function handleChartClick(event, elements, chart) {

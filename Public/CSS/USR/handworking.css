@@ -46,50 +46,22 @@
     height:125px;
 }
 
-#chartContainer {
-    width: auto;
-    height: 60vh;
-    margin: auto;
-    position: relative;
-}
 
-canvas {
-    max-width: 100%;
-}
 
 body {
     font-family: Arial, sans-serif;
     margin: 50px;
 }
 
-.dashboard-wrapper {
-    /* Ajusta a altura considerando o menu fixo (por exemplo, 56px) */
+.dashboardWrapper {
     min-height: calc(90vh - 56px);
     display: flex;
     align-items: center;
-    justify-content: center; /* Se quiser centralizar também horizontalmente */
-    padding-top: 50px; /* ajuste esse valor conforme necessário */
+    justify-content: center;
+    padding-top: 50px;
 }
 
 
-#chartContainer {
-    width: auto;
-    height: 60vh;
-    margin: auto;
-}
-
-canvas {
-    max-width: 100%;
-}
-
-@media (max-width: 375px) {
-    #chartContainer {
-        width: 100%;
-        height: 75vh;
-        padding: 0;
-    }
-    .mt-6{margin-top:2rem;}
-}
 
 /* Estilo personalizado para o crachá */
 .badge-card {
@@ -213,19 +185,10 @@ body[data-bs-theme="dark"] .detailCard .user-nickname {
 body[data-bs-theme="dark"] .detailCard .user-email {
     color: #6c757d;
 }
-body[data-bs-theme="dark"] .detailCard .user-email {
-    color: #6c757d;
+body[data-bs-theme="dark"] .polaroid{
+    background-color: #343a40;
+    color: #f8f9fa;
 }
-body[data-bs-theme="dark"] .detailCard .user-email {
-    color: #6c757d;
-}
-body[data-bs-theme="dark"] .detailCard .user-email {
-    color: #6c757d;
-}
-body[data-bs-theme="dark"] .detailCard .user-email {
-    color: #6c757d;
-}
-body[data-bs-theme="dark"] .detailCard .user-email {}
 
 .image-radio-container {
     position: relative;
@@ -282,7 +245,3 @@ body[data-bs-theme="dark"] .detailCard .user-email {}
     }
 }
 
-body[data-bs-theme="dark"] .polaroid{
-    background-color: #343a40;
-    color: #f8f9fa;
-}

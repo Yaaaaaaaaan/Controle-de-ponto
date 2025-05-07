@@ -64,7 +64,7 @@
     </head>
 
     <body>
-        <div class="dashboard-wrapper">
+        <div class="dashboardWrapper">
             <div class="container-fluid">
                 <div class="row">
                     <div class="col-12 col-md-8">
@@ -72,7 +72,7 @@
                         <h2 class="mt-1">Meu histórico</h2>
                         <p class="lead">Minhas visitas</p>
                         <div id="ChartContainer">
-                            <canvas id="attendance"></canvas>
+                            <canvas id="presence"></canvas>
                         </div>
                     </div>
 
