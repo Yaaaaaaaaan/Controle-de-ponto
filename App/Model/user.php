@@ -53,12 +53,17 @@ if (!defined('APP_RAN')) {
         }
 
         // Definir valores padrão para a imagem de perfil
-        $userToken = bin2hex(random_bytes(32));
         $this->profilePicture = 'Profile.png';
         $this->directory = '/Controle-de-ponto/App/Persistence/userProfileImages/Profile.png';
 
+        // Cria um hash para futuras transações
+        $userToken = bin2hex(random_bytes(32));
+
         // Iniciar transação para garantir consistência dos dados
         $this->conn->beginTransaction();
+
+        // Criptografa a senha
+        $this->password = password_hash($this->password, PASSWORD_DEFAULT);
 
         try {
             // 1. Inserir dados do usuário na tabela userdata
@@ -128,6 +133,15 @@ if (!defined('APP_RAN')) {
             $stmtToken->bindParam(':newUserId', $newUserId);
             $stmtToken->execute();
 
+            //6. Inserir registro no histórico
+            $ip = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'];
+            $descricao = 'Criação de conta partir do ip: ' . $ip;
+            $queryHistory = ("INSERT INTO {$this->tableNames['hs']} (description, uidUserFK) VALUES (:descricao, :id)");
+            $stmtHistory = $this->conn->prepare($queryHistory);
+            $stmtHistory->bindValue(':descricao', $descricao);
+            $stmtHistory->bindParam(':id', $newUserId);
+            $stmtHistory->execute();
+
             // Confirmar todas as operações
             $this->conn->commit();
             return true;
@@ -160,9 +174,6 @@ if (!defined('APP_RAN')) {
         return (int)$result['trigger_exists'] === 1;
     }
 
-    /**
-     * Método destrutor para limpar a conexão com o banco de dados
-     */
     public function __destruct()
     {
         // Forma correta de fechar uma conexão PDO
@@ -179,83 +190,99 @@ if (!defined('APP_RAN')) {
         if (!empty($this->nickname) && !empty($this->password)) {
             $userToken = bin2hex(random_bytes(32));
             $ip = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'];
-            $query = "SELECT u.uid, t.token	, u.uname, u.username, u.urank, u.uemail, u.upassword, u.username, d.description, p.dateload, u.udefaultTheme 
-            FROM " . $this->tableNames['ud'] . " u 
-            INNER JOIN " . $this->tableNames['pic'] . " d ON u.uid = d.uidUserFK 
-            INNER JOIN " . $this->tableNames['ut'] . " t ON u.uid = t.uidUserFK 
-            inner join " . $this->tableNames['pps'] . " p ON p.uimageFK = d.cod
-            WHERE u.username = :nickname AND u.upassword = :password;";
+
+            $query = "SELECT u.uid, t.token, u.uname, u.username, u.urank, u.uemail, u.upassword, d.description, p.dateload, u.udefaultTheme
+                  FROM {$this->tableNames['ud']} u
+                  INNER JOIN {$this->tableNames['pic']} d ON u.uid = d.uidUserFK
+                  INNER JOIN {$this->tableNames['ut']} t ON u.uid = t.uidUserFK
+                  INNER JOIN {$this->tableNames['pps']} p ON p.uimageFK = d.cod
+                  WHERE u.username = :nickname";
 
             try {
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam(':nickname', $this->nickname);
-                $stmt->bindParam(':password', $this->password);
                 $stmt->execute();
+
                 if ($stmt->rowCount() > 0) {
                     $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-                    $query2 = "START TRANSACTION;
-                        UPDATE " . $this->tableNames['ut'] . "
-                        SET token = :userToken
-                        WHERE uidUserFK = :id;
+                    // Debug temporário (remova em produção)
+                    echo "<pre>";
+                    echo "Digitada: " . $this->password . "\n";
+                    echo "No banco: " . $row['upassword'] . "\n";
+                    var_dump(password_verify($this->password, $row['upassword']));
+                    echo "</pre>";
 
-                        IF ROW_COUNT() = 0 THEN
-                            INSERT INTO " . $this->tableNames['ut'] . " (token, uidUserFK)
-                            VALUES (:userToken, :id);
-                        END IF;
-                    COMMIT;
-                    
-                    INSERT INTO " . $this->tableNames['history'] . " SET description = :descricao, uidUserFK = :id";
+                    if (password_verify($this->password, $row['upassword'])) {
+                        try {
+                            $this->conn->beginTransaction();
 
-                    try {
-                        $this->descricao = 'login a partir do ip:' . $ip . ' E criação do Hash para autenticação temporário: ' . $userToken;
-                        $this->userToken = $userToken;
-                        $this->id = $row['uid'];
-                        $stmt = $this->conn->prepare($query2);
-                        $stmt->bindValue(':id', $this->id);
-                        $stmt->bindValue(':userToken', $this->userToken);
-                        $stmt->bindValue(':descricao', $this->descricao);
-                        $stmt->execute();
-                    } catch (PDOException $e) {
-                        echo "Error: " . $e->getMessage();
+                            // Atualiza o token
+                            $update = $this->conn->prepare("UPDATE {$this->tableNames['ut']} SET token = :userToken WHERE uidUserFK = :id");
+                            $update->bindValue(':userToken', $userToken);
+                            $update->bindValue(':id', $row['uid']);
+                            $update->execute();
+
+                            // Se não atualizou nada, insere
+                            if ($update->rowCount() === 0) {
+                                $insert = $this->conn->prepare("INSERT INTO {$this->tableNames['ut']} (token, uidUserFK) VALUES (:userToken, :id)");
+                                $insert->bindValue(':userToken', $userToken);
+                                $insert->bindValue(':id', $row['uid']);
+                                $insert->execute();
+                            }
+
+                            // Registro no histórico
+                            $descricao = 'login a partir do ip: ' . $ip . ' e criação do Hash para autenticação temporário: ' . $userToken;
+                            $history = $this->conn->prepare("INSERT INTO {$this->tableNames['hs']} (description, uidUserFK) VALUES (:descricao, :id)");
+                            $history->bindValue(':descricao', $descricao);
+                            $history->bindValue(':id', $row['uid']);
+                            $history->execute();
+
+                            $this->conn->commit();
+                        } catch (PDOException $e) {
+                            $this->conn->rollBack();
+                            echo "Erro ao registrar o login: " . $e->getMessage();
+                            return false;
+                        }
+
+                        // Sessão
+                        $_SESSION['id'] = $row['uid'];
+                        $_SESSION['logged'] = true;
+                        $_SESSION['userData'] = json_encode([
+                            'userToken' => $userToken,
+                            'name' => $row['uname'],
+                            'email' => $row['uemail'],
+                            'rank' => $row['urank'],
+                            'nickname' => $row['username'],
+                            'theme' => $row['udefaultTheme'],
+                            'id' => $row['uid'],
+                            'profileUser' => $row['description'],
+                        ]);
+
+                        return true;
                     }
-                    $_SESSION['id'] = $row['uid'];
-                    $_SESSION['logged'] = true;
-                    $_SESSION['userData'] = json_encode([
-                        'userToken' => $userToken,
-                        'name' => $row['uname'],
-                        'email' => $row['uemail'],
-                        'rank' => $row['urank'],
-                        'nickname' => $row['username'],
-                        'theme' => $row['udefaultTheme'],
-                        'id' => $row['uid'],
-                        'profileUser' => $row['description'],
-                    ]);
-
-                    return true;
                 }
             } catch (PDOException $e) {
-                echo "Error: " . $e->getMessage();
-                return false;
+                echo "Erro na autenticação: " . $e->getMessage();
             }
         }
+
         return false;
     }
 
 
-    public function updateUser(): bool
-    {
+    public function updateUser(): bool{
         // Verificar os campos obrigatórios
         if (empty($this->name) || empty($this->email) || empty($this->nickname)) {
             return false;
         }
 
         // Iniciar a consulta de atualização
-        $query = "UPDATE " . $this->tableNames['ud'] . " 
-          SET uname = :name, 
-              uemail = :email,
-              username = :nickname,
-              udefaultTheme = :defaultTheme ";
+        $query = "UPDATE " . $this->tableNames['ud'] . "
+            SET uname = :name,
+            uemail = :email,
+            username = :nickname,
+            udefaultTheme = :defaultTheme ";
 
         $passwordUpdated = false;
         if (!empty($this->newPassword) && !empty($this->confirmPassword) && !empty($this->oldPassword)) {
@@ -264,13 +291,16 @@ if (!defined('APP_RAN')) {
             $checkStmt = $this->conn->prepare($checkPasswordQuery);
             $checkStmt->bindParam(':id', $this->id);
             $checkStmt->execute();
-            $currentPassword = $checkStmt->fetchColumn();
+            $currentPasswordHash = $checkStmt->fetchColumn();
+            var_dump($this->oldPassword);var_dump($this->newPassword);var_dump($this->confirmPassword);
+            var_dump($currentPasswordHash);
 
-            if ($currentPassword == $this->oldPassword && $this->newPassword == $this->confirmPassword) {
+            // Verificar se a senha antiga fornecida CORRESPONDE ao HASH armazenado
+            if ($currentPasswordHash && password_verify($this->oldPassword, $currentPasswordHash) && $this->newPassword == $this->confirmPassword) {
                 $query .= ", upassword = :newPassword";
                 $passwordUpdated = true;
             } else {
-                return false;
+                return false; // Falha na verificação da senha antiga ou nova senha não confere
             }
         }
 
@@ -287,7 +317,7 @@ if (!defined('APP_RAN')) {
             $stmt->bindParam(':id', $this->id);
 
             if ($passwordUpdated) {
-                $stmt->bindParam(':newPassword', $this->newPassword);
+                $stmt->bindParam(':newPassword', password_hash($this->newPassword, PASSWORD_DEFAULT));
             }
 
             if ($stmt->execute()) {
@@ -301,6 +331,14 @@ if (!defined('APP_RAN')) {
                     $_SESSION['userData'] = json_encode($userData);
                     $_SESSION['userData_updated'] = true;
 
+                    //Inserir registro no histórico
+                    $ip = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'];
+                    $descricao = 'Alteração de informações partir do ip: ' . $ip;
+                    $queryHistory = ("INSERT INTO {$this->tableNames['hs']} (description, uidUserFK) VALUES (:descricao, :id)");
+                    $stmtHistory = $this->conn->prepare($queryHistory);
+                    $stmtHistory->bindValue(':descricao', $descricao);
+                    $stmtHistory->bindParam(':id', $this->id);
+                    $stmtHistory->execute();
                 }
                 return true;
             }
@@ -313,8 +351,8 @@ if (!defined('APP_RAN')) {
     //TODO: a fazer FUNCIONALIDADE DELETEACCOUNT.
     public function deleteAccount() {
         if (!empty($this->email) && !empty($this->password)) {
-            $query = "SELECT uname, urank, email, upassword FROM " . $this->tableNames[0] . " 
-            WHERE email = :email AND upassword = :upassword";
+            $query = "SELECT uid, uemail, upassword FROM " . $this->tableNames['ud'] . " 
+            WHERE uemail = :email AND upassword = :upassword";
     
             try {
                 $stmt = $this->conn->prepare($query);
@@ -322,6 +360,14 @@ if (!defined('APP_RAN')) {
                 $stmt->bindParam(':upassword', $this->password);
                 $stmt->execute();
                 if ($stmt->rowCount() > 0) {
+                    //Inserir registro no histórico
+                    $ip = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'];
+                    $descricao = 'Exclusão de conta partir do ip: ' . $ip;
+                    $queryHistory = ("INSERT INTO {$this->tableNames['hs']} (description, uidUserFK) VALUES (:descricao, :id)");
+                    $stmtHistory = $this->conn->prepare($queryHistory);
+                    $stmtHistory->bindValue(':descricao', $descricao);
+                    $stmtHistory->bindParam(':id', );
+                    $stmtHistory->execute();
                     return true;
                 }
             } catch (PDOException $e) {
@@ -344,6 +390,16 @@ if (!defined('APP_RAN')) {
           //$stmt->bindParam('', $this->$registro);
           $stmt->execute();
           $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+          if($result){
+              //Inserir registro no histórico
+              $ip = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'];
+              $descricao = 'Consulta de histórico partir do ip: ' . $ip;
+              $queryHistory = ("INSERT INTO {$this->tableNames['hs']} (description, uidUserFK) VALUES (:descricao, :id)");
+              $stmtHistory = $this->conn->prepare($queryHistory);
+              $stmtHistory->bindValue(':descricao', $descricao);
+              $stmtHistory->bindParam(':id', $userId);
+              $stmtHistory->execute();
+          }
           return $result;
         } catch(PDOException $e) {
           echo "Error: " . $e->getMessage();

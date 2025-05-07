@@ -145,7 +145,7 @@ CREATE TABLE `userdata` (
                             `uid` int(11) NOT NULL,
                             `uname` varchar(100) DEFAULT NULL,
                             `uemail` varchar(88) DEFAULT NULL,
-                            `upassword` varchar(50) DEFAULT NULL,
+                            `upassword` varchar(255) DEFAULT NULL,
                             `urank` int(2) DEFAULT NULL,
                             `username` varchar(50) DEFAULT NULL,
                             `udefaultTheme` tinyint(1) NOT NULL

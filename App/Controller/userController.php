@@ -20,9 +20,9 @@ class UserController {
 
     //TODO: REPARAR FUNÇÃO DE CRIAÇÃO DE USUÁRIO
     public function createUser($name, $nickname, $email, $password){
-        $this->user->name = $name;
-        $this->user->nickname = $nickname;
-        $this->user->email = $email;
+        $this->user->name = filter_var($name, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $this->user->nickname = filter_var($nickname, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $this->user->email = filter_var($email, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $this->user->password = $password;
         $this->user->rank = 1;
         if ($this->user->createUser()){
@@ -35,29 +35,27 @@ class UserController {
         }
     }
 
-    //TODO: Apenas `authenticateUser` e, `createUser` , tanto em userController.php quanto em user.php serão apenas MVC com PHP e MYSQL.
-
     /**
      * @throws RandomException
      */
 
     public function authenticateUser($nickname, $password): void
     {
-        $this->user->nickname = $nickname;
+        $this->user->nickname = filter_var($nickname, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $this->user->password = $password;
         if($this->user->authenticateUser()){
             header('Location: ../');
         }else{
-            echo '<p>Usuário ou senha incorreto. </p>';
+            $_SESSION['response'] = '<p>Usuário ou senha incorretos. </p>';
             }
     }
 
     public function updateUser($name, $id, $email, $nickname, $oldPassword, $newPassword, $confirmPassword, $defaultTheme): void
     {
-        $this->user->name = $name;
-        $this->user->id = $id;
-        $this->user->email = $email;
-        $this->user->nickname = $nickname;
+        $this->user->name = filter_var($name, FILTER_SANITIZE_FULL_SPECIAL_CHARS);;
+        $this->user->id = $id; /* preciso descobrir como recuperar diretamente o usertoken ao invés do ID */
+        $this->user->email = filter_var($email, FILTER_SANITIZE_FULL_SPECIAL_CHARS);;
+        $this->user->nickname = filter_var($nickname, FILTER_SANITIZE_FULL_SPECIAL_CHARS);;
         $this->user->oldPassword = $oldPassword;
         $this->user->newPassword = $newPassword;
         $this->user->confirmPassword = $confirmPassword;
