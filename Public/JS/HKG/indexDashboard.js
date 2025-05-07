@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function mostrarDetalhes(categoriaSelecionada) {
-        const chartContainer = document.getElementById('chartContainer');
+        const contentChart = document.getElementById('contentChart');
         const detailCard = document.getElementById('detailCard');
         const detailTitle = document.getElementById('detailTitle');
         const detailTotal = document.getElementById('detailTotal');
@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', function() {
         detailCard.registrosPorId = registrosPorId;
 
         // Ativa animações
-        chartContainer.classList.add('shrink');
+        contentChart.classList.add('shrink');
         detailCard.classList.add('expand');
         setTimeout(() => {
             detailCard.style.display = 'block';

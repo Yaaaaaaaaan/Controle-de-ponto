@@ -30,10 +30,10 @@ if ($_POST) {
         </div>
     </div>
     <div class="row" style="width: 100%;">
-        <div id="chartContainer" class="transition-card" style="height: 68vh;">
+        <div id="contentChart" class="transitionCard" style="height: 68vh;">
             <canvas id="pointControlUsersData" width="800" height="600"></canvas>
         </div>
-        <div id="detailCard" class="transition-card detailCard mt-5" style="display: none;">
+        <div id="detailCard" class="transitionCard detailCard mt-5" style="display: none;">
             <div class="headerDetailCard mt-4 mb-4 py-1 d-flex justify-content-between align-items-center">
                 <div class="text-center" style="flex-grow: 1;">
                     <h5 id="detailTitle" class="mb-0"></h5>
