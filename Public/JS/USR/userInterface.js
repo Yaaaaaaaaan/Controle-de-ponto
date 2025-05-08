@@ -23,7 +23,8 @@ function updateUIElements(userData) {
         'responseRank': userData.rank,
         'responseNickname': userData.nickname,
         'responseTheme': userData.theme,
-        'responseId': userData.id
+        'responseId': userData.id,
+        'responseToken': userData.userToken
     };
 
     Object.entries(elements).forEach(([id, value]) => {
@@ -34,6 +35,8 @@ function updateUIElements(userData) {
     // Atualiza input ID separadamente
     const idInput = document.getElementById('responseIdInput');
     if (idInput) idInput.value = userData.id;
+
+    //TODO: Verificar o responseToken para ser populado no formulário do modal de logout (inicialmente, está em layout/menu).
 }
 
 // Função para atualizar formulário de configurações
@@ -53,6 +56,8 @@ function updateSettingsForm(userData) {
 
     setupThemeSwitch(userData.theme);
 }
+
+
 
 // Configuração do switch de tema
 /*function setupThemeSwitch(theme) {

@@ -141,7 +141,12 @@ class UserController {
         }
     }
 
-    public function unAuthenticateUser() {
+    public function unAuthenticateUser(/*$userToken*/) {
+        /* // Esse código fará a implementação inicial do logout com token do localStorage
+        (tudo será passado por formulário ou requisições HTTP)
+        $description = 'Logout. ';
+        $this->createUserHistory($description, );
+        */
         // Remove dados da sessão
         if (isset($_SESSION['UserData'])) {
             unset($_SESSION['UserData']);

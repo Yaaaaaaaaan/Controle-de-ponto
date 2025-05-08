@@ -61,6 +61,7 @@
 
                                 ?>
                                 <form action="<?php $_SERVER['PHP_SELF']; ?>" method="post">
+                                    <input type="hidden" name="auth" id="tokenResponse">
                                     <input class="btn btn-link nav-link" type="submit" name="logout" value="Logout">
                                 </form>
                             </li>
