@@ -1,0 +1,72 @@
+Controle-de-Ponto/
+├── App/
+│   ├── Config/
+│   │   ├── .htaccess
+│   │   ├── db.php
+│   │   ├── db.sql
+│   │   └── árvore de diretórios.txt #Você está aqui!
+│   ├── Controller/
+│   │   ├── .htaccess
+│   │   ├── pictureController.php
+│   │   ├── PointController.php
+│   │   └── UserController.php
+│   ├── Model/
+│   │   ├── PointControl.php
+│   │   └── User.php
+│   ├── Persistence
+│   │   ├── Errors/
+│   │   │   └── ErroUserdata.txt
+│   │   ├── UserProfileImages/
+│   │   │   ├── (Random Images)
+│   │   │   └── Profile.png
+│   │   └── .htaccess
+│   └── .htaccess
+├── Public/
+│   ├── CSS/
+│   │   ├── HKG/
+│   │   │   ├── dashboard.css
+│   │   │   └── handworking.css
+│   │   ├── IDX/
+│   │   │   └── style.css
+│   │   ├── USR/
+│   │   │   ├── dashboard.css
+│   │   │   └── handworking.css
+│   │   └── boostrap.min.css
+│   ├── JS/
+│   │   ├── HKG/
+│   │   │   └── indexDashboard.js
+│   │   ├── USR/
+│   │   │   ├── indexDashboard.js
+│   │   │   └── userInterface.js
+│   │   ├── bootstrap.bundle.min.js
+│   │   ├── color-modes.js
+│   │   ├── indexedDB.js
+│   │   ├── localStorage.js
+│   │   └── script.js
+│   ├── Persistence/
+│   │   └── userData.php
+│   ├── View/
+│   │   ├── Errors/
+│   │   │   ├── .htaccess
+│   │   │   └── forbidden.php
+│   │   ├── Housekeeping/
+│   │   │   ├── index.php
+│   │   │   └── users.php
+│   │   ├── Index/
+│   │   │   ├── .htaccess
+│   │   │   ├── index.php
+│   │   │   └── register.php
+│   │   ├── Layout/
+│   │   │   ├── menu.php
+│   │   │   └── menu_housekeep.php
+│   │   └── User/
+│   │       ├── .htaccess
+│   │       ├── community.php
+│   │       ├── index.php
+│   │       ├── notes.php
+│   │       └── settings.php
+│   └── .htaccess
+├── index.php
+├── leia.txt
+├── qodana.yaml
+└── README.md
