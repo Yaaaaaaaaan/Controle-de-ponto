@@ -1,0 +1,30 @@
+Controle-de-Ponto
+->APP
+    ->Config
+
+    ->Controller
+
+    ->Model
+
+    ->Persistence
+        ->Errors
+        ->userProfileImages
+
+->Public
+    ->CSS
+        ->HKG
+        ->IDX
+        ->USR
+
+    ->JS
+        ->HKG
+        ->USR
+
+    ->Persistence
+
+    ->View
+        ->Errors
+        ->Housekeeping
+        ->Index
+        ->Layout
+        ->User

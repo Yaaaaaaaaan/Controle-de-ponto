@@ -29,6 +29,7 @@
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script src="../../JS/script.js"></script>
         <script type="module" src="../../JS/localStorage.js"></script>
+        <script type="module" src="../../JS/indexedDB.js"></script>
       </head>
         <body>       
             <nav class="navbar navbar-dark bg-dark fixed-top">
