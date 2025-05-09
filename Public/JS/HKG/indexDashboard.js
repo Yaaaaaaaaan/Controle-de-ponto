@@ -7,10 +7,10 @@ document.addEventListener('DOMContentLoaded', function() {
             label: " ",
             data: dataPoints,
             backgroundColor: [
-                'rgb(173,181,189)',
-                'rgb(32,201,151)',
-                'rgb(253,126,20)'
-            ],
+                detalhes['Verificação pendente'] && detalhes['Verificação pendente'].length > 0 ? 'rgb(173,181,189)' : '',
+                detalhes['Já verificado'] && detalhes['Já verificado'].length > 0 ? 'rgb(32,201,151)' : '',
+                detalhes['Recusado'] && detalhes['Recusado'].length > 0 ? 'rgb(253,126,20)' : ''
+            ].filter(color => color !== ''),
             hoverOffset: 4
         }]
     };
