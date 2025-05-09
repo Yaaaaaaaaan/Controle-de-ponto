@@ -1,5 +1,6 @@
 <?php
-    error_reporting(E_ALL); // Log todos os erros para depuração
+
+error_reporting(E_ALL); // Log todos os erros para depuração
     ini_set('display_errors', 0);
     ini_set('log_errors', 1);
     ini_set('error_log', '../../App/Persistence/Errors/erroUserdata.txt'); // Substitua pelo caminho real
@@ -10,29 +11,30 @@
     error_reporting(E_ALL);
     ini_set('display_errors', 1);
 
-    //TODO: Trabalhar melhores possibilidades de implementação.
-function sendJson($data, $httpCode = 200) {
-    header('Content-Type: application/json');
-    http_response_code($httpCode);
 
-    // Recursive function to sanitize only strings
-    function sanitizeStrings($value) {
-        if (is_string($value)) {
-            return htmlspecialchars(trim($value), ENT_QUOTES, 'UTF-8');
-        } elseif (is_array($value)) {
-            return array_map('sanitizeStrings', $value); // Recursively handle arrays
-        } else {
-            return $value; // Leave other data types as they are
+    function sendJson($data, $httpCode = 200) {
+        header('Content-Type: application/json');
+        http_response_code($httpCode);
+
+        // Recursive function to sanitize only strings
+        function sanitizeStrings($value) {
+            if (is_string($value)) {
+                return htmlspecialchars(trim($value), ENT_QUOTES, 'UTF-8');
+            } elseif (is_array($value)) {
+                return array_map('sanitizeStrings', $value); // Recursively handle arrays
+            } else {
+                return $value; // Leave other data types as they are
+            }
         }
+
+        $safeData = array_map('sanitizeStrings', $data); // Apply recursive sanitization
+        echo json_encode($safeData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+        exit;
     }
 
-    $safeData = array_map('sanitizeStrings', $data); // Apply recursive sanitization
-    echo json_encode($safeData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
-    exit;
-}
-
     // Função para limpar a sessão
-    function clearSession() {
+    function clearSession(): void
+    {
         unset($_SESSION['userData']);
         sendJson([
             'success' => true,
@@ -42,7 +44,8 @@ function sendJson($data, $httpCode = 200) {
     }
 
     // Função para verificar atualizações
-    function checkUpdates() {
+    function checkUpdates(): void
+    {
         if (isset($_SESSION['userData_updated']) && $_SESSION['userData_updated'] === true) {
             unset($_SESSION['userData_updated']);
             sendJson([
@@ -56,7 +59,8 @@ function sendJson($data, $httpCode = 200) {
     }
 
     // Função para sincronizar dados com a sessão
-    function syncToSession() {
+    function syncToSession(): void
+    {
         $userDataFromClient = $_POST['userData'] ?? null;
 
         if ($userDataFromClient) {
@@ -68,7 +72,8 @@ function sendJson($data, $httpCode = 200) {
     }
 
     // Função para buscar dados do usuário e imagens de perfil
-    function getUserDataAndPictures() {
+    function getUserDataAndPictures(): void
+    {
         $response = [];
 
         $response['userData'] = (isset($_SESSION['userData']) && $_SESSION['userData'] != null && !isset($_SESSION['userData_processed']))
@@ -84,15 +89,22 @@ function sendJson($data, $httpCode = 200) {
     }
 
     // Função para atualizar o tema do usuário
-    function updateUserTheme(): void
-    {
-        $data = json_decode(file_get_contents('php://input'), true);
-        $theme = $data['theme'] ?? null;
+// Função para atualizar o tema do usuário usando userToken
+function updateUserTheme(): void
+{
+    $data = json_decode(file_get_contents('php://input'), true);
+    $theme = $data['theme'] ?? null;
+    $userToken = $data['userToken'] ?? null;
 
-        if ($theme !== null) {
-            include_once '../../App/controller/UserController.php';
-            $userController = new UserController();
-            $success = $userController->updateUserTheme($_SESSION['id'], $theme);
+    if ($theme !== null && $userToken !== null) {
+        include_once '../../App/controller/UserController.php';
+        $userController = new UserController();
+
+        // Consulte o banco de dados para obter o ID do usuário com base no userToken
+        $userId = $userController->getUserIdByToken($userToken); // Você precisará criar esta função no UserController
+
+        if ($userId) {
+            $success = $userController->updateUserTheme($userId, $theme);
 
             if ($success) {
                 $_SESSION['userData_updated'] = true; // Força atualização do userData
@@ -101,9 +113,12 @@ function sendJson($data, $httpCode = 200) {
                 sendJson(['success' => false, 'message' => 'Falha ao atualizar tema']);
             }
         } else {
-            sendJson(['success' => false, 'message' => 'Tema não especificado']);
+            sendJson(['success' => false, 'message' => 'Token de usuário inválido']);
         }
+    } else {
+        sendJson(['success' => false, 'message' => 'Tema ou token de usuário não especificados']);
     }
+}
 
     // Roteamento
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {

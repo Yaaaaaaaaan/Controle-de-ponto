@@ -1,6 +1,9 @@
 <?php
-include_once '../../../App/Config/db.php';
-include_once '../../../App/Model/pointControl.php';
+//include_once '../../../App/Config/db.php';
+//include_once '../../../App/Model/pointControl.php';
+require_once __DIR__ . '/../Config/db.php';
+require_once __DIR__ . '/../Model/pointControl.php';
+
 if (!defined('APP_RAN')) {
     die('Acesso não permitido.');
 }

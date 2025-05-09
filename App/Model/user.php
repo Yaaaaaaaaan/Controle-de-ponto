@@ -555,18 +555,40 @@ if (!defined('APP_RAN')) {
         }   
     }
     //TODO: Verificar possibilidades de fazer o theme chegar ao banco de dados via menu. Mas, sem ser via AJAX. Precisa ser na padronização atual, e/ou via javascript.
-    public function updateTheme($userId, $theme) {
+    public function getIdByToken(string $userToken): ?int
+    {
         try {
-            $sql = "UPDATE userdata SET udefaultTheme = :theme WHERE uid = :id";
-            $stmt = $this->conn->prepare($sql);
+            $query = "SELECT uid FROM {$this->tableNames['ut']} WHERE token = :userToken";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':userToken', $userToken, PDO::PARAM_STR);
+            $stmt->execute();
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($result && isset($result['uid'])) {
+                return $result['uid'];
+            } else {
+                return null;
+            }
+        } catch (PDOException $e) {
+            error_log("Erro ao buscar ID por token no Model: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    public function updateTheme(int $userId, int $theme): bool
+    {
+        try {
+            $query = "UPDATE {$this->tableNames['ud']} SET udefaultTheme = :theme WHERE uid = :id";
+            $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':theme', $theme, PDO::PARAM_INT);
             $stmt->bindParam(':id', $userId, PDO::PARAM_INT);
             return $stmt->execute();
         } catch (PDOException $e) {
-            error_log($e->getMessage());
+            error_log("Erro ao atualizar tema no Model: " . $e->getMessage());
             return false;
         }
     }
+
 
 //TODO: Criar função para um usuário validar a presença de outro usuário, mas, com a condição de; o usuário avaliador deverá estar com a presença confirmada no dia ao qual está sendo feita a validação do outro usuário e, tal ato deverá ocorrer no dia corrido.
     public function validatePresence($userId, $userIdToValidate, $description, $code, $currentDate, $descriptionToValidate): true

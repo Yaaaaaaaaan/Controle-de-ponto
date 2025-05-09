@@ -1,6 +1,6 @@
 <?php
-include_once '../../../App/Config/db.php';
-include_once '../../../App/Model/user.php';
+require_once __DIR__ . '/../Config/db.php';
+require_once __DIR__ . '/../Model/User.php';
 if (!defined('APP_RAN')) {
     die('Acesso não permitido.');
 }

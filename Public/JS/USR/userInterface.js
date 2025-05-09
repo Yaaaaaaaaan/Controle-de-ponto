@@ -72,46 +72,49 @@ function updateSettingsForm(userData) {
         localStorage.setItem('theme', themeSwitch.checked ? 1 : 0);
     });
 }*/
-
-async function sendThemeToServer(theme) {
-    try {
-        const response = await fetch('../../Persistence/userData.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ theme: theme })
-        });
-
-        const data = await response.json();
-        if (!data.success) {
-            console.error('Erro ao atualizar tema no servidor:', data.message);
-        }
-    } catch (error) {
-        console.error('Erro ao comunicar com o servidor:', error);
-    }
-}
-
-function setupThemeSwitch() {
+// Configuração do switch de tema
+function setupThemeSwitch(userData) {
     const themeSwitch = document.getElementById('themeSwitch');
     if (!themeSwitch) return;
 
-    let currentTheme = localStorage.getItem('theme');
-
-    if (currentTheme === null) {
-        const initialTheme = document.getElementById('responseTheme').textContent;
-        currentTheme = initialTheme;
-    }
-
-    themeSwitch.checked = currentTheme == 1;
+    themeSwitch.checked = userData.theme == 1;
     updateTheme(themeSwitch.checked);
 
     themeSwitch.addEventListener('click', () => {
         const newTheme = themeSwitch.checked ? 1 : 0;
         updateTheme(themeSwitch.checked);
-        localStorage.setItem('theme', newTheme);
-        sendThemeToServer(newTheme);
+
+        // Atualiza a propriedade theme no objeto userData
+        userData.theme = newTheme;
+        console.log("userData.theme atualizado:", userData.theme);
+
+        // Salva o objeto userData atualizado no localStorage
+        localStorage.setItem('userData', JSON.stringify(userData));
+
+        // Envia userToken e theme para o servidor
+        sendUserDataToServer(userData.userToken, newTheme);
     });
+}
+
+async function sendUserDataToServer(userToken, theme) {
+    try {
+        const response = await fetch('../../Persistence/userData.php', { // Ajuste o caminho se necessário
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ userToken: userToken, theme: theme }) // Envia userToken e theme
+        });
+
+        const data = await response.json();
+        if (!data.success) {
+            console.error('Erro ao atualizar tema no servidor:', data.message);
+        } else {
+            console.log('Tema atualizado no servidor com sucesso!');
+        }
+    } catch (error) {
+        console.error('Erro ao comunicar com o servidor:', error);
+    }
 }
 
 function updateTheme(isDark) {
@@ -121,23 +124,39 @@ function updateTheme(isDark) {
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', async () => {
-    const userData = await processUserData();
+    const userDataFromStorage = localStorage.getItem('userData');
+    let userData;
+
+    if (userDataFromStorage) {
+        userData = JSON.parse(userDataFromStorage);
+    } else {
+        userData = await processUserData();
+        if (userData) {
+            localStorage.setItem('userData', JSON.stringify(userData)); // Salva userData inicial
+        }
+    }
+
     if (userData) {
         updateUIPicture(userData.profileUser);
         updateUIElements(userData);
         updateSettingsForm(userData);
-        setupThemeSwitch();
+        setupThemeSwitch(userData); // Passa userData para setupThemeSwitch
     }
 
     await lastProfilePictures();
 
     // Verifica atualizações periodicamente
     setInterval(async () => {
-        const updatedData = await checkForUserDataUpdates();
-        if (updatedData) {
-            updateUIPicture(updatedData.profileUser);
-            updateUIElements(updatedData);
-            updateSettingsForm(updatedData);
+        const updatedDataFromServer = await checkForUserDataUpdates();
+        if (updatedDataFromServer) {
+            updateUIPicture(updatedDataFromServer.profileUser);
+            updateUIElements(updatedDataFromServer);
+            updateSettingsForm(updatedDataFromServer);
+
+            // Atualiza o userData local e no localStorage com os dados do servidor
+            localStorage.setItem('userData', JSON.stringify(updatedDataFromServer));
+            // Se setupThemeSwitch precisar ser re-inicializado com os novos dados:
+            // setupThemeSwitch(updatedDataFromServer);
         }
     }, 5000);
 });
