@@ -149,7 +149,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        // Atualizar apenas o conteúdo do detailContent em vez de todo o detailCard
+        // Atualizar apenas o conteúdo do detailContent em vez do detailCard completo.
         const detailContent = document.getElementById('detailContent');
         detailContent.innerHTML = `
         <div class="card-body">

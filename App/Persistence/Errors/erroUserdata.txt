@@ -150,3 +150,318 @@
 [09-May-2025 02:43:15 Europe/Berlin] PHP Warning:  include_once(): Failed opening '../../../App/Config/db.php' for inclusion (include_path='D:\xampp\php\PEAR') in D:\xampp\htdocs\Controle-de-ponto\App\Controller\userController.php on line 5
 [09-May-2025 02:43:15 Europe/Berlin] PHP Warning:  include_once(../../../App/Model/user.php): Failed to open stream: No such file or directory in D:\xampp\htdocs\Controle-de-ponto\App\Controller\userController.php on line 6
 [09-May-2025 02:43:15 Europe/Berlin] PHP Warning:  include_once(): Failed opening '../../../App/Model/user.php' for inclusion (include_path='D:\xampp\php\PEAR') in D:\xampp\htdocs\Controle-de-ponto\App\Controller\userController.php on line 6
+[09-May-2025 04:50:33 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(74): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(106): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:50:33 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(74): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(106): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:50:33 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(74): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(106): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:50:33 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(74): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(106): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:50:45 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(74): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(106): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:50:45 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(74): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(106): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:50:45 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(74): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(106): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:50:45 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(74): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(106): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:50:48 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(74): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(106): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:50:48 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(74): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(106): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:50:48 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(74): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(106): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:50:48 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(74): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(106): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:50:49 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(74): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(106): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:50:49 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(74): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(106): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:50:49 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(74): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(106): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:50:49 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(74): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(106): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:58:09 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(82): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(114): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:58:09 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(82): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(114): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:58:09 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(82): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(114): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:58:09 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(82): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(114): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:58:18 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(82): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(114): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:58:18 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(82): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(114): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:58:18 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(82): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(114): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:58:18 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(82): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(114): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:59:22 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(82): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(114): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:59:22 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(82): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(114): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:59:22 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(82): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(114): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:59:22 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(82): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(114): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:59:25 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(82): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(114): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:59:26 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(82): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(114): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:59:26 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(82): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(114): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:59:33 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(82): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(114): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:59:33 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(82): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(114): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:59:33 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(82): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(114): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15
+[09-May-2025 04:59:33 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: trim(): Argument #1 ($string) must be of type string, array given in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php:15
+Stack trace:
+#0 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(15): trim(Array)
+#1 [internal function]: sanitizeInput(Array)
+#2 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(21): array_map('sanitizeInput', Array)
+#3 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(82): sendJson(Array)
+#4 D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php(114): getUserDataAndPictures()
+#5 {main}
+  thrown in D:\xampp\htdocs\Controle-de-ponto\Public\Persistence\userData.php on line 15

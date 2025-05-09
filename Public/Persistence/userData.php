@@ -15,13 +15,21 @@
         return htmlspecialchars(trim($data), ENT_QUOTES, 'UTF-8');
     }
 
-    // Função para enviar resposta JSON
-    function sendJson($data, $httpCode = 200) {
+    //TODO: Trabalhar melhores possibilidades de implementação.
+    /*function sendJson($data, $httpCode = 200) {
         header('Content-Type: application/json');
         http_response_code($httpCode);
-        echo json_encode($data, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+        echo json_encode(array_map('sanitizeInput', $data), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); // Escape in json_encode
         exit;
-    }
+    }*/
+
+// Função para enviar resposta JSON
+function sendJson($data, $httpCode = 200) {
+    header('Content-Type: application/json');
+    http_response_code($httpCode);
+    echo json_encode($data, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+    exit;
+}
 
     // Função para limpar a sessão
     function clearSession() {
