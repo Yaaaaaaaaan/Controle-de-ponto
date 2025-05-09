@@ -546,7 +546,9 @@ if (!defined('APP_RAN')) {
         }   
     }
     //TODO: Verificar possibilidades de fazer o theme chegar ao banco de dados via menu. Mas, sem ser via AJAX. Precisa ser na padronização atual, e/ou via javascript.
-    public function getIdByToken(string $userToken): ?int{
+    public function getIdByToken(string $userToken): ?int
+    {
+        error_log("Model/User.php - getIdByToken: userToken recebido: " . $userToken);
         try {
             $query = "SELECT uid FROM {$this->tableNames['ut']} WHERE token = :userToken";
             $stmt = $this->conn->prepare($query);
@@ -560,20 +562,27 @@ if (!defined('APP_RAN')) {
                 return null;
             }
         } catch (PDOException $e) {
-            error_log("Erro ao buscar ID por token no Model: " . $e->getMessage());
+            error_log("Model/User.php - getIdByToken: Erro PDO - " . $e->getMessage());
             return null;
         }
     }
 
-    public function updateTheme(int $userId, int $theme): bool{
+    public function updateTheme(int $userId, int $theme): bool
+    {
+        error_log("Model/User.php - updateTheme: userId recebido: " . $userId . ", theme recebido: " . $theme);
         try {
             $query = "UPDATE {$this->tableNames['ud']} SET udefaultTheme = :theme WHERE uid = :id";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':theme', $theme, PDO::PARAM_INT);
             $stmt->bindParam(':id', $userId, PDO::PARAM_INT);
-            return $stmt->execute();
+            $result = $stmt->execute();
+            error_log("Model/User.php - updateTheme: Resultado da execução: " . ($result ? 'true' : 'false'));
+            if (!$result) {
+                error_log("Model/User.php - updateTheme: Erro SQL - " . print_r($stmt->errorInfo(), true));
+            }
+            return $result;
         } catch (PDOException $e) {
-            error_log("Erro ao atualizar tema no Model: " . $e->getMessage());
+            error_log("Model/User.php - updateTheme: Erro PDO - " . $e->getMessage());
             return false;
         }
     }

@@ -228,12 +228,16 @@ class UserController {
         return $insertPointControl;
        }
 
-    public function getUserIdByToken(string $userToken): ?int {
-        return $this->user->getIdByToken($userToken);
+    public function getUserIdByToken(string $userToken): ?int
+    {
+        error_log("UserController.php - getUserIdByToken: userToken recebido: " . $userToken);
+        return $this->userModel->getIdByToken($userToken);
     }
 
-    public function updateUserTheme(int $userId, int $theme): bool {
-        return $this->user->updateTheme($userId, $theme);
+    public function updateUserTheme(int $userId, int $theme): bool
+    {
+        error_log("UserController.php - updateUserTheme: userId recebido: " . $userId . ", theme recebido: " . $theme);
+        return $this->userModel->updateTheme($userId, $theme);
     }
 
     public function validatePresence($userId, $userIdToValidate, $description, $code){ //Tudo aqui é transformação

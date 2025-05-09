@@ -86,12 +86,13 @@ function setupThemeSwitch(userData) {
 
         // Atualiza a propriedade theme no objeto userData
         userData.theme = newTheme;
-        console.log("userData.theme atualizado:", userData.theme);
+        console.log("userInterface.js - setupThemeSwitch: userData.theme atualizado:", userData.theme);
 
         // Salva o objeto userData atualizado no localStorage
         localStorage.setItem('userData', JSON.stringify(userData));
 
         // Envia userToken e theme para o servidor
+        console.log("userInterface.js - setupThemeSwitch: Enviando - userToken:", userData.userToken, "theme:", newTheme);
         sendUserDataToServer(userData.userToken, newTheme);
     });
 }
@@ -106,14 +107,16 @@ async function sendUserDataToServer(userToken, theme) {
             body: JSON.stringify({ userToken: userToken, theme: theme }) // Envia userToken e theme
         });
 
+        console.log("userInterface.js - sendUserDataToServer: Resposta do servidor:", response);
         const data = await response.json();
+        console.log("userInterface.js - sendUserDataToServer: Dados da resposta:", data);
         if (!data.success) {
-            console.error('Erro ao atualizar tema no servidor:', data.message);
+            console.error('userInterface.js - sendUserDataToServer: Erro ao atualizar tema no servidor:', data.message);
         } else {
-            console.log('Tema atualizado no servidor com sucesso!');
+            console.log('userInterface.js - sendUserDataToServer: Tema atualizado no servidor com sucesso!');
         }
     } catch (error) {
-        console.error('Erro ao comunicar com o servidor:', error);
+        console.error('userInterface.js - sendUserDataToServer: Erro ao comunicar com o servidor:', error);
     }
 }
 

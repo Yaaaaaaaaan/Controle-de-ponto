@@ -1,140 +1,129 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/../Errors/erroUserdata.txt');
 
-error_reporting(E_ALL); // Log todos os erros para depuração
-    ini_set('display_errors', 0);
-    ini_set('log_errors', 1);
-    ini_set('error_log', '../../App/Persistence/Errors/erroUserdata.txt'); // Substitua pelo caminho real
+session_start();
 
-    session_start();
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-    // Configurações de erro (desative em produção)
-    error_reporting(E_ALL);
-    ini_set('display_errors', 1);
+function sendJson($data, $httpCode = 200) {
+    header('Content-Type: application/json');
+    http_response_code($httpCode);
 
-
-    function sendJson($data, $httpCode = 200) {
-        header('Content-Type: application/json');
-        http_response_code($httpCode);
-
-        // Recursive function to sanitize only strings
-        function sanitizeStrings($value) {
-            if (is_string($value)) {
-                return htmlspecialchars(trim($value), ENT_QUOTES, 'UTF-8');
-            } elseif (is_array($value)) {
-                return array_map('sanitizeStrings', $value); // Recursively handle arrays
-            } else {
-                return $value; // Leave other data types as they are
-            }
+    function sanitizeStrings($value) {
+        if (is_string($value)) {
+            return htmlspecialchars(trim($value), ENT_QUOTES, 'UTF-8');
+        } elseif (is_array($value)) {
+            return array_map('sanitizeStrings', $value);
+        } else {
+            return $value;
         }
-
-        $safeData = array_map('sanitizeStrings', $data); // Apply recursive sanitization
-        echo json_encode($safeData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
-        exit;
     }
 
-    // Função para limpar a sessão
-    function clearSession(): void
-    {
-        unset($_SESSION['userData']);
+    $safeData = array_map('sanitizeStrings', $data);
+    echo json_encode($safeData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+    exit;
+}
+
+function clearSession() {
+    unset($_SESSION['userData']);
+    sendJson([
+        'success' => true,
+        'message' => 'Sessão limpa',
+        'doNotUpdateLocalStorage' => true
+    ]);
+}
+
+function checkUpdates() {
+    if (isset($_SESSION['userData_updated']) && $_SESSION['userData_updated'] === true) {
+        unset($_SESSION['userData_updated']);
         sendJson([
             'success' => true,
-            'message' => 'Sessão limpa',
-            'doNotUpdateLocalStorage' => true
+            'dataUpdated' => true,
+            'userData' => json_decode($_SESSION['userData'], true)
         ]);
+    } else {
+        sendJson(['success' => true, 'dataUpdated' => false]);
     }
+}
 
-    // Função para verificar atualizações
-    function checkUpdates(): void
-    {
-        if (isset($_SESSION['userData_updated']) && $_SESSION['userData_updated'] === true) {
-            unset($_SESSION['userData_updated']);
-            sendJson([
-                'success' => true,
-                'dataUpdated' => true,
-                'userData' => json_decode($_SESSION['userData'], true)
-            ]);
-        } else {
-            sendJson(['success' => true, 'dataUpdated' => false]);
-        }
+function syncToSession() {
+    $userDataFromClient = $_POST['userData'] ?? null;
+
+    if ($userDataFromClient) {
+        $_SESSION['userData'] = $userDataFromClient;
+        sendJson(['success' => true, 'message' => 'Sessão sincronizada com localStorage']);
+    } else {
+        sendJson(['success' => false, 'message' => 'Dados inválidos']);
     }
+}
 
-    // Função para sincronizar dados com a sessão
-    function syncToSession(): void
-    {
-        $userDataFromClient = $_POST['userData'] ?? null;
+function getUserDataAndPictures() {
+    $response = [];
 
-        if ($userDataFromClient) {
-            $_SESSION['userData'] = $userDataFromClient;
-            sendJson(['success' => true, 'message' => 'Sessão sincronizada com localStorage']);
-        } else {
-            sendJson(['success' => false, 'message' => 'Dados inválidos']);
-        }
-    }
+    $response['userData'] = (isset($_SESSION['userData']) && $_SESSION['userData'] != null && !isset($_SESSION['userData_processed']))
+        ? json_decode($_SESSION['userData'], true)
+        : [];
+    $response['userDataAvailable'] = !empty($response['userData']);
 
-    // Função para buscar dados do usuário e imagens de perfil
-    function getUserDataAndPictures(): void
-    {
-        $response = [];
+    $response['lastProfilePictures'] = (isset($_SESSION['lastProfilePictures']) && $_SESSION['lastProfilePictures'] != null)
+        ? $_SESSION['lastProfilePictures']
+        : [];
 
-        $response['userData'] = (isset($_SESSION['userData']) && $_SESSION['userData'] != null && !isset($_SESSION['userData_processed']))
-            ? json_decode($_SESSION['userData'], true)
-            : [];
-        $response['userDataAvailable'] = !empty($response['userData']);
+    sendJson($response);
+}
 
-        $response['lastProfilePictures'] = (isset($_SESSION['lastProfilePictures']) && $_SESSION['lastProfilePictures'] != null)
-            ? $_SESSION['lastProfilePictures']
-            : [];
+function updateUserTheme(): void
+{
+    $data = json_decode(file_get_contents('php://input'), true);
+    $theme = $data['theme'] ?? null;
+    $userToken = $data['userToken'] ?? null;
 
-        sendJson($response);
-    }
+    error_log("userData.php - updateUserTheme: Dados recebidos - theme: " . ($theme ?? 'null') . ", userToken: " . ($userToken ?? 'null'));
 
-    // Função para atualizar o tema do usuário usando userToken
-    function updateUserTheme(): void
-    {
-        $data = json_decode(file_get_contents('php://input'), true);
-        $theme = $data['theme'] ?? null;
-        $userToken = $data['userToken'] ?? null;
+    if ($theme !== null && $userToken !== null) {
+        include_once __DIR__ . '/../../controller/UserController.php';
+        $userController = new UserController();
+        $userId = $userController->getUserIdByToken($userToken);
+        error_log("userData.php - updateUserTheme: ID do usuário obtido: " . ($userId ?? 'null'));
 
-        if ($theme !== null && $userToken !== null) {
-            include_once '../../App/controller/UserController.php';
-            $userController = new UserController();
+        if ($userId) {
+            $success = $userController->updateUserTheme($userId, $theme);
+            error_log("userData.php - updateUserTheme: Resultado da atualização: " . ($success ? 'true' : 'false'));
 
-            // Consulte o banco de dados para obter o ID do usuário com base no userToken
-            $userId = $userController->getUserIdByToken($userToken); // Você precisará criar esta função no UserController
-
-            if ($userId) {
-                $success = $userController->updateUserTheme($userId, $theme);
-
-                if ($success) {
-                    $_SESSION['userData_updated'] = true; // Força atualização do userData
-                    sendJson(['success' => true, 'message' => 'Tema atualizado']);
-                } else {
-                    sendJson(['success' => false, 'message' => 'Falha ao atualizar tema']);
-                }
+            if ($success) {
+                $_SESSION['userData_updated'] = true;
+                sendJson(['success' => true, 'message' => 'Tema atualizado']);
             } else {
-                sendJson(['success' => false, 'message' => 'Token de usuário inválido']);
+                sendJson(['success' => false, 'message' => 'Falha ao atualizar tema']);
             }
         } else {
-            sendJson(['success' => false, 'message' => 'Tema ou token de usuário não especificados']);
-        }
-    }
-
-    // Roteamento
-    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        if (isset($_GET['clearSession']) && $_GET['clearSession'] === 'true') {
-            clearSession();
-        } elseif (isset($_GET['checkUpdates']) && $_GET['checkUpdates'] === 'true') {
-            checkUpdates();
-        } else {
-            getUserDataAndPictures();
-        }
-    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        if (isset($_POST['syncToSession']) && $_POST['syncToSession'] === 'true') {
-            syncToSession();
-        } else {
-            updateUserTheme();
+            sendJson(['success' => false, 'message' => 'Token de usuário inválido']);
         }
     } else {
-        sendJson(['success' => false, 'message' => 'Método não permitido'], 405);
+        sendJson(['success' => false, 'message' => 'Tema ou token de usuário não especificados']);
     }
+}
+
+// Roteamento
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    if (isset($_GET['clearSession']) && $_GET['clearSession'] === 'true') {
+        clearSession();
+    } elseif (isset($_GET['checkUpdates']) && $_GET['checkUpdates'] === 'true') {
+        checkUpdates();
+    } else {
+        getUserDataAndPictures();
+    }
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['syncToSession']) && $_POST['syncToSession'] === 'true') {
+        syncToSession();
+    } else {
+        updateUserTheme();
+    }
+} else {
+    sendJson(['success' => false, 'message' => 'Método não permitido'], 405);
+}
 ?>
