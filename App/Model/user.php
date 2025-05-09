@@ -6,8 +6,7 @@ if (!defined('APP_RAN')) {
   die('Acesso não permitido');
 }
 
-#[AllowDynamicProperties] class User
-{
+#[AllowDynamicProperties] class User{
     private $conn;
     private $tableNames = [
         'ud' => 'userdata',
@@ -39,13 +38,11 @@ if (!defined('APP_RAN')) {
     public $descricao;
     public $registro;
 
-    public function __construct($db)
-    {
+    public function __construct($db){
         $this->conn = $db;
     }
 
-    public function createUser(): bool
-    {
+    public function createUser(): bool{
         // Verificar se todos os dados necessários foram fornecidos
         if (empty($this->name) || empty($this->email) || empty($this->password) ||
             empty($this->rank) || empty($this->nickname)) {
@@ -153,8 +150,7 @@ if (!defined('APP_RAN')) {
      * @param string $triggerName Nome do trigger a ser verificado
      * @return bool Retorna true se o trigger existir, false caso contrário
      */
-    private function checkTriggerExists($triggerName): bool
-    {
+    private function checkTriggerExists($triggerName): bool{
         $query = "SELECT COUNT(*) AS trigger_exists
           FROM information_schema.triggers
           WHERE trigger_name = :triggerName";
@@ -168,8 +164,7 @@ if (!defined('APP_RAN')) {
         return (int)$result['trigger_exists'] === 1;
     }
 
-    public function __destruct()
-    {
+    public function __destruct(){
         // Forma correta de fechar uma conexão PDO
         if ($this->conn) {
             $this->conn = null;
@@ -179,8 +174,7 @@ if (!defined('APP_RAN')) {
     /**
      * @throws RandomException
      */
-    public function authenticateUser(): bool
-    {
+    public function authenticateUser(): bool{
         if (!empty($this->nickname) && !empty($this->password)) {
             $userToken = bin2hex(random_bytes(32));
 
@@ -359,8 +353,7 @@ if (!defined('APP_RAN')) {
         return false;
     }
 
-    public function createUserHistory($description, $userId): bool
-    {
+    public function createUserHistory($description, $userId): bool{
         try{
             $ip = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'];
             $queryInsert = "INSERT INTO {$this->tableNames['hs']} (description, uidUserFK) VALUES (:description, :id)";
@@ -407,8 +400,7 @@ if (!defined('APP_RAN')) {
       }
 
       
-      public function setPictures($picture, $directory): bool
-      { //insere imagens no banco de dados.
+      public function setPictures($picture, $directory): bool{ //insere imagens no banco de dados.
         $this->picture = $picture;
         $this->directory = $directory;
         $this->id = $_SESSION['id'];
@@ -436,8 +428,7 @@ if (!defined('APP_RAN')) {
         return $pictures;
     }
 
-    public function updateProfilePicture($userId, $pictureId): bool
-    {
+    public function updateProfilePicture($userId, $pictureId): bool{
         try {
             // Inicia uma transação
             $this->conn->beginTransaction();
@@ -555,8 +546,7 @@ if (!defined('APP_RAN')) {
         }   
     }
     //TODO: Verificar possibilidades de fazer o theme chegar ao banco de dados via menu. Mas, sem ser via AJAX. Precisa ser na padronização atual, e/ou via javascript.
-    public function getIdByToken(string $userToken): ?int
-    {
+    public function getIdByToken(string $userToken): ?int{
         try {
             $query = "SELECT uid FROM {$this->tableNames['ut']} WHERE token = :userToken";
             $stmt = $this->conn->prepare($query);
@@ -575,8 +565,7 @@ if (!defined('APP_RAN')) {
         }
     }
 
-    public function updateTheme(int $userId, int $theme): bool
-    {
+    public function updateTheme(int $userId, int $theme): bool{
         try {
             $query = "UPDATE {$this->tableNames['ud']} SET udefaultTheme = :theme WHERE uid = :id";
             $stmt = $this->conn->prepare($query);
@@ -591,8 +580,7 @@ if (!defined('APP_RAN')) {
 
 
 //TODO: Criar função para um usuário validar a presença de outro usuário, mas, com a condição de; o usuário avaliador deverá estar com a presença confirmada no dia ao qual está sendo feita a validação do outro usuário e, tal ato deverá ocorrer no dia corrido.
-    public function validatePresence($userId, $userIdToValidate, $description, $code, $currentDate, $descriptionToValidate): true
-    {
+    public function validatePresence($userId, $userIdToValidate, $description, $code, $currentDate, $descriptionToValidate): true{
         $this->userId = $userId;
         $this->userIdToValidate = $userIdToValidate;
         $this->description = $description;

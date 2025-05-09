@@ -88,37 +88,36 @@ error_reporting(E_ALL); // Log todos os erros para depuração
         sendJson($response);
     }
 
-    // Função para atualizar o tema do usuário
-// Função para atualizar o tema do usuário usando userToken
-function updateUserTheme(): void
-{
-    $data = json_decode(file_get_contents('php://input'), true);
-    $theme = $data['theme'] ?? null;
-    $userToken = $data['userToken'] ?? null;
+    // Função para atualizar o tema do usuário usando userToken
+    function updateUserTheme(): void
+    {
+        $data = json_decode(file_get_contents('php://input'), true);
+        $theme = $data['theme'] ?? null;
+        $userToken = $data['userToken'] ?? null;
 
-    if ($theme !== null && $userToken !== null) {
-        include_once '../../App/controller/UserController.php';
-        $userController = new UserController();
+        if ($theme !== null && $userToken !== null) {
+            include_once '../../App/controller/UserController.php';
+            $userController = new UserController();
 
-        // Consulte o banco de dados para obter o ID do usuário com base no userToken
-        $userId = $userController->getUserIdByToken($userToken); // Você precisará criar esta função no UserController
+            // Consulte o banco de dados para obter o ID do usuário com base no userToken
+            $userId = $userController->getUserIdByToken($userToken); // Você precisará criar esta função no UserController
 
-        if ($userId) {
-            $success = $userController->updateUserTheme($userId, $theme);
+            if ($userId) {
+                $success = $userController->updateUserTheme($userId, $theme);
 
-            if ($success) {
-                $_SESSION['userData_updated'] = true; // Força atualização do userData
-                sendJson(['success' => true, 'message' => 'Tema atualizado']);
+                if ($success) {
+                    $_SESSION['userData_updated'] = true; // Força atualização do userData
+                    sendJson(['success' => true, 'message' => 'Tema atualizado']);
+                } else {
+                    sendJson(['success' => false, 'message' => 'Falha ao atualizar tema']);
+                }
             } else {
-                sendJson(['success' => false, 'message' => 'Falha ao atualizar tema']);
+                sendJson(['success' => false, 'message' => 'Token de usuário inválido']);
             }
         } else {
-            sendJson(['success' => false, 'message' => 'Token de usuário inválido']);
+            sendJson(['success' => false, 'message' => 'Tema ou token de usuário não especificados']);
         }
-    } else {
-        sendJson(['success' => false, 'message' => 'Tema ou token de usuário não especificados']);
     }
-}
 
     // Roteamento
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {

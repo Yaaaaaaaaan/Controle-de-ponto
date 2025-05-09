@@ -7,20 +7,17 @@ require_once __DIR__ . '/../Model/pointControl.php';
 if (!defined('APP_RAN')) {
     die('Acesso não permitido.');
 }
-class PointController
-{
+class PointController{
     private $db;
     private $pointControl;
 
-    public function __construct()
-    {
+    public function __construct(){
         $database = new Database();
         $this->db = $database->getConnection();
         $this->pointControl = new PointControl($this->db);
     }
 
-    public function getPointControl($id): array
-    {
+    public function getPointControl($id): array{
         return $this->pointControl->getPointControlData($id);
     }
 
