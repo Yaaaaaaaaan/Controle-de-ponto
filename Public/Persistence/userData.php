@@ -9,11 +9,13 @@ session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-function sendJson($data, $httpCode = 200) {
+function sendJson($data, $httpCode = 200)
+{
     header('Content-Type: application/json');
     http_response_code($httpCode);
 
-    function sanitizeStrings($value) {
+    function sanitizeStrings($value)
+    {
         if (is_string($value)) {
             return htmlspecialchars(trim($value), ENT_QUOTES, 'UTF-8');
         } elseif (is_array($value)) {
@@ -28,7 +30,8 @@ function sendJson($data, $httpCode = 200) {
     exit;
 }
 
-function clearSession() {
+function clearSession()
+{
     unset($_SESSION['userData']);
     sendJson([
         'success' => true,
@@ -37,7 +40,8 @@ function clearSession() {
     ]);
 }
 
-function checkUpdates() {
+function checkUpdates()
+{
     if (isset($_SESSION['userData_updated']) && $_SESSION['userData_updated'] === true) {
         unset($_SESSION['userData_updated']);
         sendJson([
@@ -50,28 +54,32 @@ function checkUpdates() {
     }
 }
 
-function syncToSession() {
+function syncToSession()
+{
     $userDataFromClient = $_POST['userData'] ?? null;
 
     if ($userDataFromClient) {
-        $_SESSION['userData'] = $userDataFromClient;
-        sendJson(['success' => true, 'message' => 'Sessão sincronizada com localStorage']);
+        $_SESSION['userData'] = json_encode($userDataFromClient); // Armazena como JSON
+        sendJson(['success' => true, 'message' => 'Sessão sincronizada com IndexedDB']);
     } else {
         sendJson(['success' => false, 'message' => 'Dados inválidos']);
     }
 }
 
-function getUserDataAndPictures() {
+function getUserDataAndPictures()
+{
     $response = [];
 
     $response['userData'] = (isset($_SESSION['userData']) && $_SESSION['userData'] != null && !isset($_SESSION['userData_processed']))
         ? json_decode($_SESSION['userData'], true)
         : [];
-    $response['userDataAvailable'] = !empty($response['userData']);
+    //$response['userDataAvailable'] = !empty($response['userData']);
 
-    $response['lastProfilePictures'] = (isset($_SESSION['lastProfilePictures']) && $_SESSION['lastProfilePictures'] != null)
-        ? $_SESSION['lastProfilePictures']
-        : [];
+    //$response['lastProfilePictures'] = (isset($_SESSION['lastProfilePictures']) && $_SESSION['lastProfilePictures'] != null)
+        //? $_SESSION['lastProfilePictures']
+        //: [];
+    error_log("userData.php: Chamada a getUserDataAndPictures");
+    error_log("userData.php: Dados da sessão: " . print_r($_SESSION, true));
 
     sendJson($response);
 }

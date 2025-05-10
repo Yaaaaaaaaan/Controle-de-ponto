@@ -1,11 +1,15 @@
-import { processUserData, checkForUserDataUpdates, lastProfilePictures } from '../localStorage.js';
+/*import { processUserData, checkForUserDataUpdates, lastProfilePictures } from '../JS/localStorage.js'; // Ajuste o caminho*/
+import { updateUser, processUserData, syncIndexedDBToServer, syncServerToIndexedDB, getAllUsers } from '../indexedDB/Model.js';
+
 
 // Função para atualizar imagem de perfil
 function updateUIPicture(profileUser) {
     if (!profileUser) return;
 
+
     const imageBasePath = '/controle-de-ponto/App/Persistence/userProfileImages/';
     const srcImage = imageBasePath + profileUser.replace(/"/g, '');
+
 
     ['pPicture', 'pPictureModal'].forEach(id => {
         const element = document.getElementById(id);
@@ -13,8 +17,13 @@ function updateUIPicture(profileUser) {
     });
 }
 
+
 // Função para atualizar elementos da interface
 function updateUIElements(userData) {
+    if (!userData || !userData.name) {
+        console.error("updateUIElements: Dados de usuário inválidos ou incompletos", userData);
+        return;
+    }
     const elements = {
         'responseName': userData.name,
         'responseNameCurto': `Olá, ${userData.name.split(' ')[0]}`,
@@ -32,93 +41,50 @@ function updateUIElements(userData) {
         if (element) element.textContent = value;
     });
 
-    // Atualiza input ID separadamente
     const idInput = document.getElementById('responseIdInput');
     if (idInput) idInput.value = userData.id;
-
-    //TODO: Verificar o responseToken para ser populado no formulário do modal de logout (inicialmente, está em layout/menu).
 }
 
 // Função para atualizar formulário de configurações
 function updateSettingsForm(userData) {
     if (!window.location.pathname.includes('/User/settings.php')) return;
 
+
     const formFields = {
-        'floatingInputName': userData.name,
-        'floatingInputEmail': userData.email,
-        'floatingInputNickname': userData.nickname
+        'settingsName': userData.name,
+        'settingsEmail': userData.email,
+        'settingsNickname': userData.nickname,
+        'settingsRank': userData.rank,
+        'settingsId': userData.id,
+        'settingsToken': userData.userToken
     };
+
 
     Object.entries(formFields).forEach(([id, value]) => {
         const element = document.getElementById(id);
         if (element) element.value = value;
     });
-
-    setupThemeSwitch(userData.theme);
 }
 
 
-
-// Configuração do switch de tema
-/*function setupThemeSwitch(theme) {
-    const themeSwitch = document.getElementById('themeSwitch');
-    if (!themeSwitch) return;
-
-    themeSwitch.checked = theme == 1;
-    updateTheme(themeSwitch.checked);
-
-    themeSwitch.addEventListener('click', () => {
-        updateTheme(themeSwitch.checked);
-        localStorage.setItem('theme', themeSwitch.checked ? 1 : 0);
-    });
-}*/
-// Configuração do switch de tema
-function setupThemeSwitch(userData) {
-    const themeSwitch = document.getElementById('themeSwitch');
-    if (!themeSwitch) return;
-
-    themeSwitch.checked = userData.theme == 1;
-    updateTheme(themeSwitch.checked);
-
-    themeSwitch.addEventListener('click', () => {
-        const newTheme = themeSwitch.checked ? 1 : 0;
-        updateTheme(themeSwitch.checked);
-
-        // Atualiza a propriedade theme no objeto userData
-        userData.theme = newTheme;
-        console.log("userInterface.js - setupThemeSwitch: userData.theme atualizado:", userData.theme);
-
-        // Salva o objeto userData atualizado no localStorage
-        localStorage.setItem('userData', JSON.stringify(userData));
-
-        // Envia userToken e theme para o servidor
-        console.log("userInterface.js - setupThemeSwitch: Enviando - userToken:", userData.userToken, "theme:", newTheme);
-        sendUserDataToServer(userData.userToken, newTheme);
-    });
-}
-
-async function sendUserDataToServer(userToken, theme) {
+async function sendUserDataToServer(userData) {
     try {
-        const response = await fetch('../../Persistence/userData.php', { // Ajuste o caminho se necessário
+        const response = await fetch('../../Persistence/userData.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ userToken: userToken, theme: theme }) // Envia userToken e theme
+            body: JSON.stringify(userData)
         });
-
-        console.log("userInterface.js - sendUserDataToServer: Resposta do servidor:", response);
         const data = await response.json();
-        console.log("userInterface.js - sendUserDataToServer: Dados da resposta:", data);
-        if (!data.success) {
-            console.error('userInterface.js - sendUserDataToServer: Erro ao atualizar tema no servidor:', data.message);
-        } else {
-            console.log('userInterface.js - sendUserDataToServer: Tema atualizado no servidor com sucesso!');
+        if (data.success) {
+            console.log('Dados do usuário sincronizado no servidor com sucesso!');
         }
     } catch (error) {
         console.error('userInterface.js - sendUserDataToServer: Erro ao comunicar com o servidor:', error);
     }
 }
+
 
 function updateTheme(isDark) {
     document.body.dataset.bsTheme = isDark ? 'dark' : 'light';
@@ -127,42 +93,49 @@ function updateTheme(isDark) {
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', async () => {
-    const userDataFromStorage = localStorage.getItem('userData');
-    let userData;
 
-    if (userDataFromStorage) {
-        userData = JSON.parse(userDataFromStorage);
-    } else {
-        userData = await processUserData();
-        if (userData) {
-            localStorage.setItem('userData', JSON.stringify(userData)); // Salva userData inicial
+    try {
+        const localUserData = await getAllUsers(); // Busca dados locais primeiro
+        if (localUserData && localUserData.length > 0) {
+            updateUIPicture(localUserData[0].profileUser);
+            updateUIElements(localUserData[0]);
+            updateSettingsForm(localUserData[0]);
         }
-    }
 
-    if (userData) {
-        updateUIPicture(userData.profileUser);
-        updateUIElements(userData);
-        updateSettingsForm(userData);
-        setupThemeSwitch(userData); // Passa userData para setupThemeSwitch
-    }
-
-    await lastProfilePictures();
-
-    // Verifica atualizações periodicamente
-    setInterval(async () => {
-        const updatedDataFromServer = await checkForUserDataUpdates();
-        if (updatedDataFromServer) {
-            updateUIPicture(updatedDataFromServer.profileUser);
-            updateUIElements(updatedDataFromServer);
-            updateSettingsForm(updatedDataFromServer);
-
-            // Atualiza o userData local e no localStorage com os dados do servidor
-            localStorage.setItem('userData', JSON.stringify(updatedDataFromServer));
-            // Se setupThemeSwitch precisar ser re-inicializado com os novos dados:
-            // setupThemeSwitch(updatedDataFromServer);
+        const serverUserData = await processUserData();
+        if (serverUserData && serverUserData.name) {
+            updateUIPicture(serverUserData.profileUser);
+            updateUIElements(serverUserData);
+            updateSettingsForm(serverUserData);
         }
-    }, 5000);
+
+        // Verifica atualizações periodicamente (e sincroniza o IndexedDB com o servidor)
+        setInterval(async () => {
+            try {
+                await syncServerToIndexedDB();
+                const localData = await getAllUsers();
+                if (localData && localData.length > 0) {
+                    const { userToken, theme } = localData[0];
+                    await syncIndexedDBToServer(userToken, theme);
+                }
+                const updatedDataFromServer = await getAllUsers(); // Verifique se getAllUsers() retorna os dados no formato esperado
+                if (updatedDataFromServer && updatedDataFromServer.length > 0) {
+                    updateUIPicture(updatedDataFromServer[0].profileUser);
+                    updateUIElements(updatedDataFromServer[0]);
+                    updateSettingsForm(updatedDataFromServer[0]);
+                }
+            } catch (error) {
+                //console.error("Erro no loop de atualização:", error);
+            }
+        }, 5000);
+    } catch (error) {
+        //console.error("Erro durante a inicialização:", error);
+    }
 });
 
+
 // Exporta funções que podem ser necessárias em outros arquivos
-export { updateUIPicture, updateUIElements, updateSettingsForm };
+export {
+    updateUIPicture,
+    updateUIElements
+};

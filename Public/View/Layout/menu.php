@@ -20,6 +20,7 @@
 <html lang="pt-br">
     <head>
         <title>Controle de ponto</title>
+        <link rel="icon" href="../../Persistence/SystemPics/logo.png" type="image/x-icon">
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
@@ -28,8 +29,7 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script src="../../JS/script.js"></script>
-        <script type="module" src="../../JS/localStorage.js"></script>
-        <script type="module" src="../../JS/indexedDB.js"></script>
+        <!--<script type="module" src="../../JS/localStorage.js"></script>-->
       </head>
         <body>       
             <nav class="navbar navbar-dark bg-dark fixed-top">
@@ -123,10 +123,10 @@
             </div>
             <script type="module" src="../../JS/localStorage.js"></script>
             <script type="module" src="../../JS/USR/userInterface.js"></script>
+            <script type="module" src="../../JS/indexedDB/Model.js"></script>
             <script type="module">
-                import { processUserData } from '../../JS/localStorage.js';
                 import { updateUIElements } from '../../JS/USR/userInterface.js';
-
+                import { processUserData } from '../../JS/indexedDB/Model.js';
                 document.addEventListener('DOMContentLoaded', async () => {
                     const userData = await processUserData();
                     if (userData) {

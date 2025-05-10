@@ -35,6 +35,9 @@ Controle-de-Ponto/
 │   ├── JS/
 │   │   ├── HKG/
 │   │   │   └── indexDashboard.js
+│   │   ├── indexedDB/
+│   │   │   ├── Config.js # Cria o banco de dados e as storeNames
+│   │   │   └── Model.js # Manipula os dados das storeNames com CRUD
 │   │   ├── USR/
 │   │   │   ├── indexDashboard.js
 │   │   │   └── userInterface.js
@@ -44,6 +47,8 @@ Controle-de-Ponto/
 │   │   ├── localStorage.js
 │   │   └── script.js
 │   ├── Persistence/
+│   │   ├── SystemPics
+│   │   │   └── logo.png
 │   │   └── userData.php
 │   ├── View/
 │   │   ├── Errors/

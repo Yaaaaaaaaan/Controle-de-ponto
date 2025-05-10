@@ -122,10 +122,10 @@
                 </div>
             </div>
         </div>
-        <script type="module" src="../../JS/localStorage.js"></script>
+        <script type="module" src="../../JS/indexedDB/Model.js"></script>
         <script type="module" src="../../JS/USR/userInterface.js"></script>
         <script type="module">
-            import { processUserData } from '../../JS/localStorage.js';
+            import { processUserData, syncServerToIndexedDB } from '../../JS/indexedDB/Model.js';
             import { updateUIElements } from '../../JS/USR/userInterface.js';
 
             document.addEventListener('DOMContentLoaded', async () => {
