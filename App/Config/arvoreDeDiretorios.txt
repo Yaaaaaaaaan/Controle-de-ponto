@@ -1,12 +1,12 @@
 Controle-de-Ponto/
 ├── App/
 │   ├── Config/
-│   │   ├── .htaccess
-│   │   ├── db.php
-│   │   ├── db.sql
-│   │   └── árvore de diretórios.txt #Você está aqui!
+│   │   ├── .htaccess                                                    # Controlador de acesso a diretório e arquivos
+│   │   ├── db.php                                                             # Construtor de acesso ao banco de dados
+│   │   ├── db.sql                                                                          # Arquivo do banco de dados
+│   │   └── árvore de diretórios.txt                                                                  # Você está aqui!
 │   ├── Controller/
-│   │   ├── .htaccess
+│   │   ├── .htaccess                                                    # Controlador de acesso a diretório e arquivos
 │   │   ├── pictureController.php
 │   │   ├── PointController.php
 │   │   └── UserController.php
@@ -19,8 +19,8 @@ Controle-de-Ponto/
 │   │   ├── UserProfileImages/
 │   │   │   ├── (Random Images)
 │   │   │   └── Profile.png
-│   │   └── .htaccess
-│   └── .htaccess
+│   │   └── .htaccess                                                    # Controlador de acesso a diretório e arquivos
+│   └── .htaccess                                                        # Controlador de acesso a diretório e arquivos
 ├── Public/
 │   ├── CSS/
 │   │   ├── HKG/
@@ -36,11 +36,11 @@ Controle-de-Ponto/
 │   │   ├── HKG/
 │   │   │   └── indexDashboard.js
 │   │   ├── indexedDB/
-│   │   │   ├── Config.js # Cria o banco de dados e as storeNames
-│   │   │   └── Model.js # Manipula os dados das storeNames com CRUD
+│   │   │   ├── Config.js                                                       # Cria o banco de dados e as storeNames
+│   │   │   └── Model.js                                                    # Manipula os dados das storeNames com CRUD
 │   │   ├── USR/
-│   │   │   ├── indexDashboard.js
-│   │   │   └── userInterface.js
+│   │   │   ├── indexDashboard.js                                       # Cria a parte lógica do dashboard e seus dados
+│   │   │   └── userInterface.js                               # Faz o papel de View com os dados recebidos do Model.js
 │   │   ├── bootstrap.bundle.min.js
 │   │   ├── color-modes.js
 │   │   ├── indexedDB.js
@@ -52,27 +52,27 @@ Controle-de-Ponto/
 │   │   └── userData.php
 │   ├── View/
 │   │   ├── Errors/
-│   │   │   ├── .htaccess
+│   │   │   ├── .htaccess                                                # Controlador de acesso a diretório e arquivos
 │   │   │   └── forbidden.php
 │   │   ├── Housekeeping/
 │   │   │   ├── index.php
 │   │   │   └── users.php
 │   │   ├── Index/
-│   │   │   ├── .htaccess
+│   │   │   ├── .htaccess                                                # Controlador de acesso a diretório e arquivos
 │   │   │   ├── index.php
 │   │   │   └── register.php
 │   │   ├── Layout/
 │   │   │   ├── menu.php
 │   │   │   └── menu_housekeep.php
 │   │   └── User/
-│   │       ├── .htaccess
+│   │       ├── .htaccess                                                # Controlador de acesso a diretório e arquivos
 │   │       ├── community.php
 │   │       ├── index.php
 │   │       ├── notes.php
 │   │       └── settings.php
 │   ├── service.worker.js
-│   └── .htaccess
+│   └── .htaccess                                                        # Controlador de acesso a diretório e arquivos
 ├── index.php
 ├── leia.txt
 ├── qodana.yaml
-└── README.md
+└── README.md                                                                # Arquivo inicial do repositório do Github
