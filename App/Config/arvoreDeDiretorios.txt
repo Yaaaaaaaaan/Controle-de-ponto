@@ -70,6 +70,7 @@ Controle-de-Ponto/
 │   │       ├── index.php
 │   │       ├── notes.php
 │   │       └── settings.php
+│   ├── service.worker.js
 │   └── .htaccess
 ├── index.php
 ├── leia.txt
