@@ -75,7 +75,7 @@ Controle-de-Ponto/
 │   │       ├── index.php
 │   │       ├── notes.php
 │   │       └── settings.php
-│   ├── service.worker.js
+│   ├── service-worker.js
 │   └── .htaccess                                                        # Controlador de acesso a diretório e arquivos
 ├── index.php
 ├── leia.txt

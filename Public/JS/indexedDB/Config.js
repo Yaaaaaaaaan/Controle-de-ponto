@@ -20,12 +20,11 @@ function initializeDB() {
             const db = event.target.result;
             if (!db.objectStoreNames.contains(userDataStoreName)) {
                 const userDataStore = db.createObjectStore(userDataStoreName, {
-                    keyPath: 'userToken',
-                    Index: ''
+                    keyPath: 'userToken'
                 });
-                userDataStore.createIndex('nickname', 'nickname', {
-                    unique: true
-                });
+                //userDataStore.createIndex('nickname', 'nickname', {
+                //    unique: true
+                //});
             }
         };
 
