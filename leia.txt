@@ -1,7 +1,7 @@
 
 
 
-A fazer:
+A fazer (11/05/2025):
 
 -> Adaptação da aplicação para service-worker (cache offline):
     + Módulo de autenticação de usuário (indexedDB):
