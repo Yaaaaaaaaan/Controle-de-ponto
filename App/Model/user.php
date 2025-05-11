@@ -192,14 +192,6 @@ if (!defined('APP_RAN')) {
 
                 if ($stmt->rowCount() > 0) {
                     $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-                    // Debug temporário (remova em produção)
-                    echo "<pre>";
-                    echo "Digitada: " . $this->password . "\n";
-                    echo "No banco: " . $row['upassword'] . "\n";
-                    var_dump(password_verify($this->password, $row['upassword']));
-                    echo "</pre>";
-
                     if (password_verify($this->password, $row['upassword'])) {
                         try {
                             $this->conn->beginTransaction();

@@ -1,3 +1,5 @@
+-------------------------- ------------------ -----------------           # Diagrama da árvore de diretórios do projeto
+
 Controle-de-Ponto/
 ├── App/
 │   ├── Config/
@@ -43,7 +45,7 @@ Controle-de-Ponto/
 │   │   │   └── userInterface.js                               # Faz o papel de View com os dados recebidos do Model.js
 │   │   ├── bootstrap.bundle.min.js
 │   │   ├── color-modes.js
-│   │   ├── indexedDB.js
+│   │   ├── authController.js
 │   │   ├── localStorage.js
 │   │   └── script.js
 │   ├── Persistence/
@@ -76,3 +78,13 @@ Controle-de-Ponto/
 ├── leia.txt
 ├── qodana.yaml
 └── README.md                                                                # Arquivo inicial do repositório do Github
+
+
+ -------------------------- ------------------ -----------------           # Diagrama da lógica implementada em IndexDB
+
+Banco de Dados (Database): PCDB
+    └── Object Store: userData
+        ├── Dados:
+        │   ├── userToken (Chave Primária)
+        │   ├── Outras propriedades do usuário (name, email, etc.)
+        ├── Índice: userToken (unique: true)

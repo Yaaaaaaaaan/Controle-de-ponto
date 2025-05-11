@@ -43,6 +43,24 @@ async function getUserById(id) {
     }
 }
 
+// Função para obter um usuário pelo ID
+async function getUserByNickname(nickname) {
+    try {
+        const db = await initializeDB();
+        const transaction = db.transaction(userDataStoreName, 'readonly');
+        const userDataStore = transaction.objectStore(userDataStoreName);
+        const getRequest = userDataStore.get(nickname);
+
+
+        return new Promise((resolve, reject) => {
+            getRequest.onsuccess = () => resolve(getRequest.result);
+            getRequest.onerror = () => reject('Erro ao obter usuário: ' + getRequest.error);
+        });
+    } catch (error) {
+        throw new Error('Erro ao obter usuário: ' + error);
+    }
+}
+
 
 // Função para atualizar um usuário
 async function updateUser(user) {
@@ -161,7 +179,7 @@ async function processUserData() {
         return null;
     }
 }
-
+//Model.js
 
 // Função para sincronizar dados do servidor com o IndexedDB
 async function syncServerToIndexedDB() {

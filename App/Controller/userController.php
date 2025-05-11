@@ -38,14 +38,16 @@ class UserController {
      * @throws RandomException
      */
 
-    public function authenticateUser($nickname, $password): void{
+    public function authenticateUser($nickname, $password): bool {
         $this->user->nickname = filter_var($nickname, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $this->user->password = $password;
-        if($this->user->authenticateUser()){
-            header('Location: ../');
-        }else{
+
+        if($this->user->authenticateUser()) {
+            return true;
+        } else {
             $_SESSION['response'] = '<p>Usuário ou senha incorretos. </p>';
-            }
+            return false;
+        }
     }
 
     public function updateUser($name, $id, $email, $nickname, $oldPassword, $newPassword, $confirmPassword, $defaultTheme): void{
