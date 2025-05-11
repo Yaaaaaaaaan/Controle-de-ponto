@@ -1,5 +1,18 @@
-Necessário fazer a migração do módulo de alteração de senha e demais dados para localStorage via token,
- ou seja, ao alterar a senha, deverá gerar um novo token para autenticação com a aplicação.
 
- Alteração de foto de perfil quase 100% funcional, restando apenas a inserção de uma imagem padrão para o primeiro acesso funcionar corretamente.
- 
+
+
+A fazer:
+
+-> Adaptação da aplicação para service-worker (cache offline):
+    + Módulo de autenticação de usuário (indexedDB):
+        + Melhoria do sistema de autenticação (criação do campo password e criptografia do mesmo);
+        + Elaboração do sistema de logout;
+        + Implementação do uso de userToken para validação de armazenamento de dados offline, e posteriormente online.
+        + Implementação do userToken para verificação de autenticação no sistema (online e offline).
+        + Implementação de um histórico de uso simples no modo offline, para ser enviado quando possível ao servidor.
+
+    + Módulo de foto de perfil e dados exibidos no sistema:
+        + Correção da manipulação e visualização dos dados em user/index.php e user/settings.php (USR/userInterface.js);
+        + Melhoria no fluxo das operações (criando arquivos como usrController.js e determinando suas funções corretamente);
+        +
+
