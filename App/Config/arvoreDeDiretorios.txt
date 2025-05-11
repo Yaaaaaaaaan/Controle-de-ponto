@@ -37,8 +37,11 @@ Controle-de-Ponto/
 │   ├── JS/
 │   │   ├── HKG/
 │   │   │   └── indexDashboard.js
+│   │   ├── IDX/
+│   │   │   └── authController.js
 │   │   ├── indexedDB/
 │   │   │   ├── Config.js                                                       # Cria o banco de dados e as storeNames
+│   │   │   ├── Controller.js
 │   │   │   └── Model.js                                                    # Manipula os dados das storeNames com CRUD
 │   │   ├── USR/
 │   │   │   ├── indexDashboard.js                                       # Cria a parte lógica do dashboard e seus dados
@@ -86,5 +89,5 @@ Banco de Dados (Database): PCDB
     └── Object Store: userData
         ├── Dados:
         │   ├── userToken (Chave Primária)
-        │   ├── Outras propriedades do usuário (name, email, etc.)
+        │   ├── Outras propriedades do usuário (name, email, nickname, etc.)
         ├── Índice: userToken (unique: true)
