@@ -1,3 +1,6 @@
+// ========================
+// 📁 localStorage.js
+// ========================
 // Função principal para processar dados do usuário
 async function processUserData() {
     try {

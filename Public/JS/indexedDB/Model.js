@@ -1,3 +1,6 @@
+// ========================
+// 📁 Model.js
+// ========================
 import {
     initializeDB
 } from './Config.js';

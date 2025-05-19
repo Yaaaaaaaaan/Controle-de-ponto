@@ -1,5 +1,5 @@
 // ========================
-// 📁 config.js
+// 📁 Config.js
 // ========================
 const dbName = 'PCDB';
 const dbVersion = 1;

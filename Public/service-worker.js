@@ -1,4 +1,6 @@
-
+// ========================
+// 📁 service-worker.js
+// ========================
 const CACHE_NAME = 'controle-de-ponto-v1';
 const urlsToCache = [
     '/',
