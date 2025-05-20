@@ -135,10 +135,10 @@
                 </div>
             </div>
             <script type="module" src="../../JS/localStorage.js"></script>
-            <script type="module" src="../../JS/USR/userInterface.js"></script>
+            <script type="module" src="../../JS/USR/userController.js"></script>
             <script type="module" src="../../JS/indexedDB/Model.js"></script>
             <script type="module">
-                import { updateUIElements } from '../../JS/USR/userInterface.js';
+                import { updateUIElements } from '../../JS/USR/userController.js';
                 import { processUserData } from '../../JS/indexedDB/Model.js';
                 document.addEventListener('DOMContentLoaded', async () => {
                     const userData = await processUserData();

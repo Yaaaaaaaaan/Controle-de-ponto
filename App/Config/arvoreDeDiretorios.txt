@@ -11,6 +11,7 @@ Controle-de-Ponto/
 │   │   ├── .htaccess                                                    # Controlador de acesso a diretório e arquivos
 │   │   ├── pictureController.php
 │   │   ├── PointController.php
+│   │   ├── SystemController.php
 │   │   └── UserController.php
 │   ├── Model/
 │   │   ├── PointControl.php
@@ -45,6 +46,7 @@ Controle-de-Ponto/
 │   │   │   └── Model.js                                                    # Manipula os dados das storeNames com CRUD
 │   │   ├── USR/
 │   │   │   ├── indexDashboard.js                                       # Cria a parte lógica do dashboard e seus dados
+│   │   │   ├── userController.js
 │   │   │   └── userInterface.js                               # Faz o papel de View com os dados recebidos do Model.js
 │   │   ├── bootstrap.bundle.min.js
 │   │   ├── color-modes.js
