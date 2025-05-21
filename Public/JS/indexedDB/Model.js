@@ -148,7 +148,7 @@ async function syncIndexedDBToServer(userToken, theme) {
 
 
 
-// Função para processar dados do usuário (agora em Model.js)
+// Função para processar dados do usuário
 async function processUserData() {
     try {
         const response = await fetch('../../Persistence/userData.php');
