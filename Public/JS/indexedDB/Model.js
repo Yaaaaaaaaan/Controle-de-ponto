@@ -106,7 +106,7 @@ async function deleteUser(id) {
 // Função para obter todos os usuários
 async function getAllUsers() {
     try {
-        const db = await initializeDB(); // Se getAllUsers abre o DB, pode ser o problema
+        const db = await initializeDB();
         const transaction = db.transaction(userDataStoreName, 'readonly');
         const userDataStore = transaction.objectStore(userDataStoreName);
         const request = userDataStore.getAll();
@@ -119,6 +119,23 @@ async function getAllUsers() {
         return [];
     }
 }
+// Função para obter todos os usuários
+async function getUser(id) {
+    try {
+        const db = await initializeDB();
+        const transaction = db.transaction(userDataStoreName, 'readonly');
+        const userDataStore = transaction.objectStore(userDataStoreName);
+        const getRequest = userDataStore.get(id);
+        return new Promise((resolve, reject) => {
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    } catch (error) {
+        console.error("Erro ao obter usuário:", error);
+        return [];
+    }
+}
+
 
 
 // Função para sincronizar dados do IndexedDB com o servidor
@@ -220,6 +237,7 @@ export {
     getUserById,
     updateUser,
     deleteUser,
+    getUser,
     getAllUsers,
     syncIndexedDBToServer,
     syncServerToIndexedDB,

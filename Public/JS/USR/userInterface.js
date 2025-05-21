@@ -1,5 +1,5 @@
 /*import { processUserData, checkForUserDataUpdates, lastProfilePictures } from '../JS/localStorage.js'; // Ajuste o caminho*/
-import { updateUser, processUserData, syncIndexedDBToServer, syncServerToIndexedDB, getAllUsers } from '../indexedDB/Model.js';
+import { updateUser, processUserData, syncIndexedDBToServer, syncServerToIndexedDB, getUser } from '../indexedDB/Model.js';
 
 
 // Função para atualizar imagem de perfil
