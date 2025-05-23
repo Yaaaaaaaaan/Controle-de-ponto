@@ -47,23 +47,48 @@ function updateUIElements(userData) {
 }
 
 // Função para atualizar formulário de configurações
-function updateSettingsForm(userData) {
+async function updateSettingsForm(userData) {
+    // Verifique se estamos na página correta
     if (!window.location.pathname.includes('/User/settings.php')) return;
 
+    // Garante que userData tenha dados
+    if (!userData) {
+        console.warn("updateSettingsForm: userData está vazio. Buscando no IndexedDB...");
+        try {
+            const allUsers = await getAllUsers(); // Supondo que getAllUsers retorna um array
+            if (allUsers && allUsers.length > 0) {
+                userData = allUsers[0]; // Pega o primeiro usuário
+            } else {
+                console.error("updateSettingsForm: Nenhum dado de usuário encontrado no IndexedDB.");
+                return;
+            }
+        } catch (error) {
+            console.error("updateSettingsForm: Erro ao buscar dados do IndexedDB:", error);
+            return;
+        }
+    }
 
-    const formFields = {
-        'settingsName': userData.name,
-        'settingsEmail': userData.email,
-        'settingsNickname': userData.nickname,
-        'settingsRank': userData.rank,
-        'settingsId': userData.id,
-        'settingsToken': userData.userToken
+    // Define um objeto com os mapeamentos entre IDs do input e propriedades do userData
+    const formUserData = {
+        'floatingInputName': userData.name,
+        'floatingInputEmail': userData.email,
+        'floatingInputNickname': userData.nickname,
+        //'settingsRank': userData.rank,
+        //'settingsId': userData.id,
+        //'settingsToken': userData.userToken
+
     };
 
-
-    Object.entries(formFields).forEach(([id, value]) => {
-        const element = document.getElementById(id);
-        if (element) element.value = value;
+    // Itere sobre as entradas do objeto e atualize os valores dos inputs
+    Object.entries(formUserData).forEach(([inputId, value]) => {
+        const element = document.getElementById(inputId);
+        if (element && value !== null && value !== undefined) {
+            element.value = value;
+        } else if (!element) {
+            console.warn(`Input com ID '${inputId}' não encontrado em settings.php`);
+        } else {
+            console.warn(`Valor para input '${inputId}' é nulo ou indefinido.`);
+        }
     });
 }
 
@@ -82,7 +107,7 @@ async function sendUserDataToServer(userData) {
             console.log('Dados do usuário sincronizado no servidor com sucesso!');
         }
     } catch (error) {
-        console.error('userInterface.js - sendUserDataToServer: Erro ao comunicar com o servidor:', error);
+        console.error('userController.js - sendUserDataToServer: Erro ao comunicar com o servidor:', error);
     }
 }
 
