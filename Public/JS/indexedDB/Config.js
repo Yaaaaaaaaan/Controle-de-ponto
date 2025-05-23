@@ -5,6 +5,7 @@ const dbName = 'PCDB';
 const dbVersion = 1;
 const userDataStoreName = 'userData';
 
+
 let db;
 
 function initializeDB() {

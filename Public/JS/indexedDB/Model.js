@@ -119,7 +119,7 @@ async function getAllUsers() {
         return [];
     }
 }
-// Função para obter todos os usuários
+// Função para obter dados de usuário específico ** TODO
 async function getUser(id) {
     try {
         const db = await initializeDB();

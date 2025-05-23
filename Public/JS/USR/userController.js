@@ -1,7 +1,13 @@
 import { updateUser, processUserData, syncIndexedDBToServer, syncServerToIndexedDB, getAllUsers } from '../indexedDB/Model.js';
 
-// A refatorar toda lógica aqui.
+// Necessário refatorar toda lógica aqui.
 
+
+// Função para exibir histórico do usuário
+
+function showHistory(userData) {
+
+}
 
 // Função para atualizar imagem de perfil
 function updateUIPicture(profileUser) {
