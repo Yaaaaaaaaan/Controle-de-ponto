@@ -26,9 +26,13 @@ function updateUIPicture(profileUser) {
 
 
 // Função para atualizar elementos da interface
-function updateUIElements(userData) {
+function updateUIElements(userData, pointControl) {
     if (!userData || !userData.name) {
         console.error("updateUIElements: Dados de usuário inválidos ou incompletos", userData);
+        return;
+    }
+    if(!pointControl || !pointControl.codigo){
+        console.error("updateUIElements: Dados de usuário inválidos ou incompletos", pointControl);
         return;
     }
     const elements = {

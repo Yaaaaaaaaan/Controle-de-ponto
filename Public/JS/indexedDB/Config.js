@@ -4,7 +4,7 @@
 const dbName = 'PCDB';
 const dbVersion = 1;
 const userDataStoreName = 'userData';
-
+const pointControlStoreName = 'pointControl'
 
 let db;
 
@@ -27,6 +27,17 @@ function initializeDB() {
                     unique: true
                 });
             }
+            if (!db.objectStoreNames.contains(pointControlStoreName)) {
+                const pointControlStore = db.createObjectStore(pointControlStoreName, {
+                    keyPath: 'id', name: 'pointControl'
+                });
+                pointControlStore.createIndex('pointControl', 'cod', {
+                    unique: true
+                });
+                pointControlStore.createIndex('pointControl', 'descricao', {
+                    unique: true
+                });
+            }
         };
 
         request.onsuccess = (event) => {
@@ -40,4 +51,4 @@ function initializeDB() {
     });
 }
 
-export { initializeDB, userDataStoreName };
+export { initializeDB, userDataStoreName, pointControlStoreName };
