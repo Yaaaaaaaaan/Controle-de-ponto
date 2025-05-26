@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Agora as variáveis daysData, labels e dataPoints já foram definidas
     const ctx = document.getElementById('presence').getContext('2d');
-
+ //ttttttttttttttggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggate fez isso
     const data = {
         labels: labels,
         datasets: [{
