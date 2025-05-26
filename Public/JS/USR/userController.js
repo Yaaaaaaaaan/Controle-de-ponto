@@ -1,6 +1,6 @@
 import { updateUser, processUserData, syncIndexedDBToServer, syncServerToIndexedDB, getAllUsers } from '../indexedDB/Model.js';
 
-// Necessário refatorar toda lógica aqui.
+// Necessário revisar e refatorar toda lógica aqui.
 
 
 // Função para exibir histórico do usuário
