@@ -90,7 +90,7 @@
 
                                 <!-- Botão de ação -->
                                 <form action="index.php" method="post" name="insertPointControl">
-                                    <input hidden value="1" name="insertPointControl">
+                                    <input hidden value="1" name="insertPointControl"> <!-- Otimizar esse valor do formulário -->
                                     <input hidden name="id" id="responseIdInput" value="">
                                     <button type="submit" class="btn btn-success badge-action-btn">Confirmar Presença</button>
                                 </form>
@@ -124,17 +124,17 @@
         </div>
         <script type="module" src="../../JS/indexedDB/Model.js"></script>
         <script type="module" src="../../JS/USR/userInterface.js"></script>
-        <script type="module">
-            import { processUserData, syncServerToIndexedDB } from '../../JS/indexedDB/Model.js';
-            import { updateUIElements } from '../../JS/USR/userInterface.js';
+            <script type="module">
+                import { processUserData, syncServerToIndexedDB } from '../../JS/indexedDB/Model.js';
+                import { updateUIElements } from '../../JS/USR/userInterface.js';
 
-            document.addEventListener('DOMContentLoaded', async () => {
-                const userData = await processUserData();
-                if (userData) {
-                    updateUIElements(userData);
-                }
-            });
-        </script>
+                document.addEventListener('DOMContentLoaded', async () => {
+                    const userData = await processUserData();
+                    if (userData) {
+                        updateUIElements(userData);
+                    }
+                });
+            </script>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
             //chama daysData por fora, pelo simples fato de se estar sendo feita a consulta independente do chart.js.

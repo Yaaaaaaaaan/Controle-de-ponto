@@ -7,7 +7,7 @@ import {
 
 
 const userDataStoreName = 'userData';
-
+const pointControlStoreName = 'pointControl';
 
 // Função para adicionar um novo usuário
 async function addUser(user) {
@@ -25,6 +25,23 @@ async function addUser(user) {
     } catch (error) {
         throw new Error('Erro ao adicionar usuário: ' + error);
     }
+}
+
+async function addPointControl(userAttr){
+    try {
+        const db = await initializeDB();
+        const transaction = db.transaction(pointControlStoreName, 'readwrite');
+        const pointControlStore = transaction.objectStore(pointControlStoreName);
+        const addRequest = pointControlStore.add(userAttr);
+        return new Promise((resolve, reject) =>
+        {
+            addRequest.onsuccess = () => resolve(addRequest.result);
+            addRequest.onerror = () => reject('Erro ao adicionar dados de controle de ponto: ' + addRequest.error);
+        });
+    }catch(error){
+            throw new Error('Erro ao adicionar dados de controle de ponto:' + error);
+        }
+
 }
 
 

@@ -87,7 +87,7 @@
             foreach ($resultMeses as &$mes) {
                 $mes['dias'] = $diasPorMes[$mes['month']] ?? [];
             }
-
+            $_SESSION['pointControl'] = json_encode([$resultMeses]);
             return $resultMeses;
         }
 

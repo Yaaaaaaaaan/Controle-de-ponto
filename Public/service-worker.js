@@ -1,5 +1,12 @@
 const CACHE_NAME = 'v1'; // Nome do cache (pode ser versionado)
 const urlsToCache = [
+    //CSS Bootstrap
+    '/controle-de-ponto/Public/CSS/bootstrap.min.css',
+    '/controle-de-ponto/Public/JS/bootstrap.bundle.js',
+
+    //Chart JS
+    "/controle-de-ponto/Public/JS/chartjs/dist/chart.umd.js",
+
     //IndexedDB;
     '/controle-de-ponto/Public/JS/indexedDB/Config.js',
     '/controle-de-ponto/Public/JS/indexedDB/Model.js',

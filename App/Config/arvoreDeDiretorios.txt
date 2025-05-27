@@ -36,6 +36,38 @@ Controle-de-Ponto/
 │   │   │   └── handworking.css
 │   │   └── boostrap.min.css
 │   ├── JS/
+│   │   ├── chartjs/
+│   │   │   ├── auto/
+│   │   │   │   ├── auto.cjs
+│   │   │   │   ├── auto.d.ts
+│   │   │   │   ├── auto.js
+│   │   │   │   └── package.json
+│   │   │   ├── dist/
+│   │   │   │   ├── chunks/
+│   │   │   │   ├── controllers/
+│   │   │   │   ├── core/
+│   │   │   │   ├── elements/
+│   │   │   │   ├── helpers/
+│   │   │   │   ├── platform/
+│   │   │   │   ├── plugins/
+│   │   │   │   ├── scales/
+│   │   │   │   ├── types/
+│   │   │   │   ├── chart.cjs
+│   │   │   │   ├── chart.js
+│   │   │   │   ├── chart.umd.js
+│   │   │   │   ├── helpers.cjs
+│   │   │   │   ├── helpers.js
+│   │   │   │   ├── index.d.ts
+│   │   │   │   ├── index.umd.d.ts
+│   │   │   │   └── types.d.ts
+│   │   │   ├── helpers/
+│   │   │   │   ├── helpers.cjs
+│   │   │   │   ├── helpers.d.ts
+│   │   │   │   ├── helpers.js
+│   │   │   │   └── package.json
+│   │   │   ├── LICENSE.md
+│   │   │   ├── README.md
+│   │   │   └── package.json
 │   │   ├── HKG/
 │   │   │   └── indexDashboard.js
 │   │   ├── IDX/
@@ -48,7 +80,8 @@ Controle-de-Ponto/
 │   │   │   ├── indexDashboard.js                                       # Cria a parte lógica do dashboard e seus dados
 │   │   │   ├── userController.js
 │   │   │   └── userInterface.js                               # Faz o papel de View com os dados recebidos do Model.js
-│   │   ├── bootstrap.bundle.min.js
+│   │   ├── bootstrap.bundle.js
+│   │   │   └── bootstrap.bundle.min.js
 │   │   ├── color-modes.js
 │   │   ├── authController.js
 │   │   ├── localStorage.js
@@ -56,6 +89,7 @@ Controle-de-Ponto/
 │   ├── Persistence/
 │   │   ├── SystemPics
 │   │   │   └── logo.png
+│   │   ├── pointControl.php
 │   │   └── userData.php
 │   ├── View/
 │   │   ├── Errors/

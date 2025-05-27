@@ -4,7 +4,7 @@
 const dbName = 'PCDB';
 const dbVersion = 1;
 const userDataStoreName = 'userData';
-const pointControlStoreName = 'pointControl'
+const pointControlStoreName = 'pointControl';
 
 let db;
 

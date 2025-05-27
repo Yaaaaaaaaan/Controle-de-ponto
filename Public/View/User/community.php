@@ -6,9 +6,20 @@ include "../layout/menu.php";
 
     </head>
     <body>
-        <script type="module" src="../../JS/indexedDB/Config.js"></script>
-        <script type="module" src="../../JS/indexedDB/Model.js"></script>
+        <br>
 
-        <p id="nomeTeste"></p>
+        <script type="module" src="../../JS/indexedDB/Model.js"></script>
+        <script type="module" src="../../JS/USR/userController.js"></script>
+
+        <script type="module">
+          /*  import { updateUIElements } from '../../JS/USR/userController.js';
+
+            document.addEventListener('DOMContentLoaded', async () => {
+                const userData = await processUserData();
+                if (userData) {
+                    updateUIElements(userData);
+                }
+            }); */
+        </script>
     </body>
 </html>

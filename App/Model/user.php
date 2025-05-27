@@ -234,7 +234,6 @@ if (!defined('APP_RAN')) {
                             'id' => $row['uid'],
                             'profileUser' => $row['description'],
                         ]);
-
                         return true;
                     }
                 }
