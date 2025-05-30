@@ -2,6 +2,37 @@ import { updateUser, processUserData, syncIndexedDBToServer, syncServerToIndexed
 
 // Necessário revisar e refatorar toda lógica aqui.
 
+async function getPointControlDataForDashboard() {
+    try {
+        const pointControlData = await getAllPointControlData();
+        // Manipular os dados para o formato necessário para o dashboard
+        const processedData = processPointControlData(pointControlData);
+        return processedData;
+    } catch (error) {
+        console.error("Erro ao obter dados de pointControl para o dashboard:", error);
+        return [];
+    }
+}
+
+function processPointControlData(data) {
+    // Lógica para formatar os dados (agrupar, calcular, etc.)
+    // Exemplo:
+    const formattedData = data.map(item => ({
+        id: item.id,
+        description: item.description,
+        date: item.dateIn,
+    }));
+    return formattedData;
+}
+
+// Função para atualizar a UI do dashboard com os dados de pointControl
+function updateDashboardPointControl(data) {
+    const totalRegistrosElement = document.getElementById('totalRegistros');
+    if (totalRegistrosElement) {
+        totalRegistrosElement.textContent = data.length;
+    }
+    // ... atualizar outros elementos do dashboard
+}
 
 // Função para exibir histórico do usuário
 
@@ -172,6 +203,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Exporta funções que podem ser necessárias em outros arquivos
 export {
+    getPointControlDataForDashboard,
+    updateDashboardPointControl,
     updateUIPicture,
     updateUIElements
 };
