@@ -10,6 +10,6 @@ for now, there are:
 
 
 Technologies used:
--Persistence: Mysql & IndexedDB.
--Languages: PHP, Javascript, HTML5, CSS3.
--Frameworks: Chart.JS, Bootstrap CSS & JS, FontAwesome Icons.
+- Persistence: Mysql & IndexedDB.
+- Languages: PHP, Javascript, HTML5, CSS3.
+- Frameworks: Chart.JS, Bootstrap CSS & JS, FontAwesome Icons.
