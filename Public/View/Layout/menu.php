@@ -137,7 +137,7 @@
                     </div>
                 </div>
             </div>
-            <script type="module" src="../../JS/localStorage.js"></script>
+            <!-- <script type="module" src="../../JS/localStorage.js"></script> -->
             <script type="module" src="../../JS/USR/userController.js"></script>
             <script type="module" src="../../JS/indexedDB/Model.js"></script>
             <script type="module">

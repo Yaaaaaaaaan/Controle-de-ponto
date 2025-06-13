@@ -4,7 +4,7 @@
 
 async function isOnline() {
     try {
-        const url = '/controle-de-ponto/Public/system/healthcheck.php'; // URL alterada
+        const url = '/controle-de-ponto/Public/system/healthcheck.php';
         console.log("Tentando healthcheck em:", url);
         const response = await fetch(url, {
             method: 'HEAD',
@@ -67,7 +67,7 @@ async function checkUserTokenExists(nickname) {
     });
 }
 
-async function getUserByNickname(nickname) {
+/*async function getUserByNickname(nickname) {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open("PCDB", 1);
         request.onerror = () => reject("Erro ao abrir IndexedDB");
@@ -81,7 +81,7 @@ async function getUserByNickname(nickname) {
             getReq.onerror = () => reject("Erro ao buscar usuário");
         };
     });
-}
+}*/
 
 // Ouvintes de eventos para mudanças de conexão
 window.addEventListener('online', () => {
