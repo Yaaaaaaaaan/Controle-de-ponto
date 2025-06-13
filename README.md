@@ -7,8 +7,10 @@ for now, there are:
 - Common user data change module, such as name, email and username: functional;
 - Password change module: functional;
 - Unique presence insertion module, done by the user: functional (includes: viewing total presence in a summary graph, defined by month, allowing viewing of the 3 most recent months);
+- Offline module: partially functional
 
 
 Technologies used:
--Persistence: Mysql & LocalStorage.
--Languages: PHP, Javascript, HTML5, CSS3 & Bootstrap.
+- Persistence: Mysql & IndexedDB.
+- Languages: PHP, Javascript, HTML5, CSS3.
+- Frameworks: Chart.JS, Bootstrap CSS & JS, FontAwesome Icons.
