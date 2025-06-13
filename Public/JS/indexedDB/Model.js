@@ -27,7 +27,7 @@ async function addUser(user) {
     }
 }
 
-async function addPointControl(userAttr){
+async function addPointControl(userAttr){ /* TODO:Analisar banco de dados de pointControl, e refatorar o que for necessário, seguindo a lógica do sistema, e quais dados serão repassados para cá, após, verificar quais são as chaves primárias necessárias no banco local. */
     try {
         const db = await initializeDB();
         const transaction = db.transaction(pointControlStoreName, 'readwrite');
