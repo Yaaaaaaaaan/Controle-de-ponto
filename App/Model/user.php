@@ -95,7 +95,7 @@ if (!defined('APP_RAN')) {
 
             // 3. Inserir relação entre usuário e imagem de perfil na tabela profilepictures
             $queryProfilePic = "INSERT INTO {$this->tableNames['pps']}
-                        (uidUserFK, uimageFK) 
+                        (uidUserFK, uPictureFK) 
                         VALUES (:newUserId, :newPictureId)";
 
             $stmtProfilePic = $this->conn->prepare($queryProfilePic);
@@ -178,11 +178,11 @@ if (!defined('APP_RAN')) {
         if (!empty($this->nickname) && !empty($this->password)) {
             $userToken = bin2hex(random_bytes(32));
 
-            $query = "SELECT u.uid, t.token, u.uname, u.username, u.urank, u.uemail, u.upassword, d.description, p.dateload, u.udefaultTheme
+            $query = "SELECT u.uid, t.token, u.uname, u.username, u.urank, u.uemail, u.upassword, d.namePic, p.dateload, u.udefaultTheme
                   FROM {$this->tableNames['ud']} u
                   INNER JOIN {$this->tableNames['pic']} d ON u.uid = d.uidUserFK
                   INNER JOIN {$this->tableNames['ut']} t ON u.uid = t.uidUserFK
-                  INNER JOIN {$this->tableNames['pps']} p ON p.uimageFK = d.cod
+                  INNER JOIN {$this->tableNames['pps']} p ON p.uPictureFK = d.cod
                   WHERE u.username = :nickname";
 
             try {
@@ -232,7 +232,12 @@ if (!defined('APP_RAN')) {
                             'nickname' => $row['username'],
                             'theme' => $row['udefaultTheme'],
                             'id' => $row['uid'],
-                            'profileUser' => $row['description'],
+                            'profileUser' => $row['namePic'],
+                        ]);
+                        $_SESSION['pointControl'] = json_encode([
+                            'name' => $row['uname'],
+                            'description' => $row['description'],
+                            'dateIn' => $row['dateIn'],
                         ]);
                         return true;
                     }
@@ -426,7 +431,7 @@ if (!defined('APP_RAN')) {
 
             //1. atualize a tabela
             $queryUpdate = "UPDATE " . $this->tableNames['pps'] . " 
-                      SET uimageFK = :pictureId 
+                      SET uPictureFK = :pictureId 
                       WHERE uidUserFK = :userId";
             $updateStmt = $this->conn->prepare($queryUpdate);
             $updateStmt->bindParam(':userId', $userId);
@@ -487,10 +492,10 @@ if (!defined('APP_RAN')) {
             $stmtInsertPic->bindValue(':id', $this->id, PDO::PARAM_INT);
             $stmtInsertPic->execute();
             $newPictureId = $this->conn->lastInsertId();
-            $queryProfilePic = "INSERT INTO {$this->tableNames['pps']} (uidUserFK, uimageFK)
+            $queryProfilePic = "INSERT INTO {$this->tableNames['pps']} (uidUserFK, uPictureFK)
                                 VALUES (:id, :newPictureId)
                                 ON DUPLICATE KEY UPDATE
-                                uimageFK = VALUES(uimageFK)";
+                                uPictureFK = VALUES(uPictureFK)";
             $stmtProfilePic = $this->conn->prepare($queryProfilePic);
             $stmtProfilePic->bindValue(':id', $this->id, PDO::PARAM_INT);
             $stmtProfilePic->bindValue(':newPictureId', $newPictureId, PDO::PARAM_INT);
