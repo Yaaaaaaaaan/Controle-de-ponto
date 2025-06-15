@@ -234,11 +234,6 @@ if (!defined('APP_RAN')) {
                             'id' => $row['uid'],
                             'profileUser' => $row['namePic'],
                         ]);
-                        $_SESSION['pointControl'] = json_encode([
-                            'name' => $row['uname'],
-                            'description' => $row['description'],
-                            'dateIn' => $row['dateIn'],
-                        ]);
                         return true;
                     }
                 }
