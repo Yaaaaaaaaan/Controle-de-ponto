@@ -7,10 +7,12 @@
     {
         private $conn;
         private $tableNames = [
-            'ud' => 'userdata',
-            'hs' => 'history',
-            'ut' => 'usertoken',
-            'pc' => 'pointControl'
+            'udt' => 'userdata',
+            'pps' => 'profilepictures',
+            'pic' => 'pictures',
+            'his' => 'history',
+            'utk' => 'usertoken',
+            'pcl' => 'pointControl'
         ];
 
         public $id;
@@ -29,7 +31,7 @@
             $this->descricao = $descricao;
             $this->id = $id;
 
-            $query = "INSERT INTO " . $this->tableNames['pc'] . "  (description, uidUserFK) VALUES (:description, :id)";
+            $query = "INSERT INTO " . $this->tableNames['pcl'] . "  (status, uidUserFK) VALUES (:description, :id)";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':description', $this->descricao);
             $stmt->bindParam(':id', $this->id);
@@ -50,7 +52,7 @@
         {
             // Consulta para obter os meses (para o gráfico)
             $queryMeses = "SELECT DATE_FORMAT(dateIn, '%Y-%m') as month, COUNT(*) as count 
-                FROM pointControl 
+                FROM " . $this->tableNames['pcl'] . " 
                 WHERE uidUserFK = :id 
                 GROUP BY month 
                 ORDER BY month DESC 
@@ -70,10 +72,10 @@
                 $monthStr = $mes['month'];
 
                 // Consulta modificada para incluir a descrição para cada dia
-                $queryDias = "SELECT DATE_FORMAT(dateIn, '%d') as day, COUNT(*) as day_count, description
+                $queryDias = "SELECT DATE_FORMAT(dateIn, '%d') as day, COUNT(*) as day_count, status
                     FROM pointControl 
                     WHERE uidUserFK = :id AND DATE_FORMAT(dateIn, '%Y-%m') = :month
-                    GROUP BY day, description
+                    GROUP BY day, status
                     ORDER BY day";
 
                 $stmtDias = $this->conn->prepare($queryDias);
@@ -95,21 +97,21 @@
     {
         try{
         $query = "SELECT 
-        pc.description, pc.cod,
+        pcl.description, pcl.cod,
         COUNT(*) as count,
         GROUP_CONCAT(
             JSON_OBJECT(
-                'cod', pc.cod,
-                'data', DATE_FORMAT(pc.dateIn, '%d/%m/%Y'),
+                'cod', pcl.cod,
+                'data', DATE_FORMAT(pcl.dateIn, '%d/%m/%Y'),
                 'nome', ud.uname,
-                'descricao', pc.description,
-                'id', pc.uidUserFK
+                'descricao', pcl.status,
+                'id', pcl.uidUserFK
             )
         ) as detalhes
-    FROM pointControl pc
-    INNER JOIN userdata ud ON pc.uidUserFK = ud.uid
-    WHERE pc.dateIn >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
-    GROUP BY pc.description
+    FROM pointControl pcl
+    INNER JOIN userdata ud ON pcl.uidUserFK = ud.uid
+    WHERE pcl.dateIn >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
+    GROUP BY pcl.status
     ORDER BY count DESC";
 
         // Debug direto do resultado da query

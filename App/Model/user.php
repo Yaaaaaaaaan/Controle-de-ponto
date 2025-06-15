@@ -9,12 +9,12 @@ if (!defined('APP_RAN')) {
 #[AllowDynamicProperties] class User{
     private $conn;
     private $tableNames = [
-        'ud' => 'userdata',
+        'udt' => 'userdata',
         'pps' => 'profilepictures',
         'pic' => 'pictures',
-        'hs' => 'history',
-        'ut' => 'usertoken',
-        'pc' => 'pointControl'
+        'his' => 'history',
+        'utk' => 'usertoken',
+        'pcl' => 'pointControl'
     ];
 
     public $id;
@@ -64,7 +64,7 @@ if (!defined('APP_RAN')) {
 
         try {
             // 1. Inserir dados do usuário na tabela userdata
-            $queryUser = "INSERT INTO {$this->tableNames['ud']} 
+            $queryUser = "INSERT INTO {$this->tableNames['udt']} 
                   (uname, username, uemail, upassword, urank) 
                   VALUES (:name, :nickname, :email, :password, :rank)";
 
@@ -81,7 +81,7 @@ if (!defined('APP_RAN')) {
 
             // 2. Inserir dados da imagem na tabela pictures
             $queryPicture = "INSERT INTO {$this->tableNames['pic']}
-                     (path, description, uidUserFK) 
+                     (path, namePic, uidUserFK) 
                      VALUES (:directory, :profilePicture, :newUserId)";
 
             $stmtPicture = $this->conn->prepare($queryPicture);
@@ -95,8 +95,8 @@ if (!defined('APP_RAN')) {
 
             // 3. Inserir relação entre usuário e imagem de perfil na tabela profilepictures
             $queryProfilePic = "INSERT INTO {$this->tableNames['pps']}
-                        (uidUserFK, uimageFK) 
-                        VALUES (:newUserId, :newPictureId)";
+                        (uPictureFK) 
+                        VALUES (:newPictureId)";
 
             $stmtProfilePic = $this->conn->prepare($queryProfilePic);
             $stmtProfilePic->bindParam(':newUserId', $newUserId);
@@ -109,10 +109,10 @@ if (!defined('APP_RAN')) {
             // Se o trigger não existir, criar um novo
             if (!$triggerExists) {
                 $triggerQuery = "CREATE TRIGGER tr_insert_token
-                       AFTER INSERT ON {$this->tableNames['ud']}
+                       AFTER INSERT ON {$this->tableNames['udt']}
                        FOR EACH ROW
                        BEGIN
-                         INSERT INTO {$this->tableNames['ut']} (token, uidUserFK)
+                         INSERT INTO {$this->tableNames['utk']} (token, uidUserFK)
                          VALUES (UNHEX(?), NEW.uid);
                        END";
 
@@ -121,7 +121,7 @@ if (!defined('APP_RAN')) {
             }
 
             // 5. Inserir token do usuário na tabela usertoken
-            $queryToken = "INSERT INTO {$this->tableNames['ut']} 
+            $queryToken = "INSERT INTO {$this->tableNames['utk']} 
                    (token, uidUserFK) 
                    VALUES (:userToken, :newUserId)";
 
@@ -156,7 +156,7 @@ if (!defined('APP_RAN')) {
           WHERE trigger_name = :triggerName";
 
         $stmt = $this->conn->prepare($query);
-        // Utiliza bindValue em vez de bindParam para valor literal
+        // utiliza bindValue em vez de bindParam para valor literal
         $stmt->bindValue(':triggerName', $triggerName);
         $stmt->execute();
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -178,12 +178,12 @@ if (!defined('APP_RAN')) {
         if (!empty($this->nickname) && !empty($this->password)) {
             $userToken = bin2hex(random_bytes(32));
 
-            $query = "SELECT u.uid, t.token, u.uname, u.username, u.urank, u.uemail, u.upassword, d.description, p.dateload, u.udefaultTheme
-                  FROM {$this->tableNames['ud']} u
-                  INNER JOIN {$this->tableNames['pic']} d ON u.uid = d.uidUserFK
-                  INNER JOIN {$this->tableNames['ut']} t ON u.uid = t.uidUserFK
-                  INNER JOIN {$this->tableNames['pps']} p ON p.uimageFK = d.cod
-                  WHERE u.username = :nickname";
+            $query = "SELECT udt.uid, utk.token, udt.uname, udt.username, udt.urank, udt.uemail, udt.upassword, pic.namePic, pic.dateload, udt.udefaultTheme
+                  FROM {$this->tableNames['udt']} udt
+                  INNER JOIN {$this->tableNames['pic']} pic ON udt.uid = pic.uidUserFK
+                  INNER JOIN {$this->tableNames['utk']} utk ON udt.uid = utk.uidUserFK
+                  INNER JOIN {$this->tableNames['pps']} pps ON pps.uPictureFK = pic.cod
+                  WHERE udt.username = :nickname";
 
             try {
                 $stmt = $this->conn->prepare($query);
@@ -197,14 +197,14 @@ if (!defined('APP_RAN')) {
                             $this->conn->beginTransaction();
 
                             // Atualiza o token
-                            $update = $this->conn->prepare("UPDATE {$this->tableNames['ut']} SET token = :userToken WHERE uidUserFK = :id");
+                            $update = $this->conn->prepare("UPDATE {$this->tableNames['utk']} SET token = :userToken WHERE uidUserFK = :id");
                             $update->bindValue(':userToken', $userToken);
                             $update->bindValue(':id', $row['uid']);
                             $update->execute();
 
                             // Se não atualizou nada, insere
                             if ($update->rowCount() === 0) {
-                                $insert = $this->conn->prepare("INSERT INTO {$this->tableNames['ut']} (token, uidUserFK) VALUES (:userToken, :id)");
+                                $insert = $this->conn->prepare("INSERT INTO {$this->tableNames['utk']} (token, uidUserFK) VALUES (:userToken, :id)");
                                 $insert->bindValue(':userToken', $userToken);
                                 $insert->bindValue(':id', $row['uid']);
                                 $insert->execute();
@@ -230,9 +230,9 @@ if (!defined('APP_RAN')) {
                             'email' => $row['uemail'],
                             'rank' => $row['urank'],
                             'nickname' => $row['username'],
-                            'theme' => $row['udefaultTheme'],
+                            'theme' => $row['udtefaultTheme'],
                             'id' => $row['uid'],
-                            'profileUser' => $row['description'],
+                            'profileUser' => $row['namePic'],
                         ]);
                         return true;
                     }
@@ -253,16 +253,16 @@ if (!defined('APP_RAN')) {
         }
 
         // Iniciar a consulta de atualização
-        $query = "UPDATE " . $this->tableNames['ud'] . "
+        $query = "UPDATE " . $this->tableNames['udt'] . "
             SET uname = :name,
             uemail = :email,
             username = :nickname,
-            udefaultTheme = :defaultTheme ";
+            udtefaultTheme = :defaultTheme ";
 
         $passwordUpdated = false;
         if (!empty($this->newPassword) && !empty($this->confirmPassword) && !empty($this->oldPassword)) {
             // Verificar se a senha atual está correta antes de permitir a alteração
-            $checkPasswordQuery = "SELECT upassword FROM " . $this->tableNames['ud'] . " WHERE uid = :id";
+            $checkPasswordQuery = "SELECT upassword FROM " . $this->tableNames['udt'] . " WHERE uid = :id";
             $checkStmt = $this->conn->prepare($checkPasswordQuery);
             $checkStmt->bindParam(':id', $this->id);
             $checkStmt->execute();
@@ -321,9 +321,9 @@ if (!defined('APP_RAN')) {
     //TODO: a fazer FUNCIONALIDADE DELETEACCOUNT.
     public function deleteAccount() {
         if (!empty($this->email) && !empty($this->password)) {
-            $query = "SELECT uid, uemail, upassword FROM " . $this->tableNames['ud'] . " 
+            $query = "SELECT uid, uemail, upassword FROM " . $this->tableNames['udt'] . " 
             WHERE uemail = :email AND upassword = :upassword";
-    
+
             try {
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam(':email', $this->email);
@@ -340,14 +340,14 @@ if (!defined('APP_RAN')) {
                 return false;
             }
         }
-    
+
         return false;
     }
 
     public function createUserHistory($description, $userId): bool{
         try{
             $ip = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'];
-            $queryInsert = "INSERT INTO {$this->tableNames['hs']} (description, uidUserFK) VALUES (:description, :id)";
+            $queryInsert = "INSERT INTO {$this->tableNames['his']} (description, uidUserFK) VALUES (:description, :id)";
             $stmtHistory = $this->conn->prepare($queryInsert);
             $newDescription = $description . "Endereço IP: " . $ip;
             $stmtHistory->bindValue(':description', $newDescription);
@@ -368,9 +368,9 @@ if (!defined('APP_RAN')) {
 
     public function getUserHistory($userId, $registro) {
 
-        $querySelect = "SELECT h.description, h.dateIn FROM " . $this->tableNames['ud'] .
-            " u inner join ".$this->tableNames['hs'].
-            " h ON u.uid = h.uidUserFK WHERE u.uid = :id ORDER BY h.cod desc LIMIT " . $registro . ";";
+        $querySelect = "SELECT h.description, h.dateIn FROM " . $this->tableNames['udt'] .
+            " udt inner join ".$this->tableNames['his'].
+            " h ON udt.uid = h.uidUserFK WHERE udt.uid = :id ORDER BY h.cod desc LIMIT " . $registro . ";";
 
         try {
           $stmt = $this->conn->prepare($querySelect);
@@ -390,7 +390,7 @@ if (!defined('APP_RAN')) {
         }
       }
 
-      
+
       public function setPictures($picture, $directory): bool{ //insere imagens no banco de dados.
         $this->picture = $picture;
         $this->directory = $directory;
@@ -400,7 +400,7 @@ if (!defined('APP_RAN')) {
         $stmt->bindValue(':id', $this->id);
         $stmt->bindValue(':directory', $this->directory);
         $stmt->bindValue(':picture', $this->picture);
-    
+
         if ($stmt->execute()) {
             $_SESSION['lastImageProfileUser'] = $this->directory;
             return true;
@@ -426,7 +426,7 @@ if (!defined('APP_RAN')) {
 
             //1. atualize a tabela
             $queryUpdate = "UPDATE " . $this->tableNames['pps'] . " 
-                      SET uimageFK = :pictureId 
+                      SET uPictureFK = :pictureId 
                       WHERE uidUserFK = :userId";
             $updateStmt = $this->conn->prepare($queryUpdate);
             $updateStmt->bindParam(':userId', $userId);
@@ -487,10 +487,10 @@ if (!defined('APP_RAN')) {
             $stmtInsertPic->bindValue(':id', $this->id, PDO::PARAM_INT);
             $stmtInsertPic->execute();
             $newPictureId = $this->conn->lastInsertId();
-            $queryProfilePic = "INSERT INTO {$this->tableNames['pps']} (uidUserFK, uimageFK)
+            $queryProfilePic = "INSERT INTO {$this->tableNames['pps']} (uidUserFK, uPictureFK)
                                 VALUES (:id, :newPictureId)
                                 ON DUPLICATE KEY UPDATE
-                                uimageFK = VALUES(uimageFK)";
+                                uPictureFK = VALUES(uPictureFK)";
             $stmtProfilePic = $this->conn->prepare($queryProfilePic);
             $stmtProfilePic->bindValue(':id', $this->id, PDO::PARAM_INT);
             $stmtProfilePic->bindValue(':newPictureId', $newPictureId, PDO::PARAM_INT);
@@ -529,19 +529,19 @@ if (!defined('APP_RAN')) {
             }
             return true;
         } catch (PDOException $e) {
-            if ($e->getCode() == 23000) { 
-                return false; 
+            if ($e->getCode() == 23000) {
+                return false;
             } else {
-                throw $e; 
+                throw $e;
             }
-        }   
+        }
     }
     //TODO: Verificar possibilidades de fazer o theme chegar ao banco de dados via menu. Mas, sem ser via AJAX. Precisa ser na padronização atual, e/ou via javascript.
     public function getIdByToken(string $userToken): ?int
     {
         error_log("Model/User.php - getIdByToken: userToken recebido: " . $userToken);
         try {
-            $query = "SELECT uid FROM {$this->tableNames['ut']} WHERE token = :userToken";
+            $query = "SELECT uid FROM {$this->tableNames['utk']} WHERE token = :userToken";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':userToken', $userToken, PDO::PARAM_STR);
             $stmt->execute();
@@ -562,7 +562,7 @@ if (!defined('APP_RAN')) {
     {
         error_log("Model/User.php - updateTheme: userId recebido: " . $userId . ", theme recebido: " . $theme);
         try {
-            $query = "UPDATE {$this->tableNames['ud']} SET udefaultTheme = :theme WHERE uid = :id";
+            $query = "UPDATE {$this->tableNames['udt']} SET udtefaultTheme = :theme WHERE uid = :id";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':theme', $theme, PDO::PARAM_INT);
             $stmt->bindParam(':id', $userId, PDO::PARAM_INT);
@@ -590,7 +590,7 @@ if (!defined('APP_RAN')) {
 
         $query = "SELECT 
         *
-        FROM {$this->tableNames['pc']} 
+        FROM {$this->tableNames['pcl']} 
         WHERE uidUserFK = :userId
         AND dateIn = :currentDate
         AND description = :descriptionToValidate
@@ -604,7 +604,7 @@ if (!defined('APP_RAN')) {
         $this->description = $description;
         $this->code = $code;
 
-        $query = "UPDATE {$this->tableNames['pc']} SET description = :description
+        $query = "UPDATE {$this->tableNames['pcl']} SET description = :description
                     WHERE uidUserFK = :userIdToValidate AND cod = :code";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':description', $this->description);

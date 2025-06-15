@@ -91,6 +91,8 @@ Controle-de-Ponto/
 │   │   │   └── logo.png
 │   │   ├── pointControl.php
 │   │   └── userData.php
+│   ├── System/
+│   │   └── healthCheck.php
 │   ├── View/
 │   │   ├── Errors/
 │   │   │   ├── .htaccess                                                # Controlador de acesso a diretório e arquivos
