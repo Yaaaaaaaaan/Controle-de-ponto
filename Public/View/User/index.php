@@ -14,47 +14,8 @@
         }
     }
 
-    // Buscar dados para o gráfico apenas se o controlador estiver inicializado
-        $id = $_SESSION['id'];
-    // No arquivo que precisa usar estes dados
-    $pointController = new PointController();
-    $pointControlData = $pointController->getPointControl($id);
-
-
-    // Preparar dados para o gráfico
-    $labels = [];
-    $dataPoints = [];
-    $daysData = []; // Array para armazenar os dias de cada mês
-
-    foreach ($pointControlData as $row) {
-        $month = $row['month'];
-        $labels[] = $month;
-        $dataPoints[] = $row['count'];
-
-        // Se ainda não tem dados para este mês, cria um array vazio
-        if (!isset($daysData[$month])) {
-            $daysData[$month] = [];
-        }
-
-        // Adiciona todos os dias nos dados deste mês (da propriedade 'dias')
-        if (isset($row['dias']) && is_array($row['dias'])) {
-            foreach ($row['dias'] as $diaInfo) {
-                if (isset($diaInfo['day'])) {
-                    // Adiciona o dia como chave e a contagem como valor
-                    $daysData[$month][] = [
-                        'dia' => $diaInfo['day'],
-                        'description' => $diaInfo['description'],
-                        'contagem' => $diaInfo['day_count']
-                    ];
-                }
-            }
-        }
-    }
-    //echo "profileImagePath: (à fazer) <br>".$_SESSION['profileImagePath'];
-    //echo "UserData: <br>".$_SESSION['userData'];
-    //echo "LastProfiles: <br>".$_SESSION['lastProfilePictures'];
-
-    //echo "<script>//console.log('Formato de daysData:', " . json_encode($daysData) . ");</script>";
+    // ID do usuário é necessário para o JavaScript
+    $id = $_SESSION['id'] ?? null;
 
 ?>
 
@@ -136,15 +97,7 @@
                 });
             </script>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <script>
-            //chama daysData por fora, pelo simples fato de se estar sendo feita a consulta independente do chart.js.
-            const daysData = <?php echo json_encode($daysData); ?>;
-            const labels = <?php echo json_encode($labels); ?>;
-            const dataPoints = <?php echo json_encode($dataPoints); ?>;
-
-        </script>
-        <script src="../../JS/USR/indexDashboard.js"></script> <!-- Dashboard de visualização de dados -->
-        <script type="module" src="../../JS/USR/pointControlHandler.js"></script> <!-- Handler para controle de ponto -->
+        <script type="module" src="../../JS/USR/indexDashboard.js"></script> <!-- Dashboard de visualização de dados -->
         <img hidden id="pPictureModal">
     </body>
 </html>

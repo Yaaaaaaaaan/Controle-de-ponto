@@ -3,11 +3,7 @@ define('APP_RAN', true);
 require '../layout/menu_housekeep.php';
 include_once __DIR__ . '/../../../App/controller/pointController.php';
 
-$pointController = new PointController();
-$dados = $pointController->getPointControlUsers();
-
-$labels = $dados['labels'];
-$dataPoints = $dados['dataPoints'];
+// Dados serão carregados do IndexedDB pelo JavaScript
 
 if ($_POST) {
     include_once __DIR__ . '/../../../App/controller/UserController.php';
@@ -62,12 +58,7 @@ if ($_POST) {
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    const labels = <?php echo json_encode($labels); ?>;
-    const dataPoints = <?php echo json_encode($dataPoints); ?>;
-    const detalhes = <?php echo json_encode($dados['detalhes']); ?>;
-</script>
-<script src="../../JS/HKG/indexDashboard.js"></script>
+<script type="module" src="../../JS/HKG/indexDashboard.js"></script>
 <p hidden id="responseTheme"></p>
 
 <div class="modal fade" id="editarModal" tabindex="-1" aria-labelledby="editarModalLabel" aria-hidden="true">

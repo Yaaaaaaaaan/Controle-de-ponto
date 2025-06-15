@@ -68,18 +68,45 @@ function syncToSession()
 
 function getUserDataAndPictures()
 {
-    $response = [];
-
-    $response['userData'] = (isset($_SESSION['userData']) && $_SESSION['userData'] != null && !isset($_SESSION['userData_processed']))
-        ? json_decode($_SESSION['userData'], true)
-        : [];
-    //$response['userDataAvailable'] = !empty($response['userData']);
-
-    //$response['lastProfilePictures'] = (isset($_SESSION['lastProfilePictures']) && $_SESSION['lastProfilePictures'] != null)
-        //? $_SESSION['lastProfilePictures']
-        //: [];
     error_log("userData.php: Chamada a getUserDataAndPictures");
-    error_log("userData.php: Dados da sessão: " . print_r($_SESSION, true));
+
+    // Se o usuário não estiver logado, retornar erro
+    if (!isset($_SESSION['logged']) || $_SESSION['logged'] !== true) {
+        error_log("userData.php: Usuário não logado");
+        sendJson(['success' => false, 'message' => 'Usuário não autenticado'], 401);
+        return;
+    }
+
+    $response = [
+        'success' => true,
+        'userData' => null
+    ];
+
+    // Obter dados do usuário da sessão
+    if (isset($_SESSION['userData']) && $_SESSION['userData'] != null) {
+        $userData = json_decode($_SESSION['userData'], true);
+
+        // Verificar se os dados do usuário são válidos
+        if (is_array($userData) && !empty($userData)) {
+            $response['userData'] = $userData;
+
+            // Buscar dados atualizados do usuário se necessário
+            if (!isset($_SESSION['userData_processed']) || $_SESSION['userData_processed'] !== true) {
+                // Marcar dados como processados para evitar processamento repetido
+                $_SESSION['userData_processed'] = true;
+
+                // Registrar que os dados foram obtidos
+                error_log("userData.php: Dados do usuário obtidos da sessão");
+            }
+        } else {
+            error_log("userData.php: Dados do usuário inválidos na sessão");
+        }
+    } else {
+        error_log("userData.php: Dados do usuário não encontrados na sessão");
+    }
+
+    // Registrar os dados que serão enviados
+    error_log("userData.php: Enviando resposta: " . json_encode($response));
 
     sendJson($response);
 }

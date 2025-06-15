@@ -1,8 +1,37 @@
 // ========================
 // 📁 indexDashboard.js
 // ========================
-document.addEventListener('DOMContentLoaded', function() {
-    const ctx = document.getElementById('pointControlUsersData').getContext('2d');
+import { 
+    getAllPointControl, 
+    syncServerToIndexedDB 
+} from '../indexedDB/Model.js';
+
+// Variáveis globais para armazenar dados
+let labels = [];
+let dataPoints = [];
+let detalhes = {};
+
+document.addEventListener('DOMContentLoaded', async function() {
+    // Buscar dados do IndexedDB
+    await loadDataFromIndexedDB();
+
+    // Tentar sincronizar com o servidor se estiver online
+    if (navigator.onLine) {
+        try {
+            await syncServerToIndexedDB();
+            // Recarregar dados após sincronização
+            await loadDataFromIndexedDB();
+        } catch (error) {
+            console.error("Erro ao sincronizar dados com o servidor:", error);
+        }
+    }
+
+    // Inicializar o gráfico
+    const ctx = document.getElementById('pointControlUsersData');
+    if (!ctx) {
+        console.error("Elemento 'pointControlUsersData' não encontrado");
+        return;
+    }
 
     const data = {
         labels: labels,
@@ -218,4 +247,77 @@ document.addEventListener('DOMContentLoaded', function() {
 
     botaoPesquisar.addEventListener('click', filtrarRegistros);
     inputPesquisa.addEventListener('input', filtrarRegistros);
+    // Função para carregar dados do IndexedDB
+    async function loadDataFromIndexedDB() {
+        try {
+            // Buscar todos os registros de ponto
+            const pointControlRecords = await getAllPointControl();
+
+            if (!pointControlRecords || pointControlRecords.length === 0) {
+                console.log("Nenhum registro de ponto encontrado");
+                return;
+            }
+
+            // Processar registros para obter dados por status
+            const statusData = processPointControlRecords(pointControlRecords);
+
+            // Atualizar variáveis globais
+            labels = statusData.labels;
+            dataPoints = statusData.dataPoints;
+            detalhes = statusData.detalhes;
+
+            console.log("Dados carregados do IndexedDB:", { labels, dataPoints, detalhes });
+        } catch (error) {
+            console.error("Erro ao carregar dados do IndexedDB:", error);
+        }
+    }
+
+    // Função para processar registros de ponto e obter dados por status
+    function processPointControlRecords(records) {
+        // Agrupar registros por status
+        const statusGroups = {
+            'Verificação pendente': [],
+            'Já verificado': [],
+            'Recusado': []
+        };
+
+        // Mapear códigos de status para descrições
+        const statusMap = {
+            '1': 'Verificação pendente',
+            '2': 'Já verificado',
+            '3': 'Recusado'
+        };
+
+        records.forEach(record => {
+            // Verificar se temos status
+            if (!record.status) return;
+
+            // Obter descrição do status
+            const statusDesc = statusMap[record.status] || 'Verificação pendente';
+
+            // Inicializar grupo do status se não existir
+            if (!statusGroups[statusDesc]) {
+                statusGroups[statusDesc] = [];
+            }
+
+            // Adicionar registro ao grupo do status
+            statusGroups[statusDesc].push({
+                cod: record.cod,
+                data: new Date(record.dateIn).toLocaleDateString('pt-BR'),
+                nome: record.nome || 'Usuário',
+                status: statusDesc,
+                id: record.uidUserFK
+            });
+        });
+
+        // Criar arrays para labels e dataPoints
+        const labels = Object.keys(statusGroups).filter(status => statusGroups[status].length > 0);
+        const dataPoints = labels.map(status => statusGroups[status].length);
+
+        return {
+            labels,
+            dataPoints,
+            detalhes: statusGroups
+        };
+    }
 });

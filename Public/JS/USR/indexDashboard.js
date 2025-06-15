@@ -1,7 +1,47 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // Agora as variáveis daysData, labels e dataPoints já foram definidas
-    const ctx = document.getElementById('presence').getContext('2d');
- //ttttttttttttttggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggate fez isso
+// ========================
+// 📁 indexDashboard.js
+// ========================
+import { 
+    getPointControlByUserId, 
+    getAllPointControl, 
+    getUserById, 
+    syncServerToIndexedDB 
+} from '../indexedDB/Model.js';
+
+// Variáveis globais para armazenar dados
+let daysData = {};
+let labels = [];
+let dataPoints = [];
+let userId = null;
+
+document.addEventListener('DOMContentLoaded', async function() {
+    // Obter o ID do usuário do elemento oculto
+    const idInput = document.getElementById('responseIdInput');
+    if (idInput) {
+        userId = idInput.value;
+    }
+
+    // Buscar dados do IndexedDB
+    await loadDataFromIndexedDB();
+
+    // Tentar sincronizar com o servidor se estiver online
+    if (navigator.onLine) {
+        try {
+            await syncServerToIndexedDB();
+            // Recarregar dados após sincronização
+            await loadDataFromIndexedDB();
+        } catch (error) {
+            console.error("Erro ao sincronizar dados com o servidor:", error);
+        }
+    }
+
+    // Inicializar o gráfico
+    const ctx = document.getElementById('presence');
+    if (!ctx) {
+        console.error("Elemento 'presence' não encontrado");
+        return;
+    }
+
     const data = {
         labels: labels,
         datasets: [{
@@ -279,4 +319,88 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 0);
     }
 
+    // Função para carregar dados do IndexedDB
+    async function loadDataFromIndexedDB() {
+        try {
+            // Verificar se temos ID de usuário
+            if (!userId) {
+                console.error("ID de usuário não encontrado");
+                return;
+            }
+
+            // Buscar registros de ponto do usuário
+            const pointControlRecords = await getPointControlByUserId(userId);
+
+            if (!pointControlRecords || pointControlRecords.length === 0) {
+                console.log("Nenhum registro de ponto encontrado para o usuário");
+                return;
+            }
+
+            // Processar registros para obter dados mensais
+            const monthlyData = processPointControlRecords(pointControlRecords);
+
+            // Atualizar variáveis globais
+            labels = monthlyData.labels;
+            dataPoints = monthlyData.dataPoints;
+            daysData = monthlyData.daysData;
+
+            console.log("Dados carregados do IndexedDB:", { labels, dataPoints, daysData });
+        } catch (error) {
+            console.error("Erro ao carregar dados do IndexedDB:", error);
+        }
+    }
+
+    // Função para processar registros de ponto e obter dados mensais
+    function processPointControlRecords(records) {
+        // Agrupar registros por mês
+        const monthlyGroups = {};
+        const daysDataObj = {};
+
+        records.forEach(record => {
+            // Verificar se temos data
+            if (!record.dateIn) return;
+
+            // Converter string de data para objeto Date
+            const date = new Date(record.dateIn);
+
+            // Formatar mês como YYYY-MM
+            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+            // Inicializar grupo do mês se não existir
+            if (!monthlyGroups[monthKey]) {
+                monthlyGroups[monthKey] = [];
+            }
+
+            // Inicializar dados do dia se não existir
+            if (!daysDataObj[monthKey]) {
+                daysDataObj[monthKey] = [];
+            }
+
+            // Adicionar registro ao grupo do mês
+            monthlyGroups[monthKey].push(record);
+
+            // Adicionar dados do dia
+            daysDataObj[monthKey].push({
+                day: String(date.getDate()).padStart(2, '0'),
+                day_count: 1,
+                status: record.status || 'Sem descrição'
+            });
+        });
+
+        // Ordenar meses
+        const sortedMonths = Object.keys(monthlyGroups).sort();
+
+        // Limitar a 3 meses mais recentes
+        const recentMonths = sortedMonths.slice(-3);
+
+        // Criar arrays para labels e dataPoints
+        const labels = recentMonths;
+        const dataPoints = recentMonths.map(month => monthlyGroups[month].length);
+
+        return {
+            labels,
+            dataPoints,
+            daysData: daysDataObj
+        };
+    }
 });

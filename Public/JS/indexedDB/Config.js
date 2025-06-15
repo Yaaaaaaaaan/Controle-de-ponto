@@ -2,9 +2,10 @@
 // 📁 Config.js
 // ========================
 const dbName = 'PCDB';
-const dbVersion = 1;
+const dbVersion = 2; // Incrementado para forçar upgrade
 const userDataStoreName = 'userData';
 const pointControlStoreName = 'pointControl';
+const userTokenStoreName = 'userToken';
 
 let db;
 
@@ -19,24 +20,33 @@ function initializeDB() {
 
         request.onupgradeneeded = (event) => {
             const db = event.target.result;
+
+            // Criar ou atualizar userData store
             if (!db.objectStoreNames.contains(userDataStoreName)) {
                 const userDataStore = db.createObjectStore(userDataStoreName, {
                     keyPath: 'nickname'
                 });
-                userDataStore.createIndex('userData', 'userToken', {
-                    unique: true
-                });
+                userDataStore.createIndex('userTokenIdx', 'userToken', { unique: true });
+                userDataStore.createIndex('idIdx', 'id', { unique: true });
             }
+
+            // Criar ou atualizar pointControl store
             if (!db.objectStoreNames.contains(pointControlStoreName)) {
                 const pointControlStore = db.createObjectStore(pointControlStoreName, {
-                    keyPath: 'id'
+                    keyPath: 'cod', autoIncrement: true
                 });
-                pointControlStore.createIndex('pointControlCod', 'cod', {
-                    unique: true
+                pointControlStore.createIndex('userIdIdx', 'uidUserFK', { unique: false });
+                pointControlStore.createIndex('statusIdx', 'status', { unique: false });
+                pointControlStore.createIndex('dateIdx', 'dateIn', { unique: false });
+            }
+
+            // Criar ou atualizar userToken store
+            if (!db.objectStoreNames.contains(userTokenStoreName)) {
+                const userTokenStore = db.createObjectStore(userTokenStoreName, {
+                    keyPath: 'token'
                 });
-                pointControlStore.createIndex('pointControlDesc', 'descricao', {
-                    unique: false
-                });
+                userTokenStore.createIndex('userIdIdx', 'uidUserFK', { unique: true });
+                userTokenStore.createIndex('lastUpdatedIdx', 'lastUpdated', { unique: false });
             }
         };
 
@@ -51,4 +61,4 @@ function initializeDB() {
     });
 }
 
-export { initializeDB, userDataStoreName, pointControlStoreName };
+export { initializeDB, userDataStoreName, pointControlStoreName, userTokenStoreName };

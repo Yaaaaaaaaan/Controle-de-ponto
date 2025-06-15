@@ -35,11 +35,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($auth_success) {
         error_log("Login bem-sucedido. Redirecionando...");
         $_SESSION['logged'] = true;
-        header('Location: ../User/index.php');
+
+        // Verificar se a requisição veio do JavaScript
+        $isJsAuth = isset($_GET['auth']) && $_GET['auth'] === 'attempt';
+
+        if ($isJsAuth) {
+            // Redirecionar de volta para a página de login com parâmetro de sucesso
+            // O JavaScript irá interceptar isso e sincronizar os dados
+            header('Location: index.php?auth=success');
+        } else {
+            // Redirecionamento tradicional
+            header('Location: ../User/index.php');
+        }
         exit;
     } else {
         error_log("Falha na autenticação.");
         $_SESSION['response'] = "Falha na autenticação.";
+
+        // Se a requisição veio do JavaScript, redirecionar com erro
+        if (isset($_GET['auth']) && $_GET['auth'] === 'attempt') {
+            header('Location: index.php?auth=failed');
+            exit;
+        }
     }
 }
 ?>
@@ -87,6 +104,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </div>
 
 <!-- JavaScript (IndexedDB + lógica offline) -->
-<script src="../../JS/IDX/authController.js"></script>
+<script type="module" src="../../JS/IDX/authController.js"></script>
 </body>
 </html>
