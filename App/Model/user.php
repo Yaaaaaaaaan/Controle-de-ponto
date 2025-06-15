@@ -3,7 +3,7 @@
 use Random\RandomException;
 
 if (!defined('APP_RAN')) {
-  die('Acesso não permitido');
+    die('Acesso não permitido');
 }
 
 #[AllowDynamicProperties] class User{
@@ -17,35 +17,34 @@ if (!defined('APP_RAN')) {
         'pc' => 'pointControl'
     ];
 
-    public $id;
-    public $userToken;
-    public $name;
-    public $email;
-    public $password;
-    public $rank;
-    public $nickname;
+    // Propriedades da classe mapeadas para as colunas da tabela userdata
+    public $uid; // Corresponde a 'uid'
+    public $uname; // Corresponde a 'uname'
+    public $uemail; // Corresponde a 'uemail'
+    public $upassword; // Corresponde a 'upassword'
+    public $urank; // Corresponde a 'urank'
+    public $username; // Corresponde a 'username' (novo nickname)
+    public $udefaultTheme; // Corresponde a 'udefaultTheme'
 
+    // Outras propriedades existentes
     public $newPassword;
     public $confirmPassword;
     public $oldPassword;
-
-    public $defaultTheme;
 
     public $profilePicture;
     public $directory;
     public $verifyUpload;
 
-    public $descricao;
-    public $registro;
+    public $descricao; // Parece ser para pointControl, revisar uso
+    public $registro; // Parece ser para pointControl, revisar uso
 
     public function __construct($db){
         $this->conn = $db;
     }
 
     public function createUser(): bool{
-        // Verificar se todos os dados necessários foram fornecidos
-        if (empty($this->name) || empty($this->email) || empty($this->password) ||
-            empty($this->rank) || empty($this->nickname)) {
+        if (empty($this->uname) || empty($this->uemail) || empty($this->upassword) ||
+            empty($this->urank) || empty($this->username)) {
             return false;
         }
 
@@ -64,16 +63,17 @@ if (!defined('APP_RAN')) {
 
         try {
             // 1. Inserir dados do usuário na tabela userdata
-            $queryUser = "INSERT INTO {$this->tableNames['ud']} 
-                  (uname, username, uemail, upassword, urank) 
-                  VALUES (:name, :nickname, :email, :password, :rank)";
-
+            $queryUser = "INSERT INTO " . $this->tableNames['ud'] . " (uname, uemail, upassword, urank, username, udefaultTheme) VALUES (:uname, :uemail, :upassword, :urank, :username, :udefaultTheme)";
             $stmtUser = $this->conn->prepare($queryUser);
-            $stmtUser->bindParam(':name', $this->name);
-            $stmtUser->bindParam(':nickname', $this->nickname);
-            $stmtUser->bindParam(':email', $this->email);
-            $stmtUser->bindParam(':password', $this->password);
-            $stmtUser->bindParam(':rank', $this->rank);
+
+            $this->udefaultTheme = 0; // Valor padrão é 0
+
+            $stmtUser->bindParam(':uname', $this->uname);
+            $stmtUser->bindParam(':uemail', $this->uemail);
+            $stmtUser->bindParam(':upassword', $this->upassword);
+            $stmtUser->bindParam(':urank', $this->urank);
+            $stmtUser->bindParam(':username', $this->username);
+            $stmtUser->bindParam(':udefaultTheme', $this->udefaultTheme);
             $stmtUser->execute();
 
             // Obter o ID do usuário recém-inserido
@@ -81,7 +81,7 @@ if (!defined('APP_RAN')) {
 
             // 2. Inserir dados da imagem na tabela pictures
             $queryPicture = "INSERT INTO {$this->tableNames['pic']}
-                     (path, description, uidUserFK) 
+                     (path, namePic, uidUserFK) 
                      VALUES (:directory, :profilePicture, :newUserId)";
 
             $stmtPicture = $this->conn->prepare($queryPicture);
@@ -95,11 +95,10 @@ if (!defined('APP_RAN')) {
 
             // 3. Inserir relação entre usuário e imagem de perfil na tabela profilepictures
             $queryProfilePic = "INSERT INTO {$this->tableNames['pps']}
-                        (uidUserFK, uPictureFK) 
-                        VALUES (:newUserId, :newPictureId)";
+                        ( uPictureFK) 
+                        VALUES (:newPictureId)";
 
             $stmtProfilePic = $this->conn->prepare($queryProfilePic);
-            $stmtProfilePic->bindParam(':newUserId', $newUserId);
             $stmtProfilePic->bindParam(':newPictureId', $newPictureId);
             $stmtProfilePic->execute();
 
@@ -563,14 +562,14 @@ if (!defined('APP_RAN')) {
         }
     }
 
-    public function updateTheme(int $userId, int $theme): bool
+    public function updateTheme(int $uid, int $theme): bool
     {
-        error_log("Model/User.php - updateTheme: userId recebido: " . $userId . ", theme recebido: " . $theme);
+        error_log("Model/User.php - updateTheme: userId recebido: " . $uid . ", theme recebido: " . $theme);
         try {
-            $query = "UPDATE {$this->tableNames['ud']} SET udefaultTheme = :theme WHERE uid = :id";
+            $query = "UPDATE {$this->tableNames['ud']} SET udefaultTheme = :theme WHERE uid = :uid";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':theme', $theme, PDO::PARAM_INT);
-            $stmt->bindParam(':id', $userId, PDO::PARAM_INT);
+            $stmt->bindParam(':uid', $uid, PDO::PARAM_INT);
             $result = $stmt->execute();
             error_log("Model/User.php - updateTheme: Resultado da execução: " . ($result ? 'true' : 'false'));
             if (!$result) {

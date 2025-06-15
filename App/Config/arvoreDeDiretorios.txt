@@ -79,6 +79,7 @@ Controle-de-Ponto/
 │   │   ├── USR/
 │   │   │   ├── indexDashboard.js                                       # Cria a parte lógica do dashboard e seus dados
 │   │   │   ├── userController.js
+│   │   │   ├── PointControlHandler.js
 │   │   │   └── userInterface.js                               # Faz o papel de View com os dados recebidos do Model.js
 │   │   ├── bootstrap.bundle.js
 │   │   │   └── bootstrap.bundle.min.js
@@ -122,8 +123,14 @@ Controle-de-Ponto/
  -------------------------- ------------------ -----------------           # Diagrama da lógica implementada em IndexDB
 
 Banco de Dados (Database): PCDB
-    └── Object Store: userData
-        ├── Dados:
-        │   ├── userToken (Chave Primária)
-        │   ├── Outras propriedades do usuário (name, email, nickname, etc.)
-        ├── Índice: userToken (unique: true)
+├── Object Store: userData
+│   └── Dados:
+│       ├── Primária: nickname (chave primária)
+│       ├── Índice: userToken (única: true)
+│       └── Outras propriedades de userData (email, id, name, nickname, profileUser, rank, theme)
+└── Object Store: pointControl
+    └── Dados:
+        ├── Primária: cod (chave primária)
+        ├── Índice: month (única: false)
+        ├── Índice: status (única: false)
+        └── Outras propriedades de pointControl (cod, userId, status, name, dateIn, month, isVerify, verifyByAdmin)
