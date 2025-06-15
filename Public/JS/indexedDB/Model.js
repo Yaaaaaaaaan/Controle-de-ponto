@@ -216,20 +216,43 @@ async function processUserData() {
             return null;
         }
 
+        // Só cria a transação depois de obter e validar os dados
         const db = await initializeDB();
         const transaction = db.transaction(userDataStoreName, 'readwrite');
         const userDataStore = transaction.objectStore(userDataStoreName);
 
-        userDataStore.clear();
-        userDataStore.add(serverUserData); // Assumindo objeto único
+        try {
+            // Limpa os dados existentes com Promise
+            await new Promise((resolve, reject) => {
+                const clearRequest = userDataStore.clear();
+                clearRequest.onsuccess = resolve;
+                clearRequest.onerror = reject;
+            });
 
-        await new Promise((resolve, reject) => {
-            transaction.oncomplete = () => resolve();
-            transaction.onerror = () => reject('Erro na transação IndexedDB');
-        });
+            // Adiciona os novos dados com Promise
+            await new Promise((resolve, reject) => {
+                const addRequest = userDataStore.add(serverUserData); // Assumindo objeto único
+                addRequest.onsuccess = resolve;
+                addRequest.onerror = (event) => {
+                    console.error("Erro ao adicionar dados do usuário:", event.target.error);
+                    reject(event.target.error);
+                };
+            });
 
-        return serverUserData; // ← objeto, não array
+            // Aguarda a conclusão da transação
+            await new Promise((resolve, reject) => {
+                transaction.oncomplete = resolve;
+                transaction.onerror = (event) => {
+                    console.error("Erro na transação IndexedDB:", event.target.error);
+                    reject('Erro na transação IndexedDB');
+                };
+            });
 
+            return serverUserData; // ← objeto, não array
+        } catch (innerError) {
+            console.error("Erro durante operações de IndexedDB:", innerError);
+            return serverUserData; // Retorna os dados mesmo se falhar a gravação no IndexedDB
+        }
     } catch (error) {
         console.error("Erro ao processar dados do usuário:", error);
         return null;
@@ -240,32 +263,50 @@ async function processUserData() {
 // Função para sincronizar dados do servidor com o IndexedDB
 async function syncServerToIndexedDB() {
     try {
-        const db = await initializeDB();
-        const transaction = db.transaction(userDataStoreName, 'readwrite');
-        const userDataStore = transaction.objectStore(userDataStoreName);
-
-
+        // Primeiro, busca os dados do servidor
         const response = await fetch('../../Persistence/userData.php');
         const data = await response.json();
 
-
+        // Só cria a transação depois de obter os dados
         if (data && data.userData) {
-            userDataStore.clear();
+            const db = await initializeDB();
+            const transaction = db.transaction(userDataStoreName, 'readwrite');
+            const userDataStore = transaction.objectStore(userDataStoreName);
 
-            // Handle both array and object formats
-            if (Array.isArray(data.userData) && data.userData.length > 0) {
-                data.userData.forEach(user => {
-                    userDataStore.add(user);
+            try {
+                // Limpa os dados existentes
+                await new Promise((resolve, reject) => {
+                    const clearRequest = userDataStore.clear();
+                    clearRequest.onsuccess = resolve;
+                    clearRequest.onerror = reject;
                 });
-            } else if (typeof data.userData === 'object' && Object.keys(data.userData).length > 0) {
-                userDataStore.add(data.userData);
-            }
 
-            await new Promise((resolve, reject) => {
-                transaction.oncomplete = resolve;
-                transaction.onerror = reject;
-            });
-            console.log("syncServerToIndexedDB: Dados sincronizados do servidor para IndexedDB.");
+                // Handle both array and object formats
+                if (Array.isArray(data.userData) && data.userData.length > 0) {
+                    for (const user of data.userData) {
+                        await new Promise((resolve, reject) => {
+                            const addRequest = userDataStore.add(user);
+                            addRequest.onsuccess = resolve;
+                            addRequest.onerror = reject;
+                        });
+                    }
+                } else if (typeof data.userData === 'object' && Object.keys(data.userData).length > 0) {
+                    await new Promise((resolve, reject) => {
+                        const addRequest = userDataStore.add(data.userData);
+                        addRequest.onsuccess = resolve;
+                        addRequest.onerror = reject;
+                    });
+                }
+
+                await new Promise((resolve, reject) => {
+                    transaction.oncomplete = resolve;
+                    transaction.onerror = reject;
+                });
+
+                console.log("syncServerToIndexedDB: Dados sincronizados do servidor para IndexedDB.");
+            } catch (innerError) {
+                console.error("syncServerToIndexedDB: Erro durante operação de IndexedDB:", innerError);
+            }
         } else {
             console.log("syncServerToIndexedDB: Sem dados para sincronizar.");
         }
@@ -317,25 +358,42 @@ async function syncPointControlData() {
             const transaction = db.transaction(pointControlStoreName, 'readwrite');
             const pointControlStore = transaction.objectStore(pointControlStoreName);
 
-            // Limpa os dados existentes
-            pointControlStore.clear();
+            try {
+                // Limpa os dados existentes
+                await new Promise((resolve, reject) => {
+                    const clearRequest = pointControlStore.clear();
+                    clearRequest.onsuccess = resolve;
+                    clearRequest.onerror = reject;
+                });
 
-            // Adiciona os novos dados
-            if (Array.isArray(data.pointControl)) {
-                for (const item of data.pointControl) {
-                    pointControlStore.add(item);
+                // Adiciona os novos dados
+                if (Array.isArray(data.pointControl)) {
+                    for (const item of data.pointControl) {
+                        await new Promise((resolve, reject) => {
+                            const addRequest = pointControlStore.add(item);
+                            addRequest.onsuccess = resolve;
+                            addRequest.onerror = reject;
+                        });
+                    }
+                } else if (typeof data.pointControl === 'object') {
+                    await new Promise((resolve, reject) => {
+                        const addRequest = pointControlStore.add(data.pointControl);
+                        addRequest.onsuccess = resolve;
+                        addRequest.onerror = reject;
+                    });
                 }
-            } else if (typeof data.pointControl === 'object') {
-                pointControlStore.add(data.pointControl);
+
+                await new Promise((resolve, reject) => {
+                    transaction.oncomplete = resolve;
+                    transaction.onerror = reject;
+                });
+
+                console.log("Dados de controle de ponto sincronizados do servidor para IndexedDB");
+                return true;
+            } catch (innerError) {
+                console.error("Erro durante a operação de IndexedDB:", innerError);
+                return false;
             }
-
-            await new Promise((resolve, reject) => {
-                transaction.oncomplete = resolve;
-                transaction.onerror = reject;
-            });
-
-            console.log("Dados de controle de ponto sincronizados do servidor para IndexedDB");
-            return true;
         }
 
         return false;

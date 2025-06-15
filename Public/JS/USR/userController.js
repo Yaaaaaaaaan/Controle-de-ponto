@@ -62,10 +62,13 @@ function updateUIElements(userData, pointControl) {
         console.error("updateUIElements: Dados de usuário inválidos ou incompletos", userData);
         return;
     }
-    if(!pointControl || !pointControl.codigo){
-        console.error("updateUIElements: Dados de usuário inválidos ou incompletos", pointControl);
-        return;
+
+    // Não bloqueia a execução se pointControl não for fornecido
+    if (pointControl && !pointControl.codigo) {
+        console.warn("updateUIElements: Dados de controle de ponto incompletos", pointControl);
+        // Continua a execução mesmo sem dados de controle de ponto válidos
     }
+
     const elements = {
         'responseName': userData.name,
         'responseNameCurto': `Olá, ${userData.name.split(' ')[0]}`,
@@ -85,6 +88,11 @@ function updateUIElements(userData, pointControl) {
 
     const idInput = document.getElementById('responseIdInput');
     if (idInput) idInput.value = userData.id;
+
+    // Se tiver dados de controle de ponto, atualiza elementos específicos
+    if (pointControl && pointControl.codigo) {
+        // Aqui pode adicionar código para atualizar elementos específicos de controle de ponto
+    }
 }
 
 // Função para atualizar formulário de configurações
