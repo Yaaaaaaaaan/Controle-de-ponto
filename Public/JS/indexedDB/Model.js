@@ -27,21 +27,40 @@ async function addUser(user) {
     }
 }
 
-async function addPointControl(userAttr){ /* TODO:Analisar banco de dados de pointControl, e refatorar o que for necessário, seguindo a lógica do sistema, e quais dados serão repassados para cá, após, verificar quais são as chaves primárias necessárias no banco local. */
+async function addPointControl(pointControlData) {
     try {
+        // Validate required fields
+        if (!pointControlData.id || !pointControlData.cod || !pointControlData.descricao) {
+            throw new Error('Dados de controle de ponto incompletos. Necessário: id, cod, descricao');
+        }
+
+        // Add timestamp if not provided
+        if (!pointControlData.dateIn) {
+            pointControlData.dateIn = new Date().toISOString();
+        }
+
         const db = await initializeDB();
         const transaction = db.transaction(pointControlStoreName, 'readwrite');
         const pointControlStore = transaction.objectStore(pointControlStoreName);
-        const addRequest = pointControlStore.add(userAttr);
-        return new Promise((resolve, reject) =>
-        {
-            addRequest.onsuccess = () => resolve(addRequest.result);
-            addRequest.onerror = () => reject('Erro ao adicionar dados de controle de ponto: ' + addRequest.error);
-        });
-    }catch(error){
-            throw new Error('Erro ao adicionar dados de controle de ponto:' + error);
-        }
 
+        console.log('Adicionando dados de controle de ponto:', pointControlData);
+
+        const addRequest = pointControlStore.add(pointControlData);
+
+        return new Promise((resolve, reject) => {
+            addRequest.onsuccess = () => {
+                console.log('Dados de controle de ponto adicionados com sucesso!');
+                resolve(addRequest.result);
+            };
+            addRequest.onerror = (event) => {
+                console.error('Erro ao adicionar dados de controle de ponto:', event.target.error);
+                reject('Erro ao adicionar dados de controle de ponto: ' + event.target.error);
+            };
+        });
+    } catch (error) {
+        console.error('Erro ao processar dados de controle de ponto:', error);
+        throw new Error('Erro ao adicionar dados de controle de ponto: ' + error);
+    }
 }
 
 
@@ -144,8 +163,8 @@ async function getUser(id) {
         const userDataStore = transaction.objectStore(userDataStoreName);
         const getRequest = userDataStore.get(id);
         return new Promise((resolve, reject) => {
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject(request.error);
+            getRequest.onsuccess = () => resolve(getRequest.result);
+            getRequest.onerror = () => reject(getRequest.error);
         });
     } catch (error) {
         console.error("Erro ao obter usuário:", error);
@@ -230,11 +249,18 @@ async function syncServerToIndexedDB() {
         const data = await response.json();
 
 
-        if (data && data.userData && Array.isArray(data.userData) && data.userData.length > 0) {
+        if (data && data.userData) {
             userDataStore.clear();
-            data.userData.forEach(user => { // Acesse data.userData aqui
-                userDataStore.add(user);
-            });
+
+            // Handle both array and object formats
+            if (Array.isArray(data.userData) && data.userData.length > 0) {
+                data.userData.forEach(user => {
+                    userDataStore.add(user);
+                });
+            } else if (typeof data.userData === 'object' && Object.keys(data.userData).length > 0) {
+                userDataStore.add(data.userData);
+            }
+
             await new Promise((resolve, reject) => {
                 transaction.oncomplete = resolve;
                 transaction.onerror = reject;
@@ -249,6 +275,76 @@ async function syncServerToIndexedDB() {
 }
 
 
+// Função para obter todos os registros de controle de ponto
+async function getAllPointControlData() {
+    try {
+        const db = await initializeDB();
+        const transaction = db.transaction(pointControlStoreName, 'readonly');
+        const pointControlStore = transaction.objectStore(pointControlStoreName);
+        const request = pointControlStore.getAll();
+
+        return new Promise((resolve, reject) => {
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    } catch (error) {
+        console.error("Erro ao obter dados de controle de ponto:", error);
+        return [];
+    }
+}
+
+// Função para obter registros de controle de ponto de um usuário específico
+async function getPointControlDataByUserId(userId) {
+    try {
+        const allData = await getAllPointControlData();
+        return allData.filter(item => item.uidUserFK === userId);
+    } catch (error) {
+        console.error("Erro ao filtrar dados de controle de ponto por usuário:", error);
+        return [];
+    }
+}
+
+// Função para sincronizar dados de controle de ponto com o servidor
+async function syncPointControlData() {
+    try {
+        // Primeiro, tenta obter dados do servidor
+        const response = await fetch('../../Persistence/pointControl.php');
+        const data = await response.json();
+
+        // Se tiver dados do servidor, atualiza o IndexedDB
+        if (data && data.pointControl) {
+            const db = await initializeDB();
+            const transaction = db.transaction(pointControlStoreName, 'readwrite');
+            const pointControlStore = transaction.objectStore(pointControlStoreName);
+
+            // Limpa os dados existentes
+            pointControlStore.clear();
+
+            // Adiciona os novos dados
+            if (Array.isArray(data.pointControl)) {
+                for (const item of data.pointControl) {
+                    pointControlStore.add(item);
+                }
+            } else if (typeof data.pointControl === 'object') {
+                pointControlStore.add(data.pointControl);
+            }
+
+            await new Promise((resolve, reject) => {
+                transaction.oncomplete = resolve;
+                transaction.onerror = reject;
+            });
+
+            console.log("Dados de controle de ponto sincronizados do servidor para IndexedDB");
+            return true;
+        }
+
+        return false;
+    } catch (error) {
+        console.error("Erro ao sincronizar dados de controle de ponto:", error);
+        return false;
+    }
+}
+
 export {
     addUser,
     getUserById,
@@ -258,5 +354,9 @@ export {
     getAllUsers,
     syncIndexedDBToServer,
     syncServerToIndexedDB,
-    processUserData
+    processUserData,
+    addPointControl,
+    getAllPointControlData,
+    getPointControlDataByUserId,
+    syncPointControlData
 };

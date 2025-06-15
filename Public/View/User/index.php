@@ -144,6 +144,7 @@
 
         </script>
         <script src="../../JS/USR/indexDashboard.js"></script> <!-- Dashboard de visualização de dados -->
+        <script type="module" src="../../JS/USR/pointControlHandler.js"></script> <!-- Handler para controle de ponto -->
         <img hidden id="pPictureModal">
     </body>
 </html>

@@ -29,9 +29,9 @@
             $this->descricao = $descricao;
             $this->id = $id;
 
-            $query = "INSERT INTO " . $this->tableNames['pc'] . "  (description, uidUserFK) VALUES (:description, :id)";
+            $query = "INSERT INTO " . $this->tableNames['pc'] . "  (status, uidUserFK) VALUES (:status, :id)";
             $stmt = $this->conn->prepare($query);
-            $stmt->bindParam(':description', $this->descricao);
+            $stmt->bindParam(':status', $this->descricao);
             $stmt->bindParam(':id', $this->id);
 
             try {
@@ -70,10 +70,10 @@
                 $monthStr = $mes['month'];
 
                 // Consulta modificada para incluir a descrição para cada dia
-                $queryDias = "SELECT DATE_FORMAT(dateIn, '%d') as day, COUNT(*) as day_count, description
+                $queryDias = "SELECT DATE_FORMAT(dateIn, '%d') as day, COUNT(*) as day_count, status
                     FROM pointControl 
                     WHERE uidUserFK = :id AND DATE_FORMAT(dateIn, '%Y-%m') = :month
-                    GROUP BY day, description
+                    GROUP BY day, status
                     ORDER BY day";
 
                 $stmtDias = $this->conn->prepare($queryDias);
@@ -95,21 +95,21 @@
     {
         try{
         $query = "SELECT 
-        pc.description, pc.cod,
+        pc.status, pc.cod,
         COUNT(*) as count,
         GROUP_CONCAT(
             JSON_OBJECT(
                 'cod', pc.cod,
                 'data', DATE_FORMAT(pc.dateIn, '%d/%m/%Y'),
                 'nome', ud.uname,
-                'descricao', pc.description,
+                'status', pc.status,
                 'id', pc.uidUserFK
             )
         ) as detalhes
     FROM pointControl pc
     INNER JOIN userdata ud ON pc.uidUserFK = ud.uid
     WHERE pc.dateIn >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
-    GROUP BY pc.description
+    GROUP BY pc.status
     ORDER BY count DESC";
 
         // Debug direto do resultado da query

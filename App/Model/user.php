@@ -236,7 +236,7 @@ if (!defined('APP_RAN')) {
                         ]);
                         $_SESSION['pointControl'] = json_encode([
                             'name' => $row['uname'],
-                            'description' => $row['description'],
+                            'status' => $row['status'],
                             'dateIn' => $row['dateIn'],
                         ]);
                         return true;
@@ -400,7 +400,7 @@ if (!defined('APP_RAN')) {
         $this->picture = $picture;
         $this->directory = $directory;
         $this->id = $_SESSION['id'];
-        $queryInsert = "INSERT INTO" . $this->tableNames['pic'] . " SET path=:directory, description=:picture, idUserFK = :id ";
+        $queryInsert = "INSERT INTO" . $this->tableNames['pic'] . " SET path=:directory, namePic=:picture, idUserFK = :id ";
         $stmt = $this->conn->prepare($queryInsert);
         $stmt->bindValue(':id', $this->id);
         $stmt->bindValue(':directory', $this->directory);
@@ -598,7 +598,7 @@ if (!defined('APP_RAN')) {
         FROM {$this->tableNames['pc']} 
         WHERE uidUserFK = :userId
         AND dateIn = :currentDate
-        AND description = :descriptionToValidate
+        AND status = :descriptionToValidate
         ";
 
         return true;
@@ -609,7 +609,7 @@ if (!defined('APP_RAN')) {
         $this->description = $description;
         $this->code = $code;
 
-        $query = "UPDATE {$this->tableNames['pc']} SET description = :description
+        $query = "UPDATE {$this->tableNames['pc']} SET status = :description
                     WHERE uidUserFK = :userIdToValidate AND cod = :code";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':description', $this->description);

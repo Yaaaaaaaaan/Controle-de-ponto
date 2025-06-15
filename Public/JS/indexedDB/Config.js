@@ -21,7 +21,7 @@ function initializeDB() {
             const db = event.target.result;
             if (!db.objectStoreNames.contains(userDataStoreName)) {
                 const userDataStore = db.createObjectStore(userDataStoreName, {
-                    keyPath: 'nickname', name: 'userData'
+                    keyPath: 'nickname'
                 });
                 userDataStore.createIndex('userData', 'userToken', {
                     unique: true
@@ -29,13 +29,13 @@ function initializeDB() {
             }
             if (!db.objectStoreNames.contains(pointControlStoreName)) {
                 const pointControlStore = db.createObjectStore(pointControlStoreName, {
-                    keyPath: 'id', name: 'pointControl'
+                    keyPath: 'id'
                 });
-                pointControlStore.createIndex('pointControl', 'cod', {
+                pointControlStore.createIndex('pointControlCod', 'cod', {
                     unique: true
                 });
-                pointControlStore.createIndex('pointControl', 'descricao', {
-                    unique: true
+                pointControlStore.createIndex('pointControlDesc', 'descricao', {
+                    unique: false
                 });
             }
         };
