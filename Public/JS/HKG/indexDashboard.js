@@ -1,6 +1,3 @@
-// ========================
-// 📁 indexDashboard.js
-// ========================
 document.addEventListener('DOMContentLoaded', function() {
     const ctx = document.getElementById('pointControlUsersData').getContext('2d');
 
