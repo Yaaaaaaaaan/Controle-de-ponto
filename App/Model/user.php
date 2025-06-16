@@ -212,7 +212,7 @@ if (!defined('APP_RAN')) {
 
                             // Registro no histórico
                             $description = 'login e criação de hash em ';
-                            $this->createUserHistory($description, $row['uid']);
+                            $this->createUserHistory($description, $row['uid'], $userToken);
 
                             $this->conn->commit();
                         } catch (PDOException $e) {
@@ -349,14 +349,15 @@ if (!defined('APP_RAN')) {
         return false;
     }
 
-    public function createUserHistory($description, $userId): bool{
+    public function createUserHistory($description, $userId, $userToken): bool{
         try{
             $ip = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'];
-            $queryInsert = "INSERT INTO {$this->tableNames['hs']} (description, uidUserFK) VALUES (:description, :id)";
+            $queryInsert = "INSERT INTO {$this->tableNames['hs']} (description, uidUserFK, authToken) VALUES (:description, :id, :userToken)";
             $stmtHistory = $this->conn->prepare($queryInsert);
             $newDescription = $description . "Endereço IP: " . $ip;
             $stmtHistory->bindValue(':description', $newDescription);
             $stmtHistory->bindParam(':id', $userId);
+            $stmtHistory->bindParam(':userToken', $userToken);
             $result = $stmtHistory->execute();
 
             if (!$result) {

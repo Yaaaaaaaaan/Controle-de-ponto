@@ -6,6 +6,9 @@ const dbVersion = 1;
 const userDataStoreName = 'userData';
 const pointControlStoreName = 'pointControl';
 
+const userPicturesStoreName = 'userPictures';
+
+
 let db;
 
 function initializeDB() {
@@ -37,6 +40,12 @@ function initializeDB() {
                 pointControlStore.createIndex('pointControlDesc', 'descricao', {
                     unique: false
                 });
+            }
+            if (!db.objectStoreNames.contains(userPicturesStoreName)) {
+                const userPicturesStore = db.createObjectStore(userPicturesStoreName, {
+                    keyPath: 'id'
+                });
+                userPicturesStore.createIndex('userPictures', 'userToken', {})
             }
         };
 

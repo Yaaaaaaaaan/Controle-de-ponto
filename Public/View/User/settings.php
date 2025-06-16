@@ -57,9 +57,9 @@
     }
 
     // Carrega as imagens do usuário para a interface
-    include_once '../../../App/controller/pictureController.php';
+    /*include_once '../../../App/controller/pictureController.php';
     $controller = new pictureController();
-    $pictures = $controller->getUserPictures();
+    $pictures = $controller->getUserPictures();*/
 
     /*echo '<pre>';
     var_dump($_SESSION['userData']); // Verifica a string JSON armazenada
@@ -73,7 +73,7 @@
 
     </head>
     <body>
-        <div class="container">
+        <div class="container mt-5">
             <main>
                 <div data-bs-spy="scroll" data-bs-target="#navbar-example2"  data-bs-smooth-scroll="true" tabindex="0">
                     <div class="py-4 text-center mt-2 pt-2">
@@ -292,21 +292,6 @@
                                 <button type="submit" id="updateProfilePicBtn" style="text-align: center; display: block; margin: 0 auto;" name="updateProfilePic" class="btn btn-outline-primary w-100">Atualizar Foto de Perfil</button>
                             </div>
                         </form>
-
-                        <!--<form method="post" id="profilePicForm">
-                            <div class="image-container">
-                                <?php foreach ($pictures as $picture) : ?>
-                                    <label class="image-radio-container">
-                                        <input type="radio" name="selectedPicture" value="<?= $picture['cod']; ?>">
-                                        <img src="<?= $picture['path']; ?>" class="d-block w-100" alt="Foto de Perfil">
-                                    </label>
-                                <?php endforeach; ?>
-                            </div>
-                            <text class="text-body-secondary">Essas são suas últimas três fotos adicionadas, Selecione uma.</text>
-                            <div class="d-flex justify-content-center mt-3">
-                                <button type="button" id="updateProfilePicBtn" class="btn btn-outline-primary w-100">Atualizar Foto de Perfil</button>
-                            </div>
-                        </form>-->
                     </div>
                 </div>
             </div>
