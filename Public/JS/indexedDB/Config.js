@@ -26,18 +26,18 @@ function initializeDB() {
                 const userDataStore = db.createObjectStore(userDataStoreName, {
                     keyPath: 'nickname'
                 });
-                userDataStore.createIndex('userData', 'userToken', {
+                userDataStore.createIndex('userToken', 'userToken', {
                     unique: true
                 });
             }
             if (!db.objectStoreNames.contains(pointControlStoreName)) {
                 const pointControlStore = db.createObjectStore(pointControlStoreName, {
-                    keyPath: 'id'
+                    keyPath: 'cod'
                 });
-                pointControlStore.createIndex('pointControlCod', 'cod', {
+                pointControlStore.createIndex('month', 'month', {
                     unique: true
                 });
-                pointControlStore.createIndex('pointControlDesc', 'descricao', {
+                pointControlStore.createIndex('status', 'status', {
                     unique: false
                 });
             }
