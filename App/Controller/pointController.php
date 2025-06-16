@@ -30,9 +30,9 @@ class PointController{
             $detalhes = [];
 
             foreach ($resultados as $row) {
-                $labels[] = $row['description'];
+                $labels[] = $row['status'];
                 $dataPoints[] = (int)$row['count'];
-                $detalhes[$row['description']] = json_decode('[' . $row['detalhes'] . ']', true);
+                $detalhes[$row['status']] = json_decode('[' . $row['detalhes'] . ']', true);
             }
 
             return [
