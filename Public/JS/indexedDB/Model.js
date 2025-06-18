@@ -155,7 +155,7 @@ async function getAllUsers() {
         return [];
     }
 }
-// Função para obter dados de usuário específico ** TODO
+// Função para obter dados de usuário específico
 async function getUser(id) {
     try {
         const db = await initializeDB();
@@ -258,7 +258,6 @@ async function processUserData() {
         return null;
     }
 }
-//Model.js
 
 // Função para sincronizar dados do servidor com o IndexedDB
 async function syncServerToIndexedDB() {
