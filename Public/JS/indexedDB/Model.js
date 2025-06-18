@@ -281,7 +281,7 @@ async function syncServerToIndexedDB() {
                     clearRequest.onerror = reject;
                 });
 
-                // Handle both array and object formats
+                // Lida com formatos de matriz e objeto
                 if (Array.isArray(data.userData) && data.userData.length > 0) {
                     for (const user of data.userData) {
                         await new Promise((resolve, reject) => {

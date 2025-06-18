@@ -22,7 +22,7 @@ if ($_POST) {
 <html>
 <head></head>
 <body>
-<div class="container-fluid">
+<div class="container-fluid mt-5">
     <div class="row">
         <div class="col-md-12">
             <h3 class="mt-5">Estatísticas</h3>
