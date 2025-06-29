@@ -70,7 +70,7 @@ function getUserDataAndPictures()
 {
     $response = [];
 
-    $response['userData'] = (isset($_SESSION['userData']) && $_SESSION['userData'] != null && !isset($_SESSION['userData_processed']))
+    $response['userData'] = (isset($_SESSION['userData']) && $_SESSION['userData'] != null && isset($_SESSION['userPictures']) && $_SESSION['userPictures'] != null && !isset($_SESSION['userData_processed']))
         ? json_decode($_SESSION['userData'], true)
         : [];
     //$response['userDataAvailable'] = !empty($response['userData']);
@@ -84,7 +84,7 @@ function getUserDataAndPictures()
     sendJson($response);
 }
 
-function updateUserTheme(): void
+/*function updateUserTheme(): void
 {
     $data = json_decode(file_get_contents('php://input'), true);
     $theme = $data['theme'] ?? null;
@@ -114,7 +114,7 @@ function updateUserTheme(): void
     } else {
         sendJson(['success' => false, 'message' => 'Tema ou token de usuário não especificados']);
     }
-}
+}*/
 
 // Roteamento
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {

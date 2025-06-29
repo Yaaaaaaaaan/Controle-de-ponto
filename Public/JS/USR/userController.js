@@ -1,4 +1,4 @@
-import { updateUser, processUserData, syncIndexedDBToServer, syncServerToIndexedDB, getAllUsers } from '../indexedDB/Model.js';
+import { updateUser, processUserData, /*syncIndexedDBToServer,*/ syncServerToIndexedDB, getAllUsers } from '../indexedDB/Model.js';
 
 // Necessário revisar e refatorar toda lógica aqui.
 

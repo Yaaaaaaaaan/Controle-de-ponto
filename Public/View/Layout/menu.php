@@ -28,7 +28,6 @@ if (isset($_SESSION['userData']) && $_SESSION['userData'] != null) {
     <link rel="stylesheet" href="../../CSS/USR/dashboard.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="../../JS/script.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
@@ -42,7 +41,6 @@ if (isset($_SESSION['userData']) && $_SESSION['userData'] != null) {
             });
         }
     </script>
-    <!--<script type="module" src="../../JS/localStorage.js"></script>-->
 </head>
 <body>
 <nav class="navbar navbar-dark bg-dark fixed-top">
@@ -134,19 +132,8 @@ if (isset($_SESSION['userData']) && $_SESSION['userData'] != null) {
         </div>
     </div>
 </div>
-<script type="module" src="../../JS/localStorage.js"></script>
 <script type="module" src="../../JS/USR/userController.js"></script>
-<script type="module" src="../../JS/indexedDB/Model.js"></script>
-<script type="module">
-    import { updateUIElements } from '../../JS/USR/userController.js';
-    import { processUserData } from '../../JS/indexedDB/Model.js';
-    document.addEventListener('DOMContentLoaded', async () => {
-        const userData = await processUserData();
-        if (userData) {
-            updateUIElements(userData);
-        }
-    });
-</script>
+
 
 </body>
 </html>

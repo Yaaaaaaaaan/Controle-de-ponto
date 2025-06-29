@@ -8,6 +8,7 @@ import {
 
 const userDataStoreName = 'userData';
 const pointControlStoreName = 'pointControl';
+const userPicturesStoreName = 'userPictures';
 
 // Função para adicionar um novo usuário
 async function addUser(user) {
@@ -27,6 +28,23 @@ async function addUser(user) {
     }
 }
 
+async function addUserPictures(id) {
+    try {
+        const db = await initializeDB();
+        const transaction = db.transaction(userPicturesStoreName, 'readwrite');
+        const userPicturesStoreName = transaction.objectStore(userPicturesStoreName);
+        const addRequest = userPicturesStoreName.add(user);
+
+
+        return new Promise((resolve, reject) => {
+            addRequest.onsuccess = () => resolve(addRequest.result);
+            addRequest.onerror = () => reject('Erro ao adicionar usuário: ' + addRequest.error);
+        });
+    } catch (error) {
+        throw new Error('Erro ao adicionar imagens de usuário: ' + error);
+    }
+}
+
 async function addPointControl(pointControlData) {
     try {
         // Validate required fields
@@ -35,9 +53,6 @@ async function addPointControl(pointControlData) {
         }
 
         // Add timestamp if not provided
-        if (!pointControlData.dateIn) {
-            pointControlData.dateIn = new Date().toISOString();
-        }
 
         const db = await initializeDB();
         const transaction = db.transaction(pointControlStoreName, 'readwrite');
@@ -171,35 +186,6 @@ async function getUser(id) {
         return [];
     }
 }
-
-
-
-// Função para sincronizar dados do IndexedDB com o servidor
-async function syncIndexedDBToServer(userToken, theme) {
-    try {
-        if (!userToken || typeof theme === 'undefined') {
-            console.error("Erro ao sincronizar com o servidor: Tema ou token de usuário não especificados");
-            return;
-        }
-
-        const response = await fetch('../../Persistence/userData.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userToken, theme })
-        });
-
-        const data = await response.json();
-        if (data.success) {
-            console.log("Tema atualizado no servidor com sucesso!");
-        } else {
-            console.error("Erro ao atualizar tema no servidor:", data.message);
-        }
-    } catch (error) {
-        //console.error("Erro ao comunicar com o servidor:", error);
-    }
-}
-
-
 
 // Função para processar dados do usuário
 async function processUserData() {
@@ -404,12 +390,13 @@ async function syncPointControlData() {
 
 export {
     addUser,
+    addUserPictures,
     getUserById,
     updateUser,
     deleteUser,
     getUser,
     getAllUsers,
-    syncIndexedDBToServer,
+    //syncIndexedDBToServer,
     syncServerToIndexedDB,
     processUserData,
     addPointControl,
