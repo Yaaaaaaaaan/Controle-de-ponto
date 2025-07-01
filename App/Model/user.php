@@ -421,7 +421,7 @@ if (!defined('APP_RAN')) {
         $stmt->bindParam(':userId', $userId);
         $stmt->execute();
         $pictures = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        $_SESSION['lastProfilePictures']= json_encode($pictures);
+        $_SESSION['userPictures']= json_encode($pictures);
         return $pictures;
     }
 
