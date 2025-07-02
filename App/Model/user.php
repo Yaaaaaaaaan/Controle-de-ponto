@@ -239,6 +239,7 @@ if (!defined('APP_RAN')) {
                             'status' => $row['status'],
                             'dateIn' => $row['dateIn'],
                         ]);
+                        $this->getUserPictures($row['uid']);
                         return true;
                     }
                 }
