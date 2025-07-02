@@ -417,7 +417,7 @@ if (!defined('APP_RAN')) {
       }
 
       public function getUserPictures($userId) {
-        $querySelect = "SELECT cod, path, description FROM " . $this->tableNames['pic'] . " WHERE uidUserFK = :userId ORDER BY dateload DESC LIMIT 3";
+        $querySelect = "SELECT cod, path, namePic FROM " . $this->tableNames['pic'] . " WHERE uidUserFK = :userId ORDER BY dateload DESC LIMIT 3";
         $stmt = $this->conn->prepare($querySelect);
         $stmt->bindParam(':userId', $userId);
         $stmt->execute();
@@ -441,7 +441,7 @@ if (!defined('APP_RAN')) {
             $updateStmt->execute();
 
             // 2. realize o SELECT
-            $querySelect = "SELECT description 
+            $querySelect = "SELECT namePic 
                       FROM " . $this->tableNames['pic'] . " 
                       WHERE cod = :pictureId";
             $selectStmt = $this->conn->prepare($querySelect);
@@ -525,7 +525,7 @@ if (!defined('APP_RAN')) {
         try {
             $this->descricao = 'Verificação pendente';
             $this->id = $id;
-            $query = "INSERT INTO pointControl (description, uidUserFK) VALUES (:description, :id)";
+            $query = "INSERT INTO pointControl (status, uidUserFK) VALUES (:description, :id)";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':description', $this->descricao);
             $stmt->bindParam(':id', $this->id);
