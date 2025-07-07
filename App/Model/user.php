@@ -10,7 +10,7 @@ if (!defined('APP_RAN')) {
     private $conn;
     private $tableNames = [
         'ud' => 'userdata',
-        'pps' => 'profilepictures',
+        'pps' => 'albuns',
         'pic' => 'pictures',
         'hs' => 'history',
         'ut' => 'usertoken',
