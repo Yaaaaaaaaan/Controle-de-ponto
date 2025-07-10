@@ -139,7 +139,7 @@ if (!defined('APP_RAN')) {
             // Confirmar todas as operações
             $this->conn->commit();
 
-            //6. Inserir registro no histórico TODO:Fazer funcionar aqui.
+            //6. Inserir registro no histórico
             $description = 'Criação de conta ';
             $this->createUserHistory($description, $newUserId);
             return true;
