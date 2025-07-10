@@ -10,7 +10,7 @@ USE `controle_ponto_db`;
 -- Estrutura da tabela: `usuarios`
 -- Armazena os dados de login e informações básicas dos usuários.
 --
-CREATE TABLE `usuarios` (
+CREATE TABLE IF NOT EXISTS `usuarios` (
                             `id_usuario` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
                             `nome_completo` varchar(100) DEFAULT NULL,
                             `nome_usuario` varchar(50) DEFAULT NULL,
@@ -29,14 +29,13 @@ CREATE TABLE `usuarios` (
 -- Estrutura da tabela: `tokens_autenticacao`
 -- Armazena tokens para sessões persistentes ou "lembrar de mim".
 --
-CREATE TABLE `tokens_autenticacao` (
-                                       `token_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-                                       `id_usuario` int(11) NOT NULL,
-                                       `token` varchar(255) NOT NULL,
-                                       `data_criacao` datetime NOT NULL DEFAULT current_timestamp(),
-                                       PRIMARY KEY (`token_id`),
-                                       KEY `fk_tokens_usuario` (`id_usuario`),
-                                       CONSTRAINT `fk_tokens_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`) ON DELETE CASCADE
+CREATE TABLE IF NOT EXISTS `tokens_autenticacao` (
+    `token_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `id_usuario` BIGINT UNSIGNED NOT NULL,
+    `token` VARCHAR(255) NOT NULL,
+    `data_criacao` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+    PRIMARY KEY (`token_id`),
+    FOREIGN KEY (`id_usuario`) REFERENCES `usuarios`(`id_usuario`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -45,9 +44,9 @@ CREATE TABLE `tokens_autenticacao` (
 -- Estrutura da tabela: `albuns`
 -- Associa uma ou mais fotos a um album.
 --
-CREATE TABLE `albuns` (
+CREATE TABLE IF NOT EXISTS `albuns` (
                           `album_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-                          `id_usuario` int(11) NOT NULL,
+                          `id_usuario` BIGINT UNSIGNED NOT NULL,
                           `nome_album` varchar(255) NOT NULL,
                           `tipo_album` text,
                           `data_definicao` datetime NOT NULL DEFAULT current_timestamp(),
@@ -61,7 +60,7 @@ CREATE TABLE `albuns` (
 -- Estrutura da tabela: `fotos`
 -- Armazena metadados de todas as imagens enviadas pelos usuários.
 --
-CREATE TABLE `fotos` (
+CREATE TABLE IF NOT EXISTS `fotos` (
                          `foto_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
                          `album_id` BIGINT UNSIGNED NOT NULL,
                          `id_usuario` BIGINT UNSIGNED NOT NULL,
@@ -70,10 +69,8 @@ CREATE TABLE `fotos` (
                          `legenda_foto` text DEFAULT NULL,
                          `data_upload` datetime NOT NULL DEFAULT current_timestamp(),
                          PRIMARY KEY (`foto_id`),
-                         KEY `fk_fotos_usuario` (`id_usuario`),
-                         KEY `fk_albuns_id` (`album_id`),
-                         CONSTRAINT `fk_fotos_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`) ON DELETE SET NULL,
-                         CONSTRAINT `fk_albuns_id` FOREIGN KEY (`album_id`) REFERENCES `albuns` (`album_id`) ON DELETE SET NULL
+                         FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`) ON DELETE CASCADE,
+                         FOREIGN KEY (`album_id`) REFERENCES `albuns` (`album_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -82,7 +79,7 @@ CREATE TABLE `fotos` (
 -- Estrutura da tabela: `historicos_acoes`
 -- Registra um log de ações importantes realizadas pelos usuários no sistema.
 --
-CREATE TABLE `historicos_acoes` (
+CREATE TABLE IF NOT EXISTS `historicos_acoes` (
                                     `historico_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
                                     `id_usuario` BIGINT UNSIGNED NOT NULL,
                                     `descricao` text DEFAULT NULL,
@@ -98,7 +95,7 @@ CREATE TABLE `historicos_acoes` (
 -- Estrutura da tabela: `registros_ponto`
 -- Armazena as marcações de ponto dos usuários.
 --
-CREATE TABLE `registros_ponto` (
+CREATE TABLE IF NOT EXISTS `registros_ponto` (
                                    `registro_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
                                    `id_usuario` BIGINT UNSIGNED NOT NULL,
                                    `data_registro` date NOT NULL,
@@ -117,7 +114,7 @@ CREATE TABLE `registros_ponto` (
 -- Cria um token inicial para um usuário assim que ele é inserido na tabela `usuarios`.
 --
 DELIMITER $$
-CREATE TRIGGER `trg_criar_token_novo_usuario` AFTER INSERT ON `usuarios` FOR EACH ROW
+CREATE TRIGGER IF NOT EXISTS `trg_criar_token_novo_usuario` AFTER INSERT ON `usuarios` FOR EACH ROW
 BEGIN
     -- Gera um token aleatório e o insere na tabela de tokens.
     INSERT INTO tokens_autenticacao (id_usuario, token)
