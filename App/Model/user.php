@@ -52,6 +52,7 @@ if (!defined('APP_RAN')) {
         // Define valor padrão para a imagem de perfil
         $this->profilePicture = 'Profile.png';
         $this->directory = '/Controle-de-ponto/App/Persistence/userProfileImages/Profile.png';
+        $this->isProfile = '1';
 
         // Define valore padrão para o álbum
         $this->albumName = 'Foto de perfil';
@@ -99,14 +100,15 @@ if (!defined('APP_RAN')) {
 
             // 3. Inserir dados da tabela imagem
             $queryProfilePic = "INSERT INTO {$this->tableNames['fot']}
-                        (album_id, id_usuario, caminho_arquivo, nome_foto) 
-                        VALUES (:newAlbumId, :newUserId, :directory, :profilePicture)";
+                        (album_id, id_usuario, caminho_arquivo, nome_foto, perfil) 
+                        VALUES (:newAlbumId, :newUserId, :directory, :profilePicture, :isProfile)";
 
             $stmtProfilePic = $this->conn->prepare($queryProfilePic);
             $stmtProfilePic->bindParam(':newAlbumId', $newAlbumId);
             $stmtProfilePic->bindParam(':newUserId', $newUserId);
             $stmtProfilePic->bindParam(':directory', $this->directory);
             $stmtProfilePic->bindParam(':profilePicture', $this->profilePicture);
+            $stmtProfilePic->bindParam(':isProfile', $this->isProfile);
             $stmtProfilePic->execute();
 
             // 4. Verificar se o trigger para a criação automática de tokens já existe
@@ -185,11 +187,11 @@ if (!defined('APP_RAN')) {
         if (!empty($this->nickname) && !empty($this->password)) {
             $userToken = bin2hex(random_bytes(32));
 
-            $query = "SELECT u.uid, t.token, u.uname, u.username, u.urank, u.uemail, u.upassword, d.namePic, p.dateload, u.udefaultTheme
+            $query = "SELECT u.id_usuario, t.token, u.nome_completo, u.nome_usuario, u.nivel_acesso, u.email, u.senha_hash, f.nome_foto, a.dateload, u.tema_padrao
                   FROM {$this->tableNames['usr']} u
-                  INNER JOIN {$this->tableNames['fot']} d ON u.uid = d.uidUserFK
-                  INNER JOIN {$this->tableNames['tok']} t ON u.uid = t.uidUserFK
-                  INNER JOIN {$this->tableNames['alb']} p ON p.uPictureFK = d.cod
+                  INNER JOIN {$this->tableNames['fot']} f ON u.uid = f.uidUserFK AND f.status_foto = '1'
+                  INNER JOIN {$this->tableNames['tok']} t ON u.uid = t.id_usuario
+                  INNER JOIN {$this->tableNames['alb']} a ON a.uPictureFK = f.cod
                   WHERE u.username = :nickname";
 
             try {

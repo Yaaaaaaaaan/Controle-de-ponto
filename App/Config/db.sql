@@ -67,6 +67,7 @@ CREATE TABLE IF NOT EXISTS `fotos` (
                          `caminho_arquivo` varchar(255) NOT NULL,
                          `nome_foto` text NOT NULL,
                          `legenda_foto` text DEFAULT NULL,
+                         `perfil` tinyint(1) DEFAULT 0,
                          `data_upload` datetime NOT NULL DEFAULT current_timestamp(),
                          PRIMARY KEY (`foto_id`),
                          FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`) ON DELETE CASCADE,
