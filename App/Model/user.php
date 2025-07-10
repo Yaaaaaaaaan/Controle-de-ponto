@@ -49,9 +49,13 @@ if (!defined('APP_RAN')) {
             return false;
         }
 
-        // Definir valores padrão para a imagem de perfil
+        // Define valor padrão para a imagem de perfil
         $this->profilePicture = 'Profile.png';
         $this->directory = '/Controle-de-ponto/App/Persistence/userProfileImages/Profile.png';
+
+        // Define valore padrão para o álbum
+        $this->albumName = 'Foto de perfil';
+        $this->albumType = 'Foto de perfil';
 
         // Cria um hash para futuras transações
         $userToken = bin2hex(random_bytes(32));
@@ -77,30 +81,32 @@ if (!defined('APP_RAN')) {
             $stmtUser->execute();
 
             // Obter o ID do usuário recém-inserido
-            $novoIdUsuario = $this->conn->lastInsertId();
+            $newUserId = $this->conn->lastInsertId();
 
             // 2. Inserir dados da imagem na tabela albuns
             $queryPicture = "INSERT INTO {$this->tableNames['alb']}
                      (id_usuario, nome_album, tipo_album) 
-                     VALUES (:novoIdUsuario, 'Foto de perfil', 'Foto de perfil')";
+                     VALUES (:newUserId, :albumName, :albumType)";
 
             $stmtPicture = $this->conn->prepare($queryPicture);
-            $stmtPicture->bindParam(':directory', $this->directory);
-            $stmtPicture->bindParam(':profilePicture', $this->profilePicture);
-            $stmtPicture->bindParam(':novoIdUsuario', $novoIdUsuario);
+            $stmtPicture->bindParam(':newUserId', $newUserId);
+            $stmtPicture->bindParam(':albumName', $this->albumName);
+            $stmtPicture->bindParam(':albumType', $this->albumType);
             $stmtPicture->execute();
 
             // Obter o ID da imagem recém-inserida
-            $novoAlbumId = $this->conn->lastInsertId();
+            $newAlbumId = $this->conn->lastInsertId();
 
             // 3. Inserir dados da tabela imagem
             $queryProfilePic = "INSERT INTO {$this->tableNames['fot']}
-                        (caminho_arquivo, nome_foto, id_usuario) 
-                        VALUES (:novoIdUsuario, :novoAlbumId)";
+                        (album_id, id_usuario, caminho_arquivo, nome_foto) 
+                        VALUES (:newAlbumId, :newUserId, :directory, :profilePicture)";
 
             $stmtProfilePic = $this->conn->prepare($queryProfilePic);
-            $stmtProfilePic->bindParam(':novoIdUsuario', $novoIdUsuario);
-            $stmtProfilePic->bindParam(':novoAlbumId', $novoAlbumId);
+            $stmtProfilePic->bindParam(':newAlbumId', $newAlbumId);
+            $stmtProfilePic->bindParam(':newUserId', $newUserId);
+            $stmtProfilePic->bindParam(':directory', $this->directory);
+            $stmtProfilePic->bindParam(':profilePicture', $this->profilePicture);
             $stmtProfilePic->execute();
 
             // 4. Verificar se o trigger para a criação automática de tokens já existe
@@ -112,7 +118,7 @@ if (!defined('APP_RAN')) {
                        AFTER INSERT ON {$this->tableNames['usr']}
                        FOR EACH ROW
                        BEGIN
-                         INSERT INTO {$this->tableNames['tok']} (token, uidUserFK)
+                         INSERT INTO {$this->tableNames['tok']} (token, id_usuario)
                          VALUES (UNHEX(?), NEW.uid);
                        END";
 
@@ -122,19 +128,19 @@ if (!defined('APP_RAN')) {
 
             // 5. Inserir token do usuário na tabela usertoken
             $queryToken = "INSERT INTO {$this->tableNames['tok']} 
-                   (token, uidUserFK) 
+                   (token, id_usuario) 
                    VALUES (:userToken, :newUserId)";
 
             $stmtToken = $this->conn->prepare($queryToken);
             $stmtToken->bindParam(':userToken', $userToken);
-            $stmtToken->bindParam(':newUserId', $novoIdUsuario);
+            $stmtToken->bindParam(':newUserId', $newUserId);
             $stmtToken->execute();
 
             // Confirmar todas as operações
             $this->conn->commit();
             //6. Inserir registro no histórico
             $description = 'Criação de conta ';
-            $this->createUserHistory($description, $novoIdUsuario);
+            $this->createUserHistory($description, $newUserId);
             return true;
 
         } catch (Exception $e) {
@@ -352,7 +358,7 @@ if (!defined('APP_RAN')) {
     public function createUserHistory($description, $userId): bool{
         try{
             $ip = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'];
-            $queryInsert = "INSERT INTO {$this->tableNames['his']} (description, uidUserFK) VALUES (:description, :id)";
+            $queryInsert = "INSERT INTO {$this->tableNames['his']} (descricao, id_usuario) VALUES (:description, :id)";
             $stmtHistory = $this->conn->prepare($queryInsert);
             $newDescription = $description . "Endereço IP: " . $ip;
             $stmtHistory->bindValue(':description', $newDescription);
