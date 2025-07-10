@@ -127,14 +127,14 @@ if (!defined('APP_RAN')) {
 
             $stmtToken = $this->conn->prepare($queryToken);
             $stmtToken->bindParam(':userToken', $userToken);
-            $stmtToken->bindParam(':newUserId', $newUserId);
+            $stmtToken->bindParam(':newUserId', $novoIdUsuario);
             $stmtToken->execute();
 
             // Confirmar todas as operações
             $this->conn->commit();
             //6. Inserir registro no histórico
             $description = 'Criação de conta ';
-            $this->createUserHistory($description, $newUserId);
+            $this->createUserHistory($description, $novoIdUsuario);
             return true;
 
         } catch (Exception $e) {
