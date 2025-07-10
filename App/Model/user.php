@@ -187,12 +187,12 @@ if (!defined('APP_RAN')) {
         if (!empty($this->nickname) && !empty($this->password)) {
             $userToken = bin2hex(random_bytes(32)); // Há a criação de TOKEN Pelo Banco de Dados.
 
-            $query = "SELECT u.id_usuario, t.token, u.nome_completo, u.nome_usuario, u.nivel_acesso, u.email, u.senha_hash, f.nome_foto, a.dateload, u.tema_padrao
+            $query = "SELECT u.id_usuario, t.token, u.nome_completo, u.nome_usuario, u.nivel_acesso, u.email, u.senha_hash, f.nome_foto, u.tema_padrao
                   FROM {$this->tableNames['usr']} u
-                  INNER JOIN {$this->tableNames['fot']} f ON u.uid = f.uidUserFK AND f.perfil = '1'
-                  INNER JOIN {$this->tableNames['tok']} t ON u.uid = t.id_usuario
-                  INNER JOIN {$this->tableNames['alb']} a ON a.uPictureFK = f.cod AND a.tipo_album = '1'
-                  WHERE u.username = :nickname";
+                  INNER JOIN {$this->tableNames['fot']} f ON u.id_usuario = f.id_usuario AND f.perfil = '1'
+                  INNER JOIN {$this->tableNames['tok']} t ON u.id_usuario = t.id_usuario
+                  INNER JOIN {$this->tableNames['alb']} a ON a.album_id = f.album_id AND a.tipo_album = '1'
+                  WHERE u.nome_usuario = :nickname";
 
             try {
                 $stmt = $this->conn->prepare($query);
@@ -231,17 +231,17 @@ if (!defined('APP_RAN')) {
                         }
 
                         // Sessão
-                        $_SESSION['id'] = $row['uid'];
+                        $_SESSION['id'] = $row['id_usuario'];
                         $_SESSION['logged'] = true;
                         $_SESSION['userData'] = json_encode([
                             'userToken' => $userToken,
-                            'name' => $row['uname'],
-                            'email' => $row['uemail'],
-                            'rank' => $row['urank'],
-                            'nickname' => $row['username'],
-                            'theme' => $row['udefaultTheme'],
-                            'id' => $row['uid'],
-                            'profileUser' => $row['namePic'],
+                            'name' => $row['nome_completo'],
+                            'email' => $row['email'],
+                            'rank' => $row['nivel_acesso'],
+                            'nickname' => $row['nome_usuario'],
+                            'theme' => $row['tema_padrao'],
+                            'id' => $row['id_usuario'],
+                            'profileUser' => $row['nome_foto'],
                         ]);
                         $_SESSION['pointControl'] = json_encode([
                             'name' => $row['uname'],
