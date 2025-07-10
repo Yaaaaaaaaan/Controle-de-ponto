@@ -4,7 +4,7 @@ if (!defined('APP_RAN')) {
 }
 class Database {
     private $host = 'localhost';
-    private $db_name = 'controle_de_ponto_db';
+    private $db_name = 'controle_ponto_db';
     private $username = 'root';
     private $password = '';
     public $conn;
