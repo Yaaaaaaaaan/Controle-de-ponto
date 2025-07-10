@@ -56,10 +56,10 @@ if (!defined('APP_RAN')) {
 
         // Define valore padrão para o álbum
         $this->albumName = 'Foto de perfil';
-        $this->albumType = 'Foto de perfil';
+        $this->albumType = '1';
 
         // Cria um hash para futuras transações
-        $userToken = bin2hex(random_bytes(32));
+        $userToken = bin2hex(random_bytes(32)); // há redundância aqui, pois está gerando dois hashs.
 
         // Iniciar transação para garantir consistência dos dados
         $this->conn->beginTransaction();
@@ -112,11 +112,11 @@ if (!defined('APP_RAN')) {
             $stmtProfilePic->execute();
 
             // 4. Verificar se o trigger para a criação automática de tokens já existe
-            $triggerExists = $this->checkTriggerExists('tr_insert_token');
+            $triggerExists = $this->checkTriggerExists('trg_criar_token_novo_usuario');
 
             // Se o trigger não existir, criar um novo
             if (!$triggerExists) {
-                $triggerQuery = "CREATE TRIGGER tr_insert_token
+                $triggerQuery = "CREATE TRIGGER trg_criar_token_novo_usuario
                        AFTER INSERT ON {$this->tableNames['usr']}
                        FOR EACH ROW
                        BEGIN
@@ -185,13 +185,13 @@ if (!defined('APP_RAN')) {
      */
     public function authenticateUser(): bool{
         if (!empty($this->nickname) && !empty($this->password)) {
-            $userToken = bin2hex(random_bytes(32));
+            $userToken = bin2hex(random_bytes(32)); // Há a criação de TOKEN Pelo Banco de Dados.
 
             $query = "SELECT u.id_usuario, t.token, u.nome_completo, u.nome_usuario, u.nivel_acesso, u.email, u.senha_hash, f.nome_foto, a.dateload, u.tema_padrao
                   FROM {$this->tableNames['usr']} u
-                  INNER JOIN {$this->tableNames['fot']} f ON u.uid = f.uidUserFK AND f.status_foto = '1'
+                  INNER JOIN {$this->tableNames['fot']} f ON u.uid = f.uidUserFK AND f.perfil = '1'
                   INNER JOIN {$this->tableNames['tok']} t ON u.uid = t.id_usuario
-                  INNER JOIN {$this->tableNames['alb']} a ON a.uPictureFK = f.cod
+                  INNER JOIN {$this->tableNames['alb']} a ON a.uPictureFK = f.cod AND a.tipo_album = '1'
                   WHERE u.username = :nickname";
 
             try {
@@ -206,14 +206,14 @@ if (!defined('APP_RAN')) {
                             $this->conn->beginTransaction();
 
                             // Atualiza o token
-                            $update = $this->conn->prepare("UPDATE {$this->tableNames['tok']} SET token = :userToken WHERE uidUserFK = :id");
+                            $update = $this->conn->prepare("UPDATE {$this->tableNames['tok']} SET token = :userToken WHERE id_usuario = :id");
                             $update->bindValue(':userToken', $userToken);
                             $update->bindValue(':id', $row['uid']);
                             $update->execute();
 
                             // Se não atualizou nada, insere
                             if ($update->rowCount() === 0) {
-                                $insert = $this->conn->prepare("INSERT INTO {$this->tableNames['tok']} (token, uidUserFK) VALUES (:userToken, :id)");
+                                $insert = $this->conn->prepare("INSERT INTO {$this->tableNames['tok']} (token, id_usuario) VALUES (:userToken, :id)");
                                 $insert->bindValue(':userToken', $userToken);
                                 $insert->bindValue(':id', $row['uid']);
                                 $insert->execute();

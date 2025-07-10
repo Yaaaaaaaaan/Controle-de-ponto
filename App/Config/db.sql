@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS `albuns` (
                           `album_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
                           `id_usuario` BIGINT UNSIGNED NOT NULL,
                           `nome_album` varchar(255) NOT NULL,
-                          `tipo_album` text,
+                          `tipo_album` bigint unsigned,
                           `data_definicao` datetime NOT NULL DEFAULT current_timestamp(),
                           PRIMARY KEY (`album_id`),
                           CONSTRAINT `fk_albuns_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`) ON DELETE CASCADE
