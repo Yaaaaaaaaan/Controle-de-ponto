@@ -18,7 +18,8 @@ class UserController {
     }
 
     //TODO: REPARAR FUNÇÃO DE CRIAÇÃO DE USUÁRIO
-    public function createUser($name, $nickname, $email, $password){
+    public function createUser($name, $nickname, $email, $password): void
+    {
         $this->user->name = filter_var($name, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $this->user->nickname = filter_var($nickname, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $this->user->email = filter_var($email, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
