@@ -5,12 +5,14 @@ if (!defined('APP_RAN')) {
 
 class SystemController {
 
-    public function healthcheck() {
+    public function healthcheck(): void
+    {
         http_response_code(200);
     }
 
-    public function phpinfo() {
-        phpinfo(); // Cuidado: veja as considerações de segurança abaixo
+    public function phpinfo(): void
+    {
+        phpinfo();
     }
 
     // Outras funções do sistema podem ser adicionadas aqui

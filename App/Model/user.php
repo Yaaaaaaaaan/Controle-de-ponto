@@ -129,14 +129,14 @@ if (!defined('APP_RAN')) {
             }
 
             // 5. Inserir token do usuário na tabela usertoken
-            $queryToken = "INSERT INTO {$this->tableNames['tok']} 
+            /*$queryToken = "INSERT INTO {$this->tableNames['tok']}
                    (token, id_usuario) 
                    VALUES (:userToken, :newUserId)";
 
             $stmtToken = $this->conn->prepare($queryToken);
             $stmtToken->bindParam(':userToken', $userToken);
             $stmtToken->bindParam(':newUserId', $newUserId);
-            $stmtToken->execute();
+            $stmtToken->execute();*/
 
             // Confirmar todas as operações
             $this->conn->commit();
@@ -185,7 +185,7 @@ if (!defined('APP_RAN')) {
      */
     public function authenticateUser(): bool{
         if (!empty($this->nickname) && !empty($this->password)) {
-            $userToken = bin2hex(random_bytes(32)); // Há a criação de TOKEN Pelo Banco de Dados.
+            //$userToken = bin2hex(random_bytes(32)); // Há a criação de TOKEN Pelo Banco de Dados.
 
             $query = "SELECT u.id_usuario, t.token, u.nome_completo, u.nome_usuario, u.nivel_acesso, u.email, u.senha_hash, f.nome_foto, u.tema_padrao
                   FROM {$this->tableNames['usr']} u

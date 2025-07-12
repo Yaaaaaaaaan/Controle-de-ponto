@@ -3,37 +3,29 @@ error_reporting(0);
 define('APP_RAN', true);
 session_start();
 
-error_log("index.php executado"); // Log no início
-
 $uri = $_SERVER['REQUEST_URI'];
-error_log("URI: " . $uri); // Log da URI
 
-// Rota para healthcheck (DEVE SER A PRIMEIRA VERIFICAÇÃO)
+// Rota para healthcheck
 if ($uri === '/controle-de-ponto/index.php/system/healthcheck') {
-    error_log("Rota healthcheck detectada");
     include_once 'App/Controller/SystemController.php';
     $controller = new SystemController();
     $controller->healthcheck();
-    error_log("Healthcheck executado");
     exit;
 }
 
 // Se o usuário já está logado, redireciona (ANTES DO LOGIN)
 if (isset($_SESSION['logged'])) {
-    error_log("Usuário já logado. Redirecionando...");
     header('Location: ../User/index.php');
     exit;
 }
 
-// Processamento do formulário de login (APENAS SE NÃO FOR HEALTHCHECK)
+// HealthCheck 200:OK faz:
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    error_log("Processando formulário de login");
     include_once '../../../App/Controller/UserController.php';
     $controller = new UserController();
     $auth_success = $controller->authenticateUser($_POST['nickname'], $_POST['password']);
 
     if ($auth_success) {
-        error_log("Login bem-sucedido. Redirecionando...");
         $_SESSION['logged'] = true;
 
         // Verificar se a requisição veio do JavaScript
@@ -49,8 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         exit;
     } else {
-        error_log("Falha na autenticação.");
-        $_SESSION['response'] = "Falha na autenticação.";
+        $_SESSION['response'] = "Usuário ou senha incorretos.";
 
         // Se a requisição veio do JavaScript, redirecionar com erro
         if (isset($_GET['auth']) && $_GET['auth'] === 'attempt') {
@@ -89,8 +80,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <?php
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (isset($_SESSION['response'])) {
             echo $_SESSION['response'];
+            unset($_SESSION['response']);
         }
         ?>
 
