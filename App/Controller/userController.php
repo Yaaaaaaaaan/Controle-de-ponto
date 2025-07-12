@@ -27,9 +27,16 @@ class UserController {
         if ($this->user->createUser()){
             $_SESSION['response'] = '<p>Usuário criado com sucesso.</p>';
         } else {
-            if(empty($name) || empty($email) || empty($password) || empty($nickname)){
-                    $_SESSION['userdata'] = '';
-                    $_SESSION['response'] = '<p>Preencha todos os dados.</p>';
+            if(empty($name) && !empty($nickname) && !empty($email) && !empty($password)){
+                $_SESSION['response'] = '<p>Preencha seu nome.</p>';;
+            } if(empty($email) && !empty($nickname) && !empty($password) && !empty($name)){
+                $_SESSION['response'] = '<p>Preencha seu email.</p>';;
+            } if(empty($password) && !empty($nickname) && !empty($email) && !empty($name)){
+                $_SESSION['response'] = '<p>Preencha sua senha.</p>';;
+            } if(empty($nickname) && !empty($email) && !empty($password) && !empty($name)){
+                $_SESSION['response'] = '<p>Preencha seu nome de usuário.</p>';;
+            } if(empty($name) || empty($email) || empty($password) || empty($nickname)){
+                $_SESSION['response'] = '<p>Preencha todos os dados.</p>';
             }
         }
     }
