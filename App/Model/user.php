@@ -185,13 +185,13 @@ if (!defined('APP_RAN')) {
      */
     public function authenticateUser(): bool{
         if (!empty($this->nickname) && !empty($this->password)) {
-            //$userToken = bin2hex(random_bytes(32)); // Há a criação de TOKEN Pelo Banco de Dados.
+            $userToken = bin2hex(random_bytes(32));
 
             $query = "SELECT u.id_usuario, t.token, u.nome_completo, u.nome_usuario, u.nivel_acesso, u.email, u.senha_hash, f.nome_foto, u.tema_padrao
                   FROM {$this->tableNames['usr']} u
-                  INNER JOIN {$this->tableNames['fot']} f ON u.id_usuario = f.id_usuario AND f.perfil = '1'
+                  INNER JOIN {$this->tableNames['fot']} f ON u.id_usuario = f.id_usuario AND f.perfil = '1' /* 1 = True */
                   INNER JOIN {$this->tableNames['tok']} t ON u.id_usuario = t.id_usuario
-                  INNER JOIN {$this->tableNames['alb']} a ON a.album_id = f.album_id AND a.tipo_album = '1'
+                  INNER JOIN {$this->tableNames['alb']} a ON a.album_id = f.album_id AND a.tipo_album = '1' /* 1 = Fotos de perfil */
                   WHERE u.nome_usuario = :nickname";
 
             try {
@@ -201,27 +201,27 @@ if (!defined('APP_RAN')) {
 
                 if ($stmt->rowCount() > 0) {
                     $row = $stmt->fetch(PDO::FETCH_ASSOC);
-                    if (password_verify($this->password, $row['upassword'])) {
+                    if (password_verify($this->password, $row['senha_hash'])) {
                         try {
                             $this->conn->beginTransaction();
 
                             // Atualiza o token
                             $update = $this->conn->prepare("UPDATE {$this->tableNames['tok']} SET token = :userToken WHERE id_usuario = :id");
                             $update->bindValue(':userToken', $userToken);
-                            $update->bindValue(':id', $row['uid']);
+                            $update->bindValue(':id', $row['id_usuario']);
                             $update->execute();
 
                             // Se não atualizou nada, insere
                             if ($update->rowCount() === 0) {
                                 $insert = $this->conn->prepare("INSERT INTO {$this->tableNames['tok']} (token, id_usuario) VALUES (:userToken, :id)");
                                 $insert->bindValue(':userToken', $userToken);
-                                $insert->bindValue(':id', $row['uid']);
+                                $insert->bindValue(':id', $row['id_usuario']);
                                 $insert->execute();
                             }
 
                             // Registro no histórico
                             $description = 'login e criação de hash em ';
-                            $this->createUserHistory($description, $row['uid']);
+                            $this->createUserHistory($description, $row['id_usuario']);
 
                             $this->conn->commit();
                         } catch (PDOException $e) {
@@ -244,7 +244,7 @@ if (!defined('APP_RAN')) {
                             'profileUser' => $row['nome_foto'],
                         ]);
                         $_SESSION['pointControl'] = json_encode([
-                            'name' => $row['uname'],
+                            'name' => $row['nome_completo'],
                             'status' => $row['status'],
                             'dateIn' => $row['dateIn'],
                         ]);

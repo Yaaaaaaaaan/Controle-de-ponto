@@ -17,6 +17,7 @@
     // ID do usuário é necessário para o JavaScript
     $id = $_SESSION['id'] ?? null;
 
+    echo '<br><br><br><br>'.$_SESSION['userData'];
 ?>
 
 <html>
