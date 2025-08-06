@@ -62,6 +62,38 @@ class PointController{
         }
     }
 
+    public function validatePresence($userId, $userIdToValidate, $description, $code){ //Tudo aqui é transformação
+        $currentDate = date("Y-m-d");
+        $descriptionToValidate = "Já verificado";
+        $this->user->validatePresence($userId);
+        $this->user->validatePresence($userIdToValidate);
+        $this->user->validatePresence($description);
+        $this->user->validatePresence($code);
+        $this->user->validatePresence($currentDate);
+        $this->user->validatePresence($descriptionToValidate);
 
+
+        return true;
+    }
+
+    public function updatePresenceHousekeeping($userIdToValidate, $code, $description){
+        if ($description == 1) {
+            $descriptionTranslated = "Verificação pendente";
+        } else if ($description == 2) {
+            $descriptionTranslated = "Já verificado";
+        } else if ($description == 3) {
+            $descriptionTranslated = "Recusado";
+        } else {
+            error_log("Valor inválido para descrição: " . $description);
+            return false;
+        }
+        $result = $this->pointControl->updatePresenceHousekeeping($userIdToValidate, $code, $descriptionTranslated);
+        if ($result) {
+            echo "200 OK.";
+        } else {
+            echo "400 Bad Request.";
+        }
+        return $result;
+    }
 }
 ?>

@@ -1,5 +1,11 @@
-/*import { processUserData, checkForUserDataUpdates, lastProfilePictures } from '../JS/localStorage.js'; // Ajuste o caminho*/
-import { upsertUser, processUserData, syncIndexedDBToServer, syncServerToIndexedDB, getAllUsers } from '../indexedDB/Model.js';
+import {
+    upsertUser,
+    processUserData,
+    getAllUsers,
+    fetchUserDataByToken,
+    syncIndexedDBToServer,
+    syncServerToIndexedDB
+} from '../indexedDB/Model.js';
 
 let isFirstLoad = true;
 
@@ -106,33 +112,55 @@ function updateTheme(isDark) {
 // --- PONTO DE ENTRADA DO SCRIPT ---
 // Carrega os dados uma vez e "resolve" a promessa para notificar os outros scripts.
 async function initializeUserData() {
-    let userData = null;
-    try {
-        // 1. Tenta pegar os dados do servidor primeiro, pois são os mais recentes.
-        userData = await processUserData();
+    // 1. VERIFICA SE HÁ UM TOKEN SALVO LOCALMENTE
+    const localToken = localStorage.getItem('userToken');
 
-        // 2. Se falhar (offline), tenta pegar do banco de dados local.
-        if (!userData) {
-            console.log("userInterface.js: Não foi possível obter dados do servidor, tentando IndexedDB...");
-            const localUsers = await getAllUsers();
-            if (localUsers && localUsers.length > 0) {
-                userData = localUsers[0];
+    if (!localToken) {
+        console.log("Nenhum token local encontrado. Redirecionando para o login.");
+        // Se o usuário não está na página de login, redireciona
+        if (!window.location.pathname.includes('/Index/')) {
+            window.location.href = '/controle-de-ponto/Public/View/Index/';
+        }
+        return;
+    }
+
+    try {
+        // 2. TENTA VALIDAR O TOKEN COM O SERVIDOR (SE ONLINE)
+        let userData = null;
+        if (navigator.onLine) {
+            console.log("Online. Validando token com o servidor...");
+            userData = await fetchUserDataByToken(localToken);
+            if (userData) {
+                // Se o token for válido, salva os dados frescos no IndexedDB
+                await upsertUser(userData);
             }
         }
 
-        // 3. Se finalmente temos os dados, atualiza a UI e "resolve" a promessa.
+        // 3. SE ESTIVER OFFLINE OU O TOKEN FALHAR, TENTA PEGAR DO CACHE
+        if (!userData) {
+            console.log("Offline ou token inválido. Tentando carregar do cache local...");
+            const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
+            if (activeUserId) {
+                userData = await getUserById(activeUserId);
+            }
+        }
+
+        // 4. SE FINALMENTE TEMOS DADOS, INICIA A APLICAÇÃO
         if (userData) {
+            console.log("Dados do usuário carregados com sucesso.", userData);
             updateUI(userData);
-            userDataPromiseResolver(userData); // "AVISA" a todos que estão esperando.
+            userDataPromiseResolver(userData); // "Avisa" os outros scripts que está tudo pronto
         } else {
-            // Rejeita a promessa se nenhum dado for encontrado
-            userDataPromiseResolver(null);
-            throw new Error("Dados do usuário não encontrados no servidor ou localmente.");
+            // Se o token era inválido e não há cache, força o logout
+            console.error("Token inválido e nenhum dado local encontrado. Forçando logout.");
+            // Chamar uma função de logout forçado seria ideal aqui
+            localStorage.clear();
+            window.location.href = '/controle-de-ponto/Public/View/Index/';
         }
 
     } catch (error) {
         console.error("Erro crítico ao inicializar a interface do usuário:", error);
-        userDataPromiseResolver(null); // Notifica outros scripts sobre a falha.
+        userDataPromiseResolver(null);
     }
 }
 

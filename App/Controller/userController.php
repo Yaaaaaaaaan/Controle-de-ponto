@@ -18,27 +18,35 @@ class UserController {
     }
 
     //TODO: REPARAR FUNÇÃO DE CRIAÇÃO DE USUÁRIO
-    public function createUser($name, $nickname, $email, $password): void
+    public function createUser($name, $nickname, $email, $password): array
     {
+        // --- VALIDAÇÃO CENTRALIZADA E DETALHADA ---
+        if (empty($name)) {
+            return ['success' => false, 'message' => 'O campo "Nome completo" é obrigatório.'];
+        }
+        if (empty($nickname)) {
+            return ['success' => false, 'message' => 'O campo "Usuário" é obrigatório.'];
+        }
+        if (empty($email)) {
+            return ['success' => false, 'message' => 'O campo "Email" é obrigatório.'];
+        }
+        if (empty($password)) {
+            return ['success' => false, 'message' => 'O campo "Senha" é obrigatório.'];
+        }
+        // ---------------------------------------------
+
         $this->user->name = filter_var($name, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $this->user->nickname = filter_var($nickname, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $this->user->email = filter_var($email, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $this->user->email = filter_var($email, FILTER_SANITIZE_EMAIL);
         $this->user->password = $password;
         $this->user->rank = 1;
+
+        // Tenta executar a criação no Model
         if ($this->user->createUser()){
-            $_SESSION['response'] = '<p>Usuário criado com sucesso.</p>';
+            return ['success' => true, 'message' => 'Usuário criado com sucesso!'];
         } else {
-            if(empty($name) && !empty($nickname) && !empty($email) && !empty($password)){
-                $_SESSION['response'] = '<p>Preencha seu nome.</p>';;
-            } if(empty($email) && !empty($nickname) && !empty($password) && !empty($name)){
-                $_SESSION['response'] = '<p>Preencha seu email.</p>';;
-            } if(empty($password) && !empty($nickname) && !empty($email) && !empty($name)){
-                $_SESSION['response'] = '<p>Preencha sua senha.</p>';;
-            } if(empty($nickname) && !empty($email) && !empty($password) && !empty($name)){
-                $_SESSION['response'] = '<p>Preencha seu nome de usuário.</p>';;
-            } if(empty($name) || empty($email) || empty($password) || empty($nickname)){
-                $_SESSION['response'] = '<p>Preencha todos os dados.</p>';
-            }
+            // Se o Model falhar, é provável que seja um erro de banco de dados (ex: email/nickname duplicado)
+            return ['success' => false, 'message' => 'Não foi possível criar o usuário. O email ou nome de usuário já pode estar em uso.'];
         }
     }
 
@@ -46,19 +54,19 @@ class UserController {
      * @throws RandomException
      */
 
-    public function authenticateUser($nickname, $password): bool {
+    public function authenticateUser($nickname, $password): array {
         $this->user->nickname = filter_var($nickname, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $this->user->password = $password;
 
         if($this->user->authenticateUser()) {
-            return true;
+            return ['success' => true, 'message' => 'Usuário autenticado com sucesso.'];
+
         } else {
-            $_SESSION['response'] = '<p>Usuário ou senha incorretos. </p>';
-            return false;
+            return ['success' => false, 'message' => 'Usuário não autenticado.'];
         }
     }
 
-    public function updateUser($name, $id, $email, $nickname, $oldPassword, $newPassword, $confirmPassword, $defaultTheme): void{
+    public function updateUser($name, $id, $email, $nickname, $oldPassword, $newPassword, $confirmPassword, $defaultTheme): array{
         $this->user->name = filter_var($name, FILTER_SANITIZE_FULL_SPECIAL_CHARS);;
         $this->user->id = $id; /* preciso descobrir como recuperar diretamente o usertoken ao invés do ID */
         $this->user->email = filter_var($email, FILTER_SANITIZE_FULL_SPECIAL_CHARS);;
@@ -69,82 +77,92 @@ class UserController {
         $this->user->defaultTheme = $defaultTheme ? 1 : 0;
 
         if ($this->user->updateUser()) {
-            $_SESSION['response'] = '<p>Alterações feitas com sucesso!</p>';
+            return ['success' => true, 'message' => 'Alterações efetuadas com sucesso.'];
         } else {
-            if(empty($name)) {
-                $_SESSION['response'] = '<p>Usuário não pôde ser atualizado. Favor insira seu nome.</p>';
-            } elseif(empty($email)) {
-                $_SESSION['response'] = '<p>Usuário não pôde ser atualizado. Favor insira um e-mail válido.</p>';
-            } elseif(!empty($newPassword) && empty($confirmPassword)) {
-                $_SESSION['response'] = '<p>Usuário não pôde ser atualizado. Favor confirme sua nova senha.</p>';
-            } elseif(!empty($newPassword) && empty($oldPassword)) {
-                $_SESSION['response'] = '<p>Usuário não pôde ser atualizado. Favor insira sua senha atual.</p>';
-            } elseif(empty($nickname)) {
-                $_SESSION['response'] = '<p>Usuário não pôde ser atualizado. Favor insira seu nome de usuário.</p>';
-            } else {
-                $_SESSION['response'] = '<p>Usuário não pôde ser atualizado. Favor entre em contato com a administração.</p>';
-            }
+            return ['success' => false, 'message' => 'Alterações não efetuadas.'];
         }
     }
 
-    public function updateProfilePicture($pictureId): void{
+    public function getUserByToken(string $token): ?array
+    {
+        if (empty($token)) {
+            return null;
+        }
+
+        // 1. Usa o método do Model para obter o ID a partir do token
+        $userId = $this->user->getIdByToken($token);
+
+        if ($userId) {
+            // 2. Se o ID for válido, usa o novo método para buscar os dados completos
+            return $this->user->getUserById($userId);
+        }
+
+        return null;
+    }
+
+    public function getUserIdByTokenForSync(string $userToken): ?int {
+        return $this->user->getUserIdByTokenForSync($userToken); // Apenas repassa a chamada
+    }
+
+    public function updateProfilePicture($pictureId): array{
         if (isset($_SESSION['id'])) {
             if ($this->user->updateProfilePicture($_SESSION['id'], $pictureId)) {
-                $_SESSION['response'] = '<p>Foto de perfil atualizada com sucesso.</p>';
+                return ['success' => true, 'message' => 'Imagem alterada com sucesso.'];
             } else {
-                $_SESSION['response'] = '<p>Erro ao atualizar a foto de perfil.</p>';
+                return ['success' => false, 'message' => 'Imagem não alterada.'];
             }
         } else {
-            $_SESSION['response'] = '<p>Usuário não autenticado.</p>';
+            return ['success' => false, 'message' => 'Usuário não autenticado.'];
         }
     }
 
-    public function insertUserProfilePicture($userPicture): void{
+    /*public function insertUserProfilePicture($userPicture): array
+    {
         $targetDirectory = '/Controle-de-ponto/App/Persistence/userProfileImages/';
         $nameOld = $targetDirectory . basename($userPicture['name']);
         $uploadOk = 1;
         $fileTypeImage = strtolower(pathinfo($nameOld, PATHINFO_EXTENSION));
         // Gera um novo nome de arquivo baseado na data e hora atual
-        $newFileName = date('YmdHis') .$_SESSION['id']. '.' . $fileTypeImage;
+        $newFileName = date('YmdHis') . $_SESSION['id'] . '.' . $fileTypeImage;
         $arch = $targetDirectory . $newFileName;
         // Caminho completo no servidor
         $targetFile = __DIR__ . '/../Persistence/userProfileImages/' . $newFileName;
         // Verifica se o arquivo é uma imagem
         $check = getimagesize($userPicture['tmp_name']);
         if ($check === false) {
-            $_SESSION['response'] = "O arquivo não é uma imagem.";
+            return [''] = "O arquivo não é uma imagem.";
             $uploadOk = 0;
         }
 
         // Verifica se o arquivo já existe
         if (file_exists($arch)) {
-            $_SESSION['response'] = "Arquivo já existente.";
+            return [''] = "Arquivo já existente.";
             $uploadOk = 0;
         }
 
         // Verifica o tamanho do arquivo
         if ($userPicture['size'] > 500000) { // Limite de 500KB
-            $_SESSION['response'] = "Arquivo muito grande.";
+            return [''] = "Arquivo muito grande.";
             $uploadOk = 0;
         }
 
         // Permite apenas certos formatos de arquivo
         if (!in_array($fileTypeImage, ['jpg', 'png', 'jpeg', 'gif'])) {
-            $_SESSION['response'] = "Apenas arquivos JPG, JPEG, PNG e GIF são permitidos.";
+            return [''] = "Apenas arquivos JPG, JPEG, PNG e GIF são permitidos.";
             $uploadOk = 0;
         }
 
         // Se estiver tudo ok, tenta fazer o upload
         if ($uploadOk == 1) {
             if (move_uploaded_file($userPicture['tmp_name'], $targetFile)) {
-                if($this->user->insertUserProfilePicture($newFileName, $arch,  $uploadOk)){
-                    $_SESSION['response'] = 'Imagem carregada com sucesso.';
+                if ($this->user->insertUserProfilePicture($newFileName, $arch, $uploadOk)) {
+                    return [''] = 'Imagem carregada com sucesso.';
                 }
             } else {
-                $_SESSION['response'] = '<p>Erro ao alterar imagem de perfil.</p>';
+                return [''] = '<p>Erro ao alterar imagem de perfil.</p>';
             }
         }
-    }
+    }*/
 
     public function showUserHistory($registro) {
         $this->user->registro = $registro;
@@ -155,49 +173,25 @@ class UserController {
     public function getUserIdByToken(string $userToken): ?int
     {
         error_log("UserController.php - getUserIdByToken: userToken recebido: " . $userToken);
-        return $this->userModel->getIdByToken($userToken);
+        return $this->user->getIdByToken($userToken);
     }
 
-    public function updateUserTheme(int $userId, int $theme): bool
+     public function updateUserTheme(int $userId, int $theme): bool
     {
         error_log("UserController.php - updateUserTheme: userId recebido: " . $userId . ", theme recebido: " . $theme);
-        return $this->userModel->updateTheme($userId, $theme);
+        return $this->user->updateTheme($userId, $theme);
     }
 
-    public function validatePresence($userId, $userIdToValidate, $description, $code){ //Tudo aqui é transformação
-        $currentDate = date("Y-m-d");
-        $descriptionToValidate = "Já verificado";
-        $this->user->validatePresence($userId);
-        $this->user->validatePresence($userIdToValidate);
-        $this->user->validatePresence($description);
-        $this->user->validatePresence($code);
-        $this->user->validatePresence($currentDate);
-        $this->user->validatePresence($descriptionToValidate);
-
-
-        return true;
-    }
-
-    public function updatePresenceHousekeeping($userIdToValidate, $code, $description){
-        if ($description == 1) {
-            $descriptionTranslated = "Verificação pendente";
-        } else if ($description == 2) {
-            $descriptionTranslated = "Já verificado";
-        } else if ($description == 3) {
-            $descriptionTranslated = "Recusado";
-        } else {
-            error_log("Valor inválido para descrição: " . $description);
-            return false;
+    public function getUserData(): ?array
+    {
+        if (isset($_SESSION['userData']) && $_SESSION['userData'] != null) {
+            $userData = json_decode($_SESSION['userData'], true);
+            if (is_array($userData) && !empty($userData)) {
+                return $userData;
+            }
         }
-        $result = $this->user->updatePresenceHousekeeping($userIdToValidate, $code, $descriptionTranslated);
-        if ($result) {
-            echo "200 OK.";
-        } else {
-            echo "400 Bad Request.";
-        }
-        return $result;
+        return null;
     }
-
 
 
 

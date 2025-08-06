@@ -43,12 +43,6 @@ if (!defined('APP_RAN')) {
     }
 
     public function createUser(): bool{
-        // Verificar se todos os dados necessários foram fornecidos
-        if (empty($this->name) || empty($this->email) || empty($this->password) ||
-            empty($this->rank) || empty($this->nickname)) {
-            return false;
-        }
-
         // Define valor padrão para a imagem de perfil
         $this->profilePicture = 'Profile.png';
         $this->directory = '/Controle-de-ponto/App/Api/userProfileImages/Profile.png';
@@ -183,84 +177,68 @@ if (!defined('APP_RAN')) {
     /**
      * @throws RandomException
      */
-    public function authenticateUser(): bool{
-        if (!empty($this->nickname) && !empty($this->password)) {
-            $userToken = bin2hex(random_bytes(32));
+    public function authenticateUser(): bool
+    {
+        if (empty($this->nickname) || empty($this->password)) {
+            return false;
+        }
 
-            $query = "SELECT u.id_usuario, t.token, t.data_criacao, u.nome_completo, u.nome_usuario, u.nivel_acesso, u.email, u.senha_hash, f.nome_foto, u.tema_padrao
-                  FROM {$this->tableNames['usr']} u
-                  INNER JOIN {$this->tableNames['fot']} f ON u.id_usuario = f.id_usuario AND f.perfil = '1' /* 1 = True */
-                  INNER JOIN {$this->tableNames['tok']} t ON u.id_usuario = t.id_usuario
-                  INNER JOIN {$this->tableNames['alb']} a ON a.album_id = f.album_id AND a.tipo_album = '1' /* 1 = Fotos de perfil */
-                  WHERE u.nome_usuario = :nickname";
+        // A query agora busca também o token existente e sua data de expiração
+        $query = "SELECT u.id_usuario, u.senha_hash, t.token, t.data_expiracao
+              FROM {$this->tableNames['usr']} u
+              LEFT JOIN {$this->tableNames['tok']} t ON u.id_usuario = t.id_usuario
+              WHERE u.nome_usuario = :nickname";
 
-            try {
-                $stmt = $this->conn->prepare($query);
-                $stmt->bindParam(':nickname', $this->nickname);
-                $stmt->execute();
+        try {
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':nickname', $this->nickname);
+            $stmt->execute();
 
-                if ($stmt->rowCount() > 0) {
-                    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-                    if (password_verify($this->password, $row['senha_hash'])) {
-                        try {
-                            $this->conn->beginTransaction();
+            if ($stmt->rowCount() > 0) {
+                $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                if (password_verify($this->password, $row['senha_hash'])) {
 
-                            // Atualiza o token
-                            $update = $this->conn->prepare("UPDATE {$this->tableNames['tok']} SET token = :userToken WHERE id_usuario = :id");
-                            $update->bindValue(':userToken', $userToken);
-                            $update->bindValue(':id', $row['id_usuario']);
-                            $update->execute();
+                    $userId = $row['id_usuario'];
+                    $existingToken = $row['token'];
+                    $tokenExpiry = $row['data_expiracao'] ? new DateTime($row['data_expiracao']) : null;
+                    $now = new DateTime();
 
-                            // Se não atualizou nada, insere
-                            if ($update->rowCount() === 0) {
-                                $insert = $this->conn->prepare("INSERT INTO {$this->tableNames['tok']} (token, id_usuario) VALUES (:userToken, :id)");
-                                $insert->bindValue(':userToken', $userToken);
-                                $insert->bindValue(':id', $row['id_usuario']);
-                                $insert->execute();
-                            }
+                    // LÓGICA DE GERENCIAMENTO DO TOKEN
+                    $userToken = $existingToken;
+                    // Se o token não existe OU se já expirou, gera um novo.
+                    if (!$existingToken || !$tokenExpiry || $tokenExpiry < $now) {
+                        $userToken = bin2hex(random_bytes(32));
+                        $newExpiryDate = $now->add(new DateInterval('P7D'))->format('Y-m-d H:i:s'); // Expira em 7 dias
 
-                            // Registro no histórico
-                            $description = 'login e criação de hash em ';
-                            $this->createUserHistory($description, $row['id_usuario']);
+                        // Usa INSERT ... ON DUPLICATE KEY UPDATE para inserir ou atualizar o token.
+                        // Isso requer que a coluna id_usuario na tabela de tokens seja uma chave única (UNIQUE KEY).
+                        // ALTER TABLE `tokens_autenticacao` ADD UNIQUE KEY `idx_id_usuario_unico` (`id_usuario`);
+                        $tokenQuery = "INSERT INTO {$this->tableNames['tok']} (id_usuario, token, data_expiracao)
+                                   VALUES (:id, :token, :expiry)
+                                   ON DUPLICATE KEY UPDATE token = :token, data_expiracao = :expiry";
 
-                            $this->conn->commit();
-                        } catch (PDOException $e) {
-                            $this->conn->rollBack();
-                            echo "Erro ao registrar o login: " . $e->getMessage();
-                            return false;
-                        }
+                        $tokenStmt = $this->conn->prepare($tokenQuery);
+                        $tokenStmt->bindParam(':id', $userId);
+                        $tokenStmt->bindParam(':token', $userToken);
+                        $tokenStmt->bindParam(':expiry', $newExpiryDate);
+                        $tokenStmt->execute();
+                    }
 
-                        // Sessão
-                        $_SESSION['id'] = $row['id_usuario'];
+                    // Após garantir que temos um token válido, buscamos os dados completos para a sessão
+                    $userData = $this->getUserById($userId); // Usando o método que já criamos
+
+                    if ($userData) {
+                        $_SESSION['id'] = $userId;
                         $_SESSION['logged'] = true;
-                        $_SESSION['userData'] = json_encode([
-                            'name' => $row['nome_completo'],
-                            'email' => $row['email'],
-                            'rank' => $row['nivel_acesso'],
-                            'nickname' => $row['nome_usuario'],
-                            'theme' => $row['tema_padrao'],
-                            'userId' => $row['id_usuario'],
-                            'profileUser' => $row['nome_foto'],
-                        ]);
-                        $_SESSION['pointControl'] = json_encode([
-                            'codigo' => $row['registro_id'],
-                            'userId' => $row['id_usuario'],
-                            'name' => $row['nome_completo'],
-                            'status' => $row['status'],
-                            'dateIn' => $row['dateIn'],
-                        ]);
-                        $_SESSION['tokenUserData'] = json_encode([
-                            'userToken' => $userToken,
-                            'dateIn' => $row['data_criacao'],
-                            'userId' => $row['id_usuario']]);
+                        // Salva os dados completos na sessão
+                        $_SESSION['userData'] = json_encode($userData);
                         return true;
                     }
                 }
-            } catch (PDOException $e) {
-                echo "Erro na autenticação: " . $e->getMessage();
             }
+        } catch (Exception $e) { // Captura PDOException e outras
+            error_log("Erro na autenticação: " . $e->getMessage());
         }
-
         return false;
     }
 
@@ -555,6 +533,38 @@ if (!defined('APP_RAN')) {
         }
     }
 
+    public function getUserIdByTokenForSync(string $userToken, int $gracePeriodHours = 24): ?int
+    {
+        try {
+            $query = "SELECT id_usuario, data_expiracao FROM {$this->tableNames['tok']} WHERE token = :userToken";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':userToken', $userToken, PDO::PARAM_STR);
+            $stmt->execute();
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($result) {
+                $expiryDate = new DateTime($result['data_expiracao']);
+                $now = new DateTime();
+
+                // Calcula o fim do período de carência (data de expiração + X horas)
+                $gracePeriodEndDate = (clone $expiryDate)->add(new DateInterval("PT{$gracePeriodHours}H"));
+
+                // O token é válido se:
+                // 1. A data atual for ANTES da data de expiração, OU
+                // 2. A data atual for ANTES do FIM do período de carência.
+                if ($now <= $expiryDate || $now <= $gracePeriodEndDate) {
+                    return (int)$result['id_usuario'];
+                }
+            }
+            // Se o token não existe ou está além do período de carência, retorna nulo.
+            return null;
+
+        } catch (Exception $e) {
+            error_log("Model/User.php - getUserIdByTokenForSync: Erro - " . $e->getMessage());
+            return null;
+        }
+    }
+
     public function updateTheme(int $userId, int $theme): bool
     {
         error_log("Model/User.php - updateTheme: userId recebido: " . $userId . ", theme recebido: " . $theme);
@@ -574,49 +584,57 @@ if (!defined('APP_RAN')) {
             return false;
         }
     }
+    public function getUserById(int $userId): ?array
+    {
+        // Query que une as tabelas para pegar todos os dados necessários
+        $query = "SELECT u.id_usuario, u.nome_completo, u.nome_usuario, u.nivel_acesso, u.email, u.tema_padrao,
+                     f.nome_foto,
+                     t.token AS userToken, t.data_criacao AS tokenDate
+              FROM {$this->tableNames['usr']} u
+              LEFT JOIN {$this->tableNames['fot']} f ON u.id_usuario = f.id_usuario AND f.perfil = 1
+              LEFT JOIN {$this->tableNames['tok']} t ON u.id_usuario = t.id_usuario
+              LEFT JOIN {$this->tableNames['alb']} a ON f.album_id = a.album_id AND a.tipo_album = 1
+              WHERE u.id_usuario = :userId";
 
+        try {
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':userId', $userId, PDO::PARAM_INT);
+            $stmt->execute();
 
-//TODO: Criar função para um usuário validar a presença de outro usuário, mas, com a condição de; o usuário avaliador deverá estar com a presença confirmada no dia ao qual está sendo feita a validação do outro usuário e, tal ato deverá ocorrer no dia corrido.
-    public function validatePresence($userId, $userIdToValidate, $description, $code, $currentDate, $descriptionToValidate): true{
-        $this->userId = $userId;
-        $this->userIdToValidate = $userIdToValidate;
-        $this->description = $description;
-        $this->code = $code;
-        $this->currentDate = $currentDate;
-        $this->descriptionToValidate = $descriptionToValidate;
+            if ($stmt->rowCount() > 0) {
+                $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                // Formata os dados para o padrão que o JavaScript espera
+                return [
+                    'userId' => (int)$row['id_usuario'],
+                    'name' => $row['nome_completo'],
+                    'email' => $row['email'],
+                    'rank' => (int)$row['nivel_acesso'],
+                    'nickname' => $row['nome_usuario'],
+                    'theme' => (int)$row['tema_padrao'],
+                    'profileUser' => $row['nome_foto'],
+                    'userToken' => $row['userToken'],
+                    'tokenDate' => $row['tokenDate']
+                ];
+            }
+            return null;
 
-        $query = "SELECT 
-        *
-        FROM {$this->tableNames['reg']} 
-        WHERE uidUserFK = :userId
-        AND dateIn = :currentDate
-        AND status = :descriptionToValidate
-        ";
-
-        return true;
-    }
-//TODO: Criar função para atualizar dados no housekeeping
-    public function updatePresenceHousekeeping($userIdToValidate, $code, $description) {
-        $this->userIdToValidate = $userIdToValidate;
-        $this->description = $description;
-        $this->code = $code;
-
-        $query = "UPDATE {$this->tableNames['reg']} SET status = :description
-                    WHERE uidUserFK = :userIdToValidate AND cod = :code";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':description', $this->description);
-        $stmt->bindParam(':userIdToValidate', $this->userIdToValidate);
-        $stmt->bindParam(':code', $this->code);
-        $result = $stmt->execute();
-
-        if ($result) {
-            echo "1";
-        } else {
-            echo "0";
-            print_r($stmt->errorInfo());
+        } catch (PDOException $e) {
+            error_log("Erro em User->getUserById: " . $e->getMessage());
+            return null;
         }
-        return $result;
     }
 
+    public function deleteTokenForUser(int $userId): bool
+    {
+        try {
+            $query = "DELETE FROM {$this->tableNames['tok']} WHERE id_usuario = :userId";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':userId', $userId, PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log("Erro ao deletar token: " . $e->getMessage());
+            return false;
+        }
+    }
 }
 ?>

@@ -2,10 +2,12 @@
 // 📁 Config.js
 // ========================
 const dbName = 'PCDB';
-const dbVersion = 2; // Incrementado para forçar upgrade
+const dbVersion = 4 ; // Incrementado para forçar upgrade
 const userDataStoreName = 'userData';
 const pointControlStoreName = 'pointControl';
 const userTokenStoreName = 'userToken';
+
+const syncQueueStoreName = 'syncQueue';
 
 let db;
 
@@ -26,7 +28,7 @@ function initializeDB() {
                 const userDataStore = db.createObjectStore(userDataStoreName, {
                     keyPath: 'nickname'
                 });
-                userDataStore.createIndex('id', 'userId', { unique: true });
+                userDataStore.createIndex('idIdx', 'userId', { unique: true });
             }
 
             // Criar ou atualizar pointControl store
@@ -47,6 +49,11 @@ function initializeDB() {
                 userTokenStore.createIndex('userId', 'userId', { unique: true });
                 userTokenStore.createIndex('lastUpdated', 'lastUpdated', { unique: false });
             }
+            // Criar ou atualizar syncQueue store
+            if (!db.objectStoreNames.contains(syncQueueStoreName)) {
+                const queueStore = db.createObjectStore(syncQueueStoreName, { keyPath: 'id', autoIncrement: true });
+                queueStore.createIndex('timestamp', 'timestamp', { unique: false });
+            }
         };
 
         request.onsuccess = (event) => {
@@ -60,4 +67,10 @@ function initializeDB() {
     });
 }
 
-export { initializeDB, userDataStoreName, pointControlStoreName, userTokenStoreName };
+export {
+    initializeDB,
+    userDataStoreName,
+    pointControlStoreName,
+    userTokenStoreName,
+    syncQueueStoreName
+};

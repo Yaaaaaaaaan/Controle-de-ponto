@@ -3,7 +3,7 @@
         die('Acesso não permitido');
     }
 
-    /*#[AllowDynamicProperties] //para classes com propriedades dinâmicas*/ class pointControl
+    /*#[AllowDynamicProperties] //para classes com propriedades dinâmicas*/ class PointControl
     {
         private $conn;
         private $tableNames = [
@@ -80,34 +80,73 @@
         {
             try{
                 $query = "SELECT 
-                    reg.status, reg.cod,
+                    p.status,
                     COUNT(*) as count,
                     GROUP_CONCAT(
                         JSON_OBJECT(
-                            'cod', reg.cod,
-                            'data', DATE_FORMAT(reg.dateIn, '%d/%m/%Y'),
-                            'nome', usr.uname,
-                            'status', reg.status,
-                            'id', reg.uidUserFK
+                            'cod', p.registro_id,
+                            'data', DATE_FORMAT(p.data_registro, '%d/%m/%Y'),
+                            'nome', u.nome_completo,
+                            'status', p.status,
+                            'id', p.id_usuario
                         )
                     ) as detalhes
-                    FROM pointControl reg
-                    INNER JOIN userdata usr ON reg.uidUserFK = usr.uid
-                    WHERE reg.dateIn >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
-                    GROUP BY reg.status
+                    FROM " . $this->tableNames['reg'] . " p
+                    INNER JOIN " . $this->tableNames['usr'] . "u ON p.id_usuario = u.id_usuario
+                    WHERE p.data_registro >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
+                    GROUP BY p.status
                     ORDER BY count DESC";
 
-                // Debug direto do resultado da query
                 $stmt = $this->conn->prepare($query);
                 $stmt->execute();
-                $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                return $result;
+                return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
             } catch (PDOException $e) {
-                echo "<pre>";
-                echo "Erro na query: " . $e->getMessage();
-                echo "</pre>";
+                error_log("Erro na query getPointControlUsersData: " . $e->getMessage());
                 return [];
             }
         }
+
+    //TODO: Criar função para um usuário validar a presença de outro usuário, mas, com a condição de; o usuário avaliador deverá estar com a presença confirmada no dia ao qual está sendo feita a validação do outro usuário e, tal ato deverá ocorrer no dia corrido.
+    public function validatePresence($userId, $userIdToValidate, $description, $code, $currentDate, $descriptionToValidate): true{
+        $this->userId = $userId;
+        $this->userIdToValidate = $userIdToValidate;
+        $this->description = $description;
+        $this->code = $code;
+        $this->currentDate = $currentDate;
+        $this->descriptionToValidate = $descriptionToValidate;
+
+        $query = "SELECT 
+        *
+        FROM {$this->tableNames['reg']} 
+        WHERE uidUserFK = :userId
+        AND dateIn = :currentDate
+        AND status = :descriptionToValidate
+        ";
+
+        return true;
+    }
+//TODO: Criar função para atualizar dados no housekeeping
+    public function updatePresenceHousekeeping($userIdToValidate, $code, $description) {
+        $this->userIdToValidate = $userIdToValidate;
+        $this->description = $description;
+        $this->code = $code;
+
+        $query = "UPDATE {$this->tableNames['reg']} SET status = :description
+                    WHERE uidUserFK = :userIdToValidate AND cod = :code";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':description', $this->description);
+        $stmt->bindParam(':userIdToValidate', $this->userIdToValidate);
+        $stmt->bindParam(':code', $this->code);
+        $result = $stmt->execute();
+
+        if ($result) {
+            echo "1";
+        } else {
+            echo "0";
+            print_r($stmt->errorInfo());
+        }
+        return $result;
+    }
     }
 ?>

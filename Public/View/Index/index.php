@@ -12,44 +12,6 @@ if ($uri === '/controle-de-ponto/index.php/system/healthcheck') {
     $controller->healthcheck();
     exit;
 }
-
-// Se o usuário já está logado, redireciona (ANTES DO LOGIN)
-if (isset($_SESSION['logged'])) {
-    header('Location: ../User/index.php');
-    exit;
-}
-
-// HealthCheck 200:OK faz:
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    include_once '../../../App/Controller/UserController.php';
-    $controller = new UserController();
-    $auth_success = $controller->authenticateUser($_POST['nickname'], $_POST['password']);
-
-    if ($auth_success) {
-        $_SESSION['logged'] = true;
-
-        // Verificar se a requisição veio do JavaScript
-        $isJsAuth = isset($_GET['auth']) && $_GET['auth'] === 'attempt';
-
-        if ($isJsAuth) {
-            // Redirecionar de volta para a página de login com parâmetro de sucesso
-            // O JavaScript irá interceptar isso e sincronizar os dados
-            header('Location: index.php?auth=success');
-        } else {
-            // Redirecionamento tradicional
-            header('Location: ../User/index.php');
-        }
-        exit;
-    } else {
-        $_SESSION['response'] = "Usuário ou senha incorretos.";
-
-        // Se a requisição veio do JavaScript, redirecionar com erro
-        if (isset($_GET['auth']) && $_GET['auth'] === 'attempt') {
-            header('Location: index.php?auth=failed');
-            exit;
-        }
-    }
-}
 ?>
 
 <!DOCTYPE html>

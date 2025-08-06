@@ -74,23 +74,26 @@ Controle-de-Ponto/
 │   │   │   └── authController.js
 │   │   ├── indexedDB/
 │   │   │   ├── Config.js                                                       # Cria o banco de dados e as storeNames
-│   │   │   ├── Controller.js
 │   │   │   └── Model.js                                                    # Manipula os dados das storeNames com CRUD
 │   │   ├── USR/
 │   │   │   ├── indexDashboard.js                                       # Cria a parte lógica do dashboard e seus dados
 │   │   │   ├── userController.js
 │   │   │   └── userInterface.js                               # Faz o papel de View com os dados recebidos do Model.js
+│   │   ├── Core/
+│   │   │   ├── syncController.js                                       #
+│   │   │   ├── userController.js
+│   │   │   └── userInterface.js                               #
 │   │   ├── bootstrap.bundle.js
 │   │   │   └── bootstrap.bundle.min.js
 │   │   ├── color-modes.js
 │   │   ├── authController.js
-│   │   ├── localStorage.js                                             # Inativo
 │   │   └── script.js
 │   ├── Api/
 │   │   ├── SystemPics
 │   │   │   └── logo.png
 │   │   ├── logout.php
 │   │   ├── pointControl.php
+│   │   ├── sync.php
 │   │   ├── userData.php
 │   │   └── userToken.php
 │   ├── View/

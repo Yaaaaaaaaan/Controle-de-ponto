@@ -1,7 +1,15 @@
-import { upsertUser, processUserData, syncIndexedDBToServer, syncServerToIndexedDB, getAllUsers, addPointControlRecordToServer , clearObjectStore } from '../indexedDB/Model.js';
+import {
+    upsertUser,
+    processUserData,
+    syncIndexedDBToServer,
+    syncServerToIndexedDB,
+    getAllUsers,
+    addPointControlRecordToServer,
+    clearObjectStore,
+    addActionToSyncQueue
+} from '../indexedDB/Model.js';
 import { userDataPromise } from './userInterface.js';
 
-// Necessário revisar e refatorar toda lógica aqui.
 
 async function getPointControlDataForDashboard() {
     try {
@@ -18,16 +26,28 @@ async function getPointControlDataForDashboard() {
 async function handleConfirmPresenceClick(event) {
     const button = event.currentTarget;
     button.disabled = true;
-    button.textContent = 'Enviando...';
+    button.textContent = 'Processando...';
 
     try {
-        const success = await addPointControlRecordToServer("Confirmado");
-        if (success) {
-            //alert('Presença confirmada com sucesso!');
-            await syncServerToIndexedDB(); // Sincroniza para garantir que o IndexedDB local tenha o novo registro.
-            window.location.reload(); // Recarrega a página para o gráfico ser redesenhado.
+        if (navigator.onLine) {
+            // MODO ONLINE: Envia para o servidor como antes
+            const success = await addPointControlRecordToServer("Confirmado");
+            if (success) {
+                alert('Presença confirmada com sucesso!');
+                await syncServerToIndexedDB();
+                window.location.reload();
+            } else {
+                alert('Falha ao confirmar a presença.');
+            }
         } else {
-            //alert('Falha ao confirmar a presença. O registro para hoje pode já existir.');
+            // MODO OFFLINE: Salva na fila de sincronização
+            const action = {
+                type: 'addPoint',
+                payload: { status: 'Confirmado' }
+            };
+            await addActionToSyncQueue(action);
+            alert('Você está offline. Sua presença foi registrada e será sincronizada quando houver conexão.');
+            // Opcional: atualizar a UI localmente para refletir a mudança
         }
     } catch (error) {
         console.error("Erro ao confirmar presença:", error);
@@ -212,26 +232,20 @@ function updateTheme(isDark) {
 
 async function handleLogout() {
     try {
-        console.log("Iniciando processo de logout no cliente...");
+        console.log("Encerrando sessão ativa...");
 
-        // 1. LIMPA OS DADOS DO NAVEGADOR (Funciona 100% offline)
-        await Promise.all([
-            clearObjectStore('userData'),
-            clearObjectStore('pointControl')
-        ]);
-        localStorage.clear();
-        console.log("Dados locais limpos com sucesso.");
+        // 1. Remove APENAS os ponteiros da sessão ativa do localStorage.
+        localStorage.removeItem('activeUserId');
+        localStorage.removeItem('userToken');
+        console.log("Sessão local encerrada.");
 
-        // 2. ENCERRA A SESSÃO NO SERVIDOR (Apenas se estiver online)
+        // 2. Notifica o servidor (se online) para destruir a sessão PHP.
         if (navigator.onLine) {
-            console.log("Online. Notificando o servidor para encerrar a sessão...");
-            // O JavaScript chama o novo endpoint de logout
             await fetch('/controle-de-ponto/Public/Api/logout.php');
-            console.log("Comando de encerramento de sessão enviado ao servidor.");
+            console.log("Sessão do servidor encerrada.");
         }
 
-        // 3. REDIRECIONA O USUÁRIO
-        //alert("Você foi desconectado com sucesso.");
+        // 3. Redireciona para a página de login.
         window.location.href = '/controle-de-ponto/Public/View/Index/';
 
     } catch (error) {

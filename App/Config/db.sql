@@ -1,6 +1,8 @@
 --
 -- Banco de dados: `controle_ponto_db`
 --
+
+drop database  controle_ponto_db;
 CREATE DATABASE IF NOT EXISTS `controle_ponto_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 USE `controle_ponto_db`;
 
@@ -34,6 +36,7 @@ CREATE TABLE IF NOT EXISTS `tokens_autenticacao` (
     `id_usuario` BIGINT UNSIGNED NOT NULL,
     `token` VARCHAR(255) NOT NULL,
     `data_criacao` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+    `data_expiracao` DATETIME NOT NULL,
     PRIMARY KEY (`token_id`),
     FOREIGN KEY (`id_usuario`) REFERENCES `usuarios`(`id_usuario`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

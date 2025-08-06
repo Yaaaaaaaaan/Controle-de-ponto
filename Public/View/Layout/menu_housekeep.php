@@ -113,7 +113,7 @@
                 </div>
             </div>
         </nav>
-        <script type="module" src="../../JS/localStorage.js"></script>
+        <script type="module" src="/controle-de-ponto/Public/JS/Core/syncController.js"></script>
         <script type="module" src="../../JS/USR/userInterface.js"></script>
         <script type="module">
             import { processUserData } from '../../JS/localStorage.js';

@@ -5,7 +5,8 @@ import {
     initializeDB,
     userDataStoreName,
     pointControlStoreName,
-    userTokenStoreName
+    userTokenStoreName,
+    syncQueueStoreName
 } from './Config.js';
 
 // ========================
@@ -242,6 +243,54 @@ async function setUserToken(token, userId) {
     } catch (error) {
         console.error('Erro ao atualizar token de usuário:', error);
         throw new Error('Erro ao atualizar token de usuário: ' + error);
+    }
+}
+
+//busca dados do usuário usando token.
+async function fetchUserDataByToken(token) {
+    if (!token) return null;
+
+    try {
+        const response = await fetch('/controle-de-ponto/Public/Api/userToken.php', {
+            method: 'GET',
+            headers: {
+                // Envia o token no cabeçalho, como é o padrão de mercado
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.status === 401) {
+            console.warn("Sessão no servidor expirada ou inválida.");
+            // Aqui você pode acionar uma lógica de logout forçado
+            return null;
+        }
+
+        const result = await response.json();
+        return result.success ? result.userData : null;
+
+    } catch (error) {
+        console.error("Erro de rede ao buscar dados por token:", error);
+        return null;
+    }
+}
+
+//Verifica token para autenticação
+async function getUserTokenByUserId(userId) {
+    try {
+        const db = await initializeDB();
+        const transaction = db.transaction(userTokenStoreName, 'readonly');
+        const tokenStore = transaction.objectStore(userTokenStoreName);
+        // Usa o índice 'userId' que criamos na store de tokens
+        const index = tokenStore.index('userId');
+        const request = index.get(userId);
+
+        return new Promise((resolve, reject) => {
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject('Erro ao obter token por userId: ' + request.error);
+        });
+    } catch (error) {
+        console.error('Erro em getUserTokenByUserId:', error);
+        return null;
     }
 }
 
@@ -486,6 +535,12 @@ async function addPointControlRecordToServer(status) {
     }
 }
 
+
+
+// =============================
+// Funções de controle de acesso
+// =============================
+
 /**
  * Remove todos os registros de um Object Store específico.
  * @param {string} storeName - O nome do Object Store a ser limpo (ex: 'userData').
@@ -514,32 +569,64 @@ async function clearObjectStore(storeName) {
     }
 }
 
+//Histórico de uso do sistema offline
+async function addActionToSyncQueue(action) {
+    const db = await initializeDB();
+    const transaction = db.transaction(syncQueueStoreName, 'readwrite');
+    const store = transaction.objectStore(syncQueueStoreName);
+    action.timestamp = new Date(); // Adiciona um timestamp
+    store.add(action);
+    return new Promise(resolve => transaction.oncomplete = resolve);
+}
+
+//Manipulação do histórico de uso do sistema offline
+async function getSyncQueue() {
+    const db = await initializeDB();
+    const transaction = db.transaction(syncQueueStoreName, 'readonly');
+    const store = transaction.objectStore(syncQueueStoreName);
+    return store.getAll();
+}
+
+//Manipulação do histórico de uso do sistema offline
+async function clearSyncQueue() {
+    const db = await initializeDB();
+    const transaction = db.transaction(syncQueueStoreName, 'readwrite');
+    const store = transaction.objectStore(syncQueueStoreName);
+    store.clear();
+    return new Promise(resolve => transaction.oncomplete = resolve);
+}
 
 export {
     // Funções de usuário
+    upsertUser,
     getUserById,
     getUserByNickname,
     getUserByToken,
     deleteUser,
     getAllUsers,
 
-    // Funções de controle de acesso
-    upsertUser,
-    addPointControl,
-    setUserToken,
-    clearObjectStore,
-
     // Funções de controle de ponto
+    addPointControl,
     getPointControlByUserId,
     getAllPointControl,
     addPointControlRecordToServer,
 
     // Funções de token
+    setUserToken,
+    fetchUserDataByToken,
+    getUserTokenByUserId,
     isTokenValid,
 
     // Funções de sincronização
     processUserData,
     syncIndexedDBToServer,
     syncServerToIndexedDB,
-    storeAuthData
+    storeAuthData,
+
+    // Funções de controle de acesso
+    clearObjectStore,
+    addActionToSyncQueue,
+    getSyncQueue,
+    clearSyncQueue
+
 };
