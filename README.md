@@ -10,6 +10,8 @@ for now, there are:
 - Offline module: partially functional
 
 
+Architecture: MVC with API-First.
+
 Technologies used:
 - Persistence: Mysql & IndexedDB.
 - Languages: PHP, Javascript, HTML5, CSS3.
