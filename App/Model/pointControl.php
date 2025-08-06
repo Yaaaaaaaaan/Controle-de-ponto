@@ -7,10 +7,10 @@
     {
         private $conn;
         private $tableNames = [
-            'ud' => 'userdata',
-            'hs' => 'history',
-            'ut' => 'usertoken',
-            'pc' => 'pointControl'
+            'usr' => 'usuarios',
+            'his' => 'historicos_acoes',
+            'tok' => 'tokens_autenticacao',
+            'reg' => 'registros_ponto'
         ];
 
         public $id;
@@ -24,109 +24,90 @@
             $this->conn = $db;
         }
 
-        public function insertPointControl($id, $descricao): bool
+        public function insertPointControl($id, $status): bool
         {
-            $this->descricao = $descricao;
-            $this->id = $id;
+            $query = "INSERT INTO " . $this->tableNames['reg'] . " (id_usuario, data_registro, status) VALUES (:id, CURDATE(), :status)";
 
-            $query = "INSERT INTO " . $this->tableNames['pc'] . "  (status, uidUserFK) VALUES (:status, :id)";
             $stmt = $this->conn->prepare($query);
-            $stmt->bindParam(':status', $this->descricao);
-            $stmt->bindParam(':id', $this->id);
+
+            // Associa os parâmetros recebidos
+            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmt->bindParam(':status', $status, PDO::PARAM_STR);
 
             try {
-                $stmt->execute();
-                return true;
+                if ($stmt->execute()) {
+                    return true;
+                }
+                return false;
             } catch (PDOException $e) {
+                // Trata erro de chave duplicada (usuário já bateu ponto no dia)
                 if ($e->getCode() == 23000) {
+                    error_log("Tentativa de inserção de ponto duplicado para o usuário: " . $id);
                     return false;
                 } else {
+                    error_log("Erro PDO em insertPointControl: " . $e->getMessage());
                     throw $e;
                 }
             }
         }
 
-        public function getPointControlData($id): array
-        {
-            // Consulta para obter os meses (para o gráfico)
-            $queryMeses = "SELECT DATE_FORMAT(dateIn, '%Y-%m') as month, COUNT(*) as count 
-                FROM pointControl 
-                WHERE uidUserFK = :id 
-                GROUP BY month 
-                ORDER BY month DESC 
-                LIMIT 3";
+    public function getPointControl($id_usuario)
+    {
+        // A query agora seleciona e renomeia as colunas para corresponder ao que o JS espera
+        $query = "SELECT
+                registro_id AS cod,
+                id_usuario AS userId,
+                data_registro AS dateIn,
+                status
+              FROM " . $this->tableNames['reg'] . "
+              WHERE id_usuario = :id_usuario
+              ORDER BY data_registro ASC";
 
-            $stmt = $this->conn->prepare($queryMeses);
-            $stmt->bindParam(':id', $id);
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id_usuario', $id_usuario, PDO::PARAM_INT);
+
+        try {
             $stmt->execute();
-            $resultMeses = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            // Inverte a ordem para mostrar do mais antigo para o mais recente
-            $resultMeses = array_reverse($resultMeses);
-
-            // Obter detalhes dos dias para cada mês
-            $diasPorMes = [];
-            foreach ($resultMeses as $mes) {
-                $monthStr = $mes['month'];
-
-                // Consulta modificada para incluir a descrição para cada dia
-                $queryDias = "SELECT DATE_FORMAT(dateIn, '%d') as day, COUNT(*) as day_count, status
-                    FROM pointControl 
-                    WHERE uidUserFK = :id AND DATE_FORMAT(dateIn, '%Y-%m') = :month
-                    GROUP BY day, status
-                    ORDER BY day";
-
-                $stmtDias = $this->conn->prepare($queryDias);
-                $stmtDias->bindParam(':id', $id);
-                $stmtDias->bindParam(':month', $monthStr);
-                $stmtDias->execute();
-                $diasPorMes[$monthStr] = $stmtDias->fetchAll(PDO::FETCH_ASSOC);
-            }
-
-            // Adicionar informações de dias ao resultado
-            foreach ($resultMeses as &$mes) {
-                $mes['dias'] = $diasPorMes[$mes['month']] ?? [];
-            }
-            $_SESSION['pointControl'] = json_encode([$resultMeses]);
-            return $resultMeses;
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Erro PDO em getPointControl: " . $e->getMessage());
+            return [];
         }
+    }
+
 
     public function getPointControlUsersData(): array
-    {
-        try{
-        $query = "SELECT 
-        pc.status, pc.cod,
-        COUNT(*) as count,
-        GROUP_CONCAT(
-            JSON_OBJECT(
-                'cod', pc.cod,
-                'data', DATE_FORMAT(pc.dateIn, '%d/%m/%Y'),
-                'nome', ud.uname,
-                'status', pc.status,
-                'id', pc.uidUserFK
-            )
-        ) as detalhes
-    FROM pointControl pc
-    INNER JOIN userdata ud ON pc.uidUserFK = ud.uid
-    WHERE pc.dateIn >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
-    GROUP BY pc.status
-    ORDER BY count DESC";
+        {
+            try{
+                $query = "SELECT 
+                    reg.status, reg.cod,
+                    COUNT(*) as count,
+                    GROUP_CONCAT(
+                        JSON_OBJECT(
+                            'cod', reg.cod,
+                            'data', DATE_FORMAT(reg.dateIn, '%d/%m/%Y'),
+                            'nome', usr.uname,
+                            'status', reg.status,
+                            'id', reg.uidUserFK
+                        )
+                    ) as detalhes
+                    FROM pointControl reg
+                    INNER JOIN userdata usr ON reg.uidUserFK = usr.uid
+                    WHERE reg.dateIn >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
+                    GROUP BY reg.status
+                    ORDER BY count DESC";
 
-        // Debug direto do resultado da query
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        return $result;
-    } catch (PDOException $e) {
-        echo "<pre>";
-        echo "Erro na query: " . $e->getMessage();
-        echo "</pre>";
-        return [];
+                // Debug direto do resultado da query
+                $stmt = $this->conn->prepare($query);
+                $stmt->execute();
+                $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                return $result;
+            } catch (PDOException $e) {
+                echo "<pre>";
+                echo "Erro na query: " . $e->getMessage();
+                echo "</pre>";
+                return [];
+            }
         }
-
-
-}
-
-}
-
-    ?>
+    }
+?>

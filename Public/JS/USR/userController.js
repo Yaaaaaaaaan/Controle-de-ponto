@@ -1,4 +1,5 @@
-import { updateUser, processUserData, syncIndexedDBToServer, syncServerToIndexedDB, getAllUsers } from '../indexedDB/Model.js';
+import { upsertUser, processUserData, syncIndexedDBToServer, syncServerToIndexedDB, getAllUsers, addPointControlRecordToServer } from '../indexedDB/Model.js';
+import { userDataPromise } from './userInterface.js';
 
 // Necessário revisar e refatorar toda lógica aqui.
 
@@ -14,6 +15,53 @@ async function getPointControlDataForDashboard() {
     }
 }
 
+async function handleConfirmPresenceClick(event) {
+    const button = event.currentTarget;
+    button.disabled = true;
+    button.textContent = 'Enviando...';
+
+    try {
+        const success = await addPointControlRecordToServer("Confirmado");
+        if (success) {
+            alert('Presença confirmada com sucesso!');
+            await syncServerToIndexedDB(); // Sincroniza para garantir que o IndexedDB local tenha o novo registro.
+            window.location.reload(); // Recarrega a página para o gráfico ser redesenhado.
+        } else {
+            alert('Falha ao confirmar a presença. O registro para hoje pode já existir.');
+        }
+    } catch (error) {
+        console.error("Erro ao confirmar presença:", error);
+        alert('Ocorreu um erro. Verifique o console.');
+    } finally {
+        button.disabled = false;
+        button.textContent = 'Confirmar Presença';
+    }
+}
+
+/**
+ * Anexa os event listeners aos elementos da página.
+ */
+function attachEventListeners() {
+    const confirmButton = document.getElementById('confirmPresenceBtn');
+    if (confirmButton) {
+        confirmButton.addEventListener('click', handleConfirmPresenceClick);
+    }
+    // Outros listeners (ex: formulário de settings, botões de logout) podem ser adicionados aqui.
+}
+
+async function initializeController() {
+    // Pausa a execução até que a promessa do userInterface.js seja resolvida.
+    const userData = await userDataPromise;
+    if (userData) {
+        // Só anexa os listeners se o usuário estiver carregado e logado.
+        console.log("userController.js: Dados do usuário prontos. Anexando listeners de eventos.");
+        attachEventListeners();
+    } else {
+        console.warn("userController.js: Dados do usuário não foram carregados, listeners não anexados.");
+    }
+}
+
+initializeController();
 function processPointControlData(data) {
     // Lógica para formatar os dados (agrupar, calcular, etc.)
     // Exemplo:
@@ -62,10 +110,10 @@ function updateUIElements(userData, pointControl) {
         console.error("updateUIElements: Dados de usuário inválidos ou incompletos", userData);
         return;
     }
-    if(!pointControl || !pointControl.codigo){
+   /* if(!pointControl || !pointControl.codigo){
         console.error("updateUIElements: Dados de usuário inválidos ou incompletos", pointControl);
         return;
-    }
+    }*/
     const elements = {
         'responseName': userData.name,
         'responseNameCurto': `Olá, ${userData.name.split(' ')[0]}`,
@@ -182,8 +230,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 await syncServerToIndexedDB();
                 const localData = await getAllUsers();
                 if (localData && localData.length > 0) {
-                    const { userToken, theme } = localData[0];
-                    await syncIndexedDBToServer(userToken, theme);
+                    // const { userToken, theme } = localData[0];
+                    // console.log("Sincronização de cliente para servidor desativada temporariamente.");
+                    // await syncIndexedDBToServer(userToken, theme);
                 }
                 const updatedDataFromServer = await getAllUsers(); // Verifique se getAllUsers() retorna os dados no formato esperado
                 if (updatedDataFromServer && updatedDataFromServer.length > 0) {
@@ -206,5 +255,6 @@ export {
     getPointControlDataForDashboard,
     updateDashboardPointControl,
     updateUIPicture,
-    updateUIElements
+    updateUIElements,
+    userDataPromise
 };

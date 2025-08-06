@@ -147,7 +147,7 @@ class UserController {
     }
 
     public function unAuthenticateUser(/*$userToken*/) {
-        /* // Esse código fará a implementação inicial do logout com token do localStorage
+        /* // Esse código fará a implementação inicial do logout com token do indexedDB
         (tudo será passado por formulário ou requisições HTTP)
         $description = 'Logout. ';
         $this->createUserHistory($description, );
@@ -155,10 +155,14 @@ class UserController {
         // Remove dados da sessão
         if (isset($_SESSION['UserData'])) {
             unset($_SESSION['UserData']);
+            unset($_SESSION['pointControl']);
+            unset($_SESSION['tokenUserData']);
         }
 
         if (isset($_SESSION['localUserData'])) {
             unset($_SESSION['localUserData']);
+            unset($_SESSION['pointControl']);
+            unset($_SESSION['tokenUserData']);
         }
 
         // Destrua a sessão completamente
@@ -211,8 +215,8 @@ class UserController {
             
                     
                     <script>
-                        // Remove os dados do localStorage
-                        localStorage.removeItem('userData');
+                        // Remove os dados de usuário da indexedDB
+                        
                         console.log('localStorage limpo');
                         
                         // Redireciona após um curto delay
@@ -231,12 +235,6 @@ class UserController {
         $userHistory = $this->user->getUserHistory(userId: $_SESSION['id'], registro: $registro);
         return $userHistory;
     }
-
-    public function insertPointControl($id){
-        $this->user->id = $id;
-        $insertPointControl = $this->user->insertPointControl( $id);
-        return $insertPointControl;
-       }
 
     public function getUserIdByToken(string $userToken): ?int
     {

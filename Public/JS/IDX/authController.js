@@ -2,8 +2,7 @@
 // 📁 authController.js
 // ========================
 import { 
-    getUserByNickname, 
-    isTokenValid, 
+    getUserByNickname,
     storeAuthData, 
     syncServerToIndexedDB 
 } from '../indexedDB/Model.js';

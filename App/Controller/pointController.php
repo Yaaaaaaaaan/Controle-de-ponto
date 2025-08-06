@@ -17,8 +17,19 @@ class PointController{
         $this->pointControl = new PointControl($this->db);
     }
 
-    public function getPointControl($id): array{
-        return $this->pointControl->getPointControlData($id);
+    public function insertPointControl($id, $status): bool
+    {
+        // Validação simples dos dados recebidos
+        if (empty($id) || !isset($status)) {
+            return false;
+        }
+
+        // Chama o método corrigido no Model de Ponto
+        return $this->pointControl->insertPointControl($id, $status);
+    }
+
+    public function getPointControl($id): array {
+        return $this->pointControl->getPointControl($id);
     }
 
     public function getPointControlUsers(): array{

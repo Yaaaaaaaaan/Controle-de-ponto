@@ -13,30 +13,34 @@ import {
 // ========================
 
 // Adicionar um novo usuário
-async function addUser(user) {
+async function upsertUser(user) {
     try {
+        // Garantir que temos um objeto de usuário válido
+        if (!user || !user.nickname) {
+            throw new Error("Objeto de usuário ou nickname inválido.");
+        }
+
         const db = await initializeDB();
         const transaction = db.transaction(userDataStoreName, 'readwrite');
         const userDataStore = transaction.objectStore(userDataStoreName);
 
-        // Verificar se o usuário já existe
-        const existingUser = await getUserByNickname(user.nickname);
-        if (existingUser) {
-            // Atualizar usuário existente
-            return updateUser(user);
-        }
+        // put() adiciona se não existe, ou atualiza se já existe. Perfeito!
+        const putRequest = userDataStore.put(user);
 
-        const addRequest = userDataStore.add(user);
         return new Promise((resolve, reject) => {
-            addRequest.onsuccess = () => {
-                console.log("Usuário adicionado com sucesso:", user.nickname);
-                resolve(addRequest.result);
+            putRequest.onsuccess = () => {
+                console.log("Usuário adicionado/atualizado com sucesso:", user.nickname);
+                // Retorna o objeto do usuário para consistência com outras funções
+                resolve(user);
             };
-            addRequest.onerror = () => reject('Erro ao adicionar usuário: ' + addRequest.error);
+            putRequest.onerror = () => {
+                console.error('Erro no put do usuário:', putRequest.error);
+                reject('Erro ao adicionar/atualizar usuário: ' + putRequest.error);
+            };
         });
     } catch (error) {
-        console.error('Erro ao adicionar usuário:', error);
-        throw new Error('Erro ao adicionar usuário: ' + error);
+        console.error('Erro em addOrUpdateUser:', error);
+        throw error; // Propaga o erro
     }
 }
 
@@ -96,26 +100,6 @@ async function getUserByToken(token) {
     }
 }
 
-// Atualizar um usuário
-async function updateUser(user) {
-    try {
-        const db = await initializeDB();
-        const transaction = db.transaction(userDataStoreName, 'readwrite');
-        const userDataStore = transaction.objectStore(userDataStoreName);
-        const putRequest = userDataStore.put(user);
-
-        return new Promise((resolve, reject) => {
-            putRequest.onsuccess = () => {
-                console.log("Usuário atualizado com sucesso:", user.nickname);
-                resolve(user);
-            };
-            putRequest.onerror = () => reject('Erro ao atualizar usuário: ' + putRequest.error);
-        });
-    } catch (error) {
-        console.error('Erro ao atualizar usuário:', error);
-        throw new Error('Erro ao atualizar usuário: ' + error);
-    }
-}
 
 // Deletar um usuário pelo ID
 async function deleteUser(nickname) {
@@ -315,7 +299,7 @@ async function processUserData() {
         }
 
         // Adicionar ou atualizar o usuário no IndexedDB
-        await addUser(serverUserData);
+        await upsertUser(serverUserData);
 
         // Se temos um token, atualizá-lo também
         if (serverUserData.userToken && serverUserData.id) {
@@ -333,7 +317,7 @@ async function processUserData() {
 async function syncIndexedDBToServer(userToken, theme) {
     try {
         if (!userToken || typeof theme === 'undefined') {
-            console.error("Erro ao sincronizar com o servidor: Tema ou token de usuário não especificados");
+            //console.error("Erro ao sincronizar com o servidor: Tema ou token de usuário não especificados");
             return false;
         }
 
@@ -380,14 +364,14 @@ async function syncServerToIndexedDB() {
             if (Array.isArray(userData.userData)) {
                 // Processar múltiplos usuários
                 for (const user of userData.userData) {
-                    await addUser(user);
+                    await upsertUser(user);
                     if (user.userToken && user.id) {
                         await setUserToken(user.userToken, user.id);
                     }
                 }
             } else if (typeof userData.userData === 'object') {
                 // Processar um único usuário
-                await addUser(userData.userData);
+                await upsertUser(userData.userData);
                 if (userData.userData.userToken && userData.userData.id) {
                     await setUserToken(userData.userData.userToken, userData.userData.id);
                 }
@@ -437,7 +421,7 @@ async function storeAuthData(userData) {
         }
 
         // Armazenar dados do usuário
-        await addUser(userData);
+        await upsertUser(userData);
 
         // Armazenar token
         if (userData.id) {
@@ -452,23 +436,105 @@ async function storeAuthData(userData) {
     }
 }
 
+/**
+ * Envia um novo registro de ponto (bater o ponto) para o servidor.
+ * @param {number} status - O status do ponto (ex: 1 para entrada, 0 para saída).
+ * @returns {Promise<boolean>} - Retorna true se bem-sucedido, false caso contrário.
+ */
+async function addPointControlRecordToServer(status) {
+    try {
+        // Validar se o status foi fornecido
+        if (typeof status === 'undefined') {
+            console.error("Erro ao bater o ponto: o status não foi especificado.");
+            return false;
+        }
+
+        // Verificar se estamos online
+        if (!navigator.onLine) {
+            console.log("Dispositivo offline. Ação de bater o ponto será sincronizada depois.");
+            // Aqui você poderia salvar a tentativa em uma fila no IndexedDB para sincronizar depois.
+            return false;
+        }
+
+        console.log(`Enviando registro de ponto para o servidor com status: ${status}`);
+
+        // AQUI ESTÁ A OPÇÃO 3!
+        const response = await fetch('../../Persistence/pointControl.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'addRecord', // Informa ao PHP exatamente o que fazer
+                status: status       // Envia o status do ponto
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            console.log("Ponto batido com sucesso no servidor!");
+            // Após o sucesso, você pode querer atualizar os dados locais
+            // chamando a função que busca os dados de ponto novamente.
+            return true;
+        } else {
+            console.error("Erro ao bater o ponto no servidor:", data.message);
+            return false;
+        }
+
+    } catch (error) {
+        console.error("Erro fatal ao comunicar com o servidor para bater o ponto:", error);
+        return false;
+    }
+}
+
+/**
+ * Remove todos os registros de um Object Store específico.
+ * @param {string} storeName - O nome do Object Store a ser limpo (ex: 'userData').
+ * @returns {Promise<void>} - Uma promessa que é resolvida quando a limpeza é concluída.
+ */
+async function clearObjectStore(storeName) {
+    try {
+        const db = await initializeDB();
+        const transaction = db.transaction(storeName, 'readwrite');
+        const objectStore = transaction.objectStore(storeName);
+        const clearRequest = objectStore.clear();
+
+        return new Promise((resolve, reject) => {
+            clearRequest.onsuccess = () => {
+                console.log(`Object Store '${storeName}' limpo com sucesso.`);
+                resolve();
+            };
+            clearRequest.onerror = (event) => {
+                console.error(`Erro ao limpar o Object Store '${storeName}':`, event.target.error);
+                reject(event.target.error);
+            };
+        });
+    } catch (error) {
+        console.error(`Erro ao iniciar a transação para limpar '${storeName}':`, error);
+        throw error;
+    }
+}
+
+
 export {
     // Funções de usuário
-    addUser,
     getUserById,
     getUserByNickname,
     getUserByToken,
-    updateUser,
     deleteUser,
     getAllUsers,
 
-    // Funções de controle de ponto
+    // Funções de controle de acesso
+    upsertUser,
     addPointControl,
+    setUserToken,
+    clearObjectStore,
+
+    // Funções de controle de ponto
     getPointControlByUserId,
     getAllPointControl,
+    addPointControlRecordToServer,
 
     // Funções de token
-    setUserToken,
     isTokenValid,
 
     // Funções de sincronização

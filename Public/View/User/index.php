@@ -3,21 +3,8 @@
     require "../layout/menu.php";
     include_once __DIR__ . '/../../../App/controller/pointController.php';
 
-
-
-    if ($_POST) {
-        include_once '../../../App/controller/UserController.php';
-        $userController = new UserController();
-
-        if (isset($_POST['insertPointControl'])) {
-            $insertPointControl = $userController->insertPointControl($_POST['id']);
-        }
-    }
-
     // ID do usuário é necessário para o JavaScript
     $id = $_SESSION['id'] ?? null;
-
-    echo '<br><br><br><br>'.$_SESSION['userData'];
 ?>
 
 <html>
@@ -39,7 +26,7 @@
                     </div>
 
                     <div class="col-12 col-md-4 mt-5">
-                        <div class="row mt-5">
+                        <div class="row mt-5 me-3">
                             <!-- Card do usuário -->
                             <div id="userCard" class="badge-card mt-5">
                                 <!-- Foto do perfil -->
@@ -51,11 +38,7 @@
                                 <div id="responseEmail" class="user-email">usuario@email.com</div>
 
                                 <!-- Botão de ação -->
-                                <form action="index.php" method="post" name="insertPointControl">
-                                    <input hidden value="1" name="insertPointControl"> <!-- Otimizar esse valor do formulário -->
-                                    <input hidden name="id" id="responseIdInput" value="">
-                                    <button type="submit" class="btn btn-success badge-action-btn">Confirmar Presença</button>
-                                </form>
+                                <input hidden name="id" id="responseIdInput" value=""> <button type="button" id="confirmPresenceBtn" class="btn btn-success badge-action-btn">Confirmar Presença</button>
                                 <p hidden id="responseUserToken"></p>
                                 <p hidden id="responseTheme"></p>
                                 <p hidden id="rank"></p>
@@ -99,6 +82,33 @@
             </script>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script type="module" src="../../JS/USR/indexDashboard.js"></script> <!-- Dashboard de visualização de dados -->
+        <script type="module">
+            import { addPointControlRecordToServer, syncServerToIndexedDB } from '../../JS/indexedDB/Model.js';
+
+            document.getElementById('confirmPresenceBtn').addEventListener('click', async () => {
+                const button = document.getElementById('confirmPresenceBtn');
+                button.disabled = true;
+                button.textContent = 'Enviando...';
+
+                // O status '1' pode significar "presença confirmada"
+                const success = await addPointControlRecordToServer("Verificação pendente");
+
+                if (success) {
+                    alert('Presença confirmada com sucesso!');
+                    // Após sucesso, sincronize os dados para atualizar o gráfico
+                    await syncServerToIndexedDB();
+                    // Opcional: recarregar a página para redesenhar o gráfico com os novos dados.
+                    // Para uma experiência mais fluida, o ideal seria o indexDashboard.js
+                    // ter uma função para recarregar e redesenhar o gráfico sem reload.
+                    window.location.reload();
+                } else {
+                    alert('Falha ao confirmar a presença. Verifique o console para mais detalhes.');
+                }
+
+                button.disabled = false;
+                button.textContent = 'Confirmar Presença';
+            });
+        </script>
         <img hidden id="pPictureModal">
     </body>
 </html>

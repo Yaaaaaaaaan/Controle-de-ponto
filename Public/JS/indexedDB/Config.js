@@ -26,8 +26,7 @@ function initializeDB() {
                 const userDataStore = db.createObjectStore(userDataStoreName, {
                     keyPath: 'nickname'
                 });
-                userDataStore.createIndex('userTokenIdx', 'userToken', { unique: true });
-                userDataStore.createIndex('idIdx', 'id', { unique: true });
+                userDataStore.createIndex('id', 'userId', { unique: true });
             }
 
             // Criar ou atualizar pointControl store
@@ -35,9 +34,9 @@ function initializeDB() {
                 const pointControlStore = db.createObjectStore(pointControlStoreName, {
                     keyPath: 'cod', autoIncrement: true
                 });
-                pointControlStore.createIndex('userIdIdx', 'uidUserFK', { unique: false });
-                pointControlStore.createIndex('statusIdx', 'status', { unique: false });
-                pointControlStore.createIndex('dateIdx', 'dateIn', { unique: false });
+                pointControlStore.createIndex('userIdIdx', 'userId', { unique: false });
+                pointControlStore.createIndex('status', 'status', { unique: false });
+                pointControlStore.createIndex('date', 'dateIn', { unique: false });
             }
 
             // Criar ou atualizar userToken store
@@ -45,8 +44,8 @@ function initializeDB() {
                 const userTokenStore = db.createObjectStore(userTokenStoreName, {
                     keyPath: 'token'
                 });
-                userTokenStore.createIndex('userIdIdx', 'uidUserFK', { unique: true });
-                userTokenStore.createIndex('lastUpdatedIdx', 'lastUpdated', { unique: false });
+                userTokenStore.createIndex('userId', 'userId', { unique: true });
+                userTokenStore.createIndex('lastUpdated', 'lastUpdated', { unique: false });
             }
         };
 

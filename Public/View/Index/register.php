@@ -44,7 +44,7 @@
                         echo $_SESSION['response'];
                     }
                 ?>
-                <div class="d-grid"><button class="" type="submit">Registrar</button></div> <a href="../Index/index.php">Voltar</a>
+                <div class="d-grid"><button class="" type="submit">Registrar</button></div> <a href="../Index/Index.php">Voltar</a>
         
             </form>
         </div>

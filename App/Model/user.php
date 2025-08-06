@@ -187,7 +187,7 @@ if (!defined('APP_RAN')) {
         if (!empty($this->nickname) && !empty($this->password)) {
             $userToken = bin2hex(random_bytes(32));
 
-            $query = "SELECT u.id_usuario, t.token, u.nome_completo, u.nome_usuario, u.nivel_acesso, u.email, u.senha_hash, f.nome_foto, u.tema_padrao
+            $query = "SELECT u.id_usuario, t.token, t.data_criacao, u.nome_completo, u.nome_usuario, u.nivel_acesso, u.email, u.senha_hash, f.nome_foto, u.tema_padrao
                   FROM {$this->tableNames['usr']} u
                   INNER JOIN {$this->tableNames['fot']} f ON u.id_usuario = f.id_usuario AND f.perfil = '1' /* 1 = True */
                   INNER JOIN {$this->tableNames['tok']} t ON u.id_usuario = t.id_usuario
@@ -234,20 +234,25 @@ if (!defined('APP_RAN')) {
                         $_SESSION['id'] = $row['id_usuario'];
                         $_SESSION['logged'] = true;
                         $_SESSION['userData'] = json_encode([
-                            'userToken' => $userToken,
                             'name' => $row['nome_completo'],
                             'email' => $row['email'],
                             'rank' => $row['nivel_acesso'],
                             'nickname' => $row['nome_usuario'],
                             'theme' => $row['tema_padrao'],
-                            'id' => $row['id_usuario'],
+                            'userId' => $row['id_usuario'],
                             'profileUser' => $row['nome_foto'],
                         ]);
                         $_SESSION['pointControl'] = json_encode([
+                            'codigo' => $row['registro_id'],
+                            'userId' => $row['id_usuario'],
                             'name' => $row['nome_completo'],
                             'status' => $row['status'],
                             'dateIn' => $row['dateIn'],
                         ]);
+                        $_SESSION['tokenUserData'] = json_encode([
+                            'userToken' => $userToken,
+                            'dateIn' => $row['data_criacao'],
+                            'userId' => $row['id_usuario']]);
                         return true;
                     }
                 }
@@ -528,28 +533,6 @@ if (!defined('APP_RAN')) {
         }
     }
 
-     public function insertPointControl($id): bool{
-        try {
-            $this->descricao = 'Verificação pendente';
-            $this->id = $id;
-            $query = "INSERT INTO pointControl (description, uidUserFK) VALUES (:description, :id)";
-            $stmt = $this->conn->prepare($query);
-            $stmt->bindParam(':description', $this->descricao);
-            $stmt->bindParam(':id', $this->id);
-            if($stmt->execute()){
-                //Inserir registro no histórico
-                $description = 'Inserção de presença no controle-de-ponto. ';
-                $this->createUserHistory($description, $id);
-            }
-            return true;
-        } catch (PDOException $e) {
-            if ($e->getCode() == 23000) { 
-                return false; 
-            } else {
-                throw $e; 
-            }
-        }   
-    }
     //TODO: Verificar possibilidades de fazer o theme chegar ao banco de dados via menu. Mas, sem ser via AJAX. Precisa ser na padronização atual, e/ou via javascript.
     public function getIdByToken(string $userToken): ?int
     {

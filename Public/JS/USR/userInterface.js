@@ -1,6 +1,12 @@
 /*import { processUserData, checkForUserDataUpdates, lastProfilePictures } from '../JS/localStorage.js'; // Ajuste o caminho*/
-import { updateUser, processUserData, syncIndexedDBToServer, syncServerToIndexedDB, getUser } from '../indexedDB/Model.js';
+import { upsertUser, processUserData, syncIndexedDBToServer, syncServerToIndexedDB, getAllUsers } from '../indexedDB/Model.js';
 
+let isFirstLoad = true;
+
+let userDataPromiseResolver;
+const userDataPromise = new Promise(resolve => {
+    userDataPromiseResolver = resolve;
+});
 
 // Função para atualizar imagem de perfil
 function updateUIPicture(profileUser) {
@@ -43,6 +49,13 @@ function updateUIElements(userData) {
 
     const idInput = document.getElementById('responseIdInput');
     if (idInput) idInput.value = userData.id;
+
+    // Avisa a todos os outros scripts na página que os dados do usuário estão prontos.
+    if (isFirstLoad) {
+        console.log('Primeira carga: Disparando evento "userDataReady" com userId:', userData.userId);
+        document.dispatchEvent(new CustomEvent('userDataReady', { detail: { userId: userData.userId } }));
+        isFirstLoad = false; // Desativa o gatilho para as próximas vezes
+    }
 }
 
 // Função para atualizar formulário de configurações
@@ -90,9 +103,65 @@ function updateTheme(isDark) {
     document.body.dataset.bsTheme = isDark ? 'dark' : 'light';
 }
 
+// --- PONTO DE ENTRADA DO SCRIPT ---
+// Carrega os dados uma vez e "resolve" a promessa para notificar os outros scripts.
+async function initializeUserData() {
+    let userData = null;
+    try {
+        // 1. Tenta pegar os dados do servidor primeiro, pois são os mais recentes.
+        userData = await processUserData();
+
+        // 2. Se falhar (offline), tenta pegar do banco de dados local.
+        if (!userData) {
+            console.log("userInterface.js: Não foi possível obter dados do servidor, tentando IndexedDB...");
+            const localUsers = await getAllUsers();
+            if (localUsers && localUsers.length > 0) {
+                userData = localUsers[0];
+            }
+        }
+
+        // 3. Se finalmente temos os dados, atualiza a UI e "resolve" a promessa.
+        if (userData) {
+            updateUI(userData);
+            userDataPromiseResolver(userData); // "AVISA" a todos que estão esperando.
+        } else {
+            // Rejeita a promessa se nenhum dado for encontrado
+            userDataPromiseResolver(null);
+            throw new Error("Dados do usuário não encontrados no servidor ou localmente.");
+        }
+
+    } catch (error) {
+        console.error("Erro crítico ao inicializar a interface do usuário:", error);
+        userDataPromiseResolver(null); // Notifica outros scripts sobre a falha.
+    }
+}
+
+export function updateUI(userData) {
+    if (!userData || !userData.userId) {
+        console.warn("updateUI: Dados de usuário inválidos ou userId ausente.", userData);
+        return;
+    }
+    const elements = {
+        'responseName': userData.name,
+        'responseNameCurto': `Olá, ${userData.name.split(' ')[0]}`,
+        'responseEmail': userData.email,
+    };
+    Object.entries(elements).forEach(([id, value]) => {
+        const element = document.getElementById(id);
+        if (element) element.textContent = value;
+    });
+
+    // Atualiza a imagem de perfil
+    if (userData.profileUser) {
+        const imageBasePath = '/controle-de-ponto/App/Persistence/userProfileImages/';
+        const srcImage = imageBasePath + String(userData.profileUser).replace(/"/g, '');
+        const picElement = document.getElementById('pPicture');
+        if (picElement) picElement.src = srcImage;
+    }
+}
 
 // Inicialização
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', initializeUserData, async () => {
 
     try {
         const localUserData = await getAllUsers(); // Busca dados locais primeiro
@@ -137,5 +206,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Exporta funções que podem ser necessárias em outros arquivos
 export {
     updateUIPicture,
-    updateUIElements
+    updateUIElements,
+    userDataPromise
 };
