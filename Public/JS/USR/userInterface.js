@@ -82,7 +82,7 @@ function updateSettingsForm(userData) {
 
 async function sendUserDataToServer(userData) {
     try {
-        const response = await fetch('../../Persistence/userData.php', {
+        const response = await fetch('../../Api/userData.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

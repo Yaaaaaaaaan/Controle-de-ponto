@@ -1,3 +1,3 @@
-# Permite o acesso ao diretório Persistence/userProfileImages/ e seus arquivos
+# Permite o acesso ao diretório Api/userProfileImages/ e seus arquivos
 Order Allow,Deny
 Allow from all

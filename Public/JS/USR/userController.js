@@ -1,4 +1,4 @@
-import { upsertUser, processUserData, syncIndexedDBToServer, syncServerToIndexedDB, getAllUsers, addPointControlRecordToServer } from '../indexedDB/Model.js';
+import { upsertUser, processUserData, syncIndexedDBToServer, syncServerToIndexedDB, getAllUsers, addPointControlRecordToServer , clearObjectStore } from '../indexedDB/Model.js';
 import { userDataPromise } from './userInterface.js';
 
 // Necessário revisar e refatorar toda lógica aqui.
@@ -23,15 +23,15 @@ async function handleConfirmPresenceClick(event) {
     try {
         const success = await addPointControlRecordToServer("Confirmado");
         if (success) {
-            alert('Presença confirmada com sucesso!');
+            //alert('Presença confirmada com sucesso!');
             await syncServerToIndexedDB(); // Sincroniza para garantir que o IndexedDB local tenha o novo registro.
             window.location.reload(); // Recarrega a página para o gráfico ser redesenhado.
         } else {
-            alert('Falha ao confirmar a presença. O registro para hoje pode já existir.');
+            //alert('Falha ao confirmar a presença. O registro para hoje pode já existir.');
         }
     } catch (error) {
         console.error("Erro ao confirmar presença:", error);
-        alert('Ocorreu um erro. Verifique o console.');
+        //alert('Ocorreu um erro. Verifique o console.');
     } finally {
         button.disabled = false;
         button.textContent = 'Confirmar Presença';
@@ -47,6 +47,11 @@ function attachEventListeners() {
         confirmButton.addEventListener('click', handleConfirmPresenceClick);
     }
     // Outros listeners (ex: formulário de settings, botões de logout) podem ser adicionados aqui.
+
+    const logoutButton = document.getElementById('logoutBtn');
+    if (logoutButton) {
+        logoutButton.addEventListener('click', handleLogout);
+    }
 }
 
 async function initializeController() {
@@ -184,7 +189,7 @@ async function updateSettingsForm(userData) {
 
 async function sendUserDataToServer(userData) {
     try {
-        const response = await fetch('../../Persistence/userData.php', {
+        const response = await fetch('../../Api/userData.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -204,6 +209,36 @@ async function sendUserDataToServer(userData) {
 function updateTheme(isDark) {
     document.body.dataset.bsTheme = isDark ? 'dark' : 'light';
 }
+
+async function handleLogout() {
+    try {
+        console.log("Iniciando processo de logout no cliente...");
+
+        // 1. LIMPA OS DADOS DO NAVEGADOR (Funciona 100% offline)
+        await Promise.all([
+            clearObjectStore('userData'),
+            clearObjectStore('pointControl')
+        ]);
+        localStorage.clear();
+        console.log("Dados locais limpos com sucesso.");
+
+        // 2. ENCERRA A SESSÃO NO SERVIDOR (Apenas se estiver online)
+        if (navigator.onLine) {
+            console.log("Online. Notificando o servidor para encerrar a sessão...");
+            // O JavaScript chama o novo endpoint de logout
+            await fetch('/controle-de-ponto/Public/Api/logout.php');
+            console.log("Comando de encerramento de sessão enviado ao servidor.");
+        }
+
+        // 3. REDIRECIONA O USUÁRIO
+        //alert("Você foi desconectado com sucesso.");
+        window.location.href = '/controle-de-ponto/Public/View/Index/';
+
+    } catch (error) {
+        console.error("Ocorreu um erro durante o logout:", error);
+    }
+}
+
 
 
 // Inicialização

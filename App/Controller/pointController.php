@@ -62,12 +62,6 @@ class PointController{
         }
     }
 
-    /*public function getDetailedPointControlData($id): array //Ainda não existe.
-    {
-        return $this->pointControl->getDetailedPointControlData($id);
-    }*/
-
-
 
 }
 ?>

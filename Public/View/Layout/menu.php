@@ -2,25 +2,12 @@
     session_start();
     error_reporting(0);
     ini_set('display_errors', 'Off');
-    if ($_POST) {
-        define('APP_RAN', true);
-        include_once '../../../App/controller/UserController.php';
-        if(isset($_POST['logout'])){$controller = new UserController();
-            $controller->unAuthenticateUser();
-        }
-    }
-    //validação de token e dados comuns de usuário
-    if (isset($_SESSION['userData']) && $_SESSION['userData'] != null) {
-        $userData = $_SESSION['userData'];
-    } else {
-        $userData = false;
-    }
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
     <head>
         <title>Controle de ponto</title>
-        <link rel="icon" href="../../Persistence/SystemPics/logo.png" type="image/x-icon">
+        <link rel="icon" href="../../Api/SystemPics/logo.png" type="image/x-icon">
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <!--<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">-->
@@ -130,9 +117,9 @@
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Voltar</button>
-                            <form action="<?php $_SERVER['PHP_SELF']; ?>" method="post">
-                                <input class="btn btn-success" type="submit" name="logout" value="Sim, desejo sair.">
-                            </form>
+
+                            <a class="btn btn-success" id="logoutBtn" href="#">Sim, desejo sair.</a>
+
                         </div>
                     </div>
                 </div>

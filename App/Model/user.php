@@ -51,7 +51,7 @@ if (!defined('APP_RAN')) {
 
         // Define valor padrão para a imagem de perfil
         $this->profilePicture = 'Profile.png';
-        $this->directory = '/Controle-de-ponto/App/Persistence/userProfileImages/Profile.png';
+        $this->directory = '/Controle-de-ponto/App/Api/userProfileImages/Profile.png';
         $this->isProfile = '1';
 
         // Define valore padrão para o álbum

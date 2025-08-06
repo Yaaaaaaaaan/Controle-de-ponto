@@ -84,13 +84,15 @@ Controle-de-Ponto/
 │   │   │   └── bootstrap.bundle.min.js
 │   │   ├── color-modes.js
 │   │   ├── authController.js
-│   │   ├── localStorage.js
+│   │   ├── localStorage.js                                             # Inativo
 │   │   └── script.js
-│   ├── Persistence/
+│   ├── Api/
 │   │   ├── SystemPics
 │   │   │   └── logo.png
+│   │   ├── logout.php
 │   │   ├── pointControl.php
-│   │   └── userData.php
+│   │   ├── userData.php
+│   │   └── userToken.php
 │   ├── View/
 │   │   ├── Errors/
 │   │   │   ├── .htaccess                                                # Controlador de acesso a diretório e arquivos

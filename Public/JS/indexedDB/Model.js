@@ -286,7 +286,7 @@ async function isTokenValid(token) {
 // Sincronizar dados do usuário do servidor para o IndexedDB
 async function processUserData() {
     try {
-        const response = await fetch('../../Persistence/userData.php');
+        const response = await fetch('../../Api/userData.php');
         const fullData = await response.json();
 
         console.log("processUserData: Resposta do servidor:", fullData);
@@ -327,7 +327,7 @@ async function syncIndexedDBToServer(userToken, theme) {
             return false;
         }
 
-        const response = await fetch('../../Persistence/userData.php', {
+        const response = await fetch('../../Api/userData.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userToken, theme })
@@ -357,7 +357,7 @@ async function syncServerToIndexedDB() {
         }
 
         // Buscar dados do usuário
-        const userResponse = await fetch('../../Persistence/userData.php');
+        const userResponse = await fetch('../../Api/userData.php');
         const userData = await userResponse.json();
 
         if (userData && userData.userData) {
@@ -379,7 +379,7 @@ async function syncServerToIndexedDB() {
         }
 
         // Buscar dados de controle de ponto
-        const pointResponse = await fetch('../../Persistence/pointControl.php');
+        const pointResponse = await fetch('../../Api/pointControl.php');
         const pointData = await pointResponse.json();
 
         if (pointData && pointData.pointControl && Array.isArray(pointData.pointControl)) {
@@ -459,7 +459,7 @@ async function addPointControlRecordToServer(status) {
         console.log(`Enviando registro de ponto para o servidor com status: ${status}`);
 
         // AQUI ESTÁ A OPÇÃO 3!
-        const response = await fetch('../../Persistence/pointControl.php', {
+        const response = await fetch('../../Api/pointControl.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
