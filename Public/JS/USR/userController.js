@@ -253,6 +253,33 @@ async function handleLogout() {
     }
 }
 
+async function forceLogout(reason) {
+    console.error(`Sessão inválida detectada: ${reason}. Forçando logout.`);
+    
+    // 1. A prioridade é remover os identificadores da sessão ativa.
+    localStorage.removeItem('activeUserId');
+    localStorage.removeItem('userToken');
+    
+    // 2. Apagar o IndexedDB é uma medida mais drástica.
+    // Podemos comentar essa parte para evitar a perda de dados em cenários de erro.
+    // Os dados antigos serão sobrescritos na próxima sincronização de qualquer maneira.
+    /*
+    try {
+        await Promise.all([
+            clearObjectStore('userData'),
+            clearObjectStore('pointControl'),
+            clearObjectStore('userToken')
+        ]);
+    } catch (error) {
+        console.error("Erro ao limpar dados durante o logout forçado:", error);
+    }
+    */
+   
+    // 3. Notifica o usuário e redireciona.
+    alert("Sua sessão é inválida ou expirou. Por favor, faça o login novamente.");
+    window.location.href = '/controle-de-ponto/Public/View/Index/';
+}
+
 
 
 // Inicialização
@@ -305,5 +332,6 @@ export {
     updateDashboardPointControl,
     updateUIPicture,
     updateUIElements,
-    userDataPromise
+    userDataPromise,
+    forceLogout
 };
