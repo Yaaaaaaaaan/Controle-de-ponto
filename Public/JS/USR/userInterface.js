@@ -4,7 +4,8 @@ import {
     getAllUsers,
     fetchUserDataByToken,
     syncIndexedDBToServer,
-    syncServerToIndexedDB
+    syncServerToIndexedDB,
+    getUserById
 } from '../indexedDB/Model.js';
 
 let isFirstLoad = true;

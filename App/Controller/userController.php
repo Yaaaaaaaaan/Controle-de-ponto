@@ -20,36 +20,36 @@ class UserController {
     //TODO: REPARAR FUNÇÃO DE CRIAÇÃO DE USUÁRIO
     public function createUser($name, $nickname, $email, $password): array
     {
-        // --- VALIDAÇÃO CENTRALIZADA E DETALHADA ---
-        if (empty($name)) {
-            return ['success' => false, 'message' => 'O campo "Nome completo" é obrigatório.'];
+        // Validação de negócio centralizada
+        if (empty($name) || empty($nickname) || empty($email) || empty($password)) {
+            return ['success' => false, 'message' => 'Todos os campos são obrigatórios.'];
         }
-        if (empty($nickname)) {
-            return ['success' => false, 'message' => 'O campo "Usuário" é obrigatório.'];
-        }
-        if (empty($email)) {
-            return ['success' => false, 'message' => 'O campo "Email" é obrigatório.'];
-        }
-        if (empty($password)) {
-            return ['success' => false, 'message' => 'O campo "Senha" é obrigatório.'];
-        }
-        // ---------------------------------------------
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            error_log("CreateUser - Erro: email inválido - $email");
 
-        $this->user->name = filter_var($name, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $this->user->nickname = filter_var($nickname, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $this->user->email = filter_var($email, FILTER_SANITIZE_EMAIL);
+            return ['success' => false, 'message' => 'O formato do email é inválido.'];
+        }
+        // (Pode adicionar outras validações, como comprimento da senha, etc.)
+
+        // Prepara os dados para o Model
+        $this->user->name = $name;
+        $this->user->nickname = $nickname;
+        $this->user->email = $email;
         $this->user->password = $password;
         $this->user->rank = 1;
+
+        // Tenta executar a criação no Model
+        $result = $this->user->createUser();
+        error_log("CreateUser - Resultado do Model: " . ($result ? 'true' : 'false'));
+
 
         // Tenta executar a criação no Model
         if ($this->user->createUser()){
             return ['success' => true, 'message' => 'Usuário criado com sucesso!'];
         } else {
-            // Se o Model falhar, é provável que seja um erro de banco de dados (ex: email/nickname duplicado)
             return ['success' => false, 'message' => 'Não foi possível criar o usuário. O email ou nome de usuário já pode estar em uso.'];
         }
     }
-
     /**
      * @throws RandomException
      */
@@ -193,7 +193,14 @@ class UserController {
         return null;
     }
 
-
+    public function deleteUserToken(int $userId): bool
+    {
+        if (empty($userId)) {
+            return false;
+        }
+        // Apenas chama o método correspondente que já existe no Model (User.php)
+        return $this->user->deleteTokenForUser($userId);
+    }
 
 }
 ?>

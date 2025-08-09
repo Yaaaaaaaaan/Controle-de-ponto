@@ -1,4 +1,6 @@
 <?php
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 define('APP_RAN', true);
 session_start();
 header('Content-Type: application/json');
@@ -27,12 +29,22 @@ $userController = new UserController();
 $isAuthenticated = $userController->authenticateUser($nickname, $password);
 
 if ($isAuthenticated) {
-    $userData = $userController->getUserData(); // Pega os dados da sessão recém-criada
-    if ($userData) {
+    $tokenData = isset($_SESSION['tokenUserData']) ? json_decode($_SESSION['tokenUserData'], true) : null;
+    $userData = isset($_SESSION['userData']) ? json_decode($_SESSION['userData'], true) : null;
+    if ($userData && $tokenData) {
+        $responseData = array_merge($userData, $tokenData);
+        sendJson(['success' => true, 'session' => $responseData]);
+    } else {
+        sendJson(['success' => false, 'message' => 'Erro ao recuperar dados da sessão após o login.'], 500);
+    }
+    /*
+     $userData = $userController->getUserData(); // Pega os dados da sessão recém-criada
+     if ($userData) {
         sendJson(['success' => true, 'userData' => $userData]);
     } else {
         sendJson(['success' => false, 'message' => 'Erro ao recuperar dados da sessão após o login.'], 500);
     }
+    */
 } else {
     sendJson(['success' => false, 'message' => 'Usuário ou senha incorretos.'], 401);
 }

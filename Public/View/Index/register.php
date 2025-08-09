@@ -12,28 +12,28 @@
 <body>
 <div class="container-userlogin">
     <h2>Registro</h2>
-    <form id="registerForm">
+    <form id="registerForm" novalidate>
         <div class="form-floating mb-3">
-            <input type="text" class="form-control" name="name" placeholder="Nome completo" required>
-            <label>Nome completo</label>
+            <input type="text" class="form-control" name="name" id="name" placeholder="Nome completo" required>
+            <label for="name">Nome completo</label>
         </div>
         <div class="form-floating mb-3">
-            <input type="email" class="form-control" name="email" placeholder="Email" required>
-            <label>Email</label>
+            <input type="email" class="form-control" name="email" id="email" placeholder="Email" required>
+            <label for="email">Email</label>
         </div>
         <div class="form-floating mb-3">
-            <input type="text" class="form-control" name="nickname" placeholder="Usuário" required>
-            <label>Usuário</label>
+            <input type="text" class="form-control" name="nickname" id="nickname" placeholder="Usuário" required>
+            <label for="nickname">Usuário</label>
         </div>
         <div class="form-floating mb-3">
-            <input type="password" name="password" class="form-control" placeholder="Senha" required>
-            <label>Senha</label>
+            <input type="password" name="password" id="password" class="form-control" placeholder="Senha" required>
+            <label for="password">Senha</label>
         </div>
 
         <p id="response" class="text-center mt-2"></p>
 
         <div class="d-grid">
-            <button class="" type="submit">Registrar</button>
+            <button type="submit">Registrar</button>
         </div>
         <a href="index.php" class="d-block mt-3 text-center">Já tem uma conta? Voltar para o login</a>
     </form>

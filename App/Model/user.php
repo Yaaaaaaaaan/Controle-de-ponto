@@ -45,28 +45,17 @@ if (!defined('APP_RAN')) {
     public function createUser(): bool{
         // Define valor padrão para a imagem de perfil
         $this->profilePicture = 'Profile.png';
-        $this->directory = '/Controle-de-ponto/App/Api/userProfileImages/Profile.png';
+        $this->directory = '/controle-de-ponto/Public/Api/userProfileImages/Profile.png';
         $this->isProfile = '1';
-
-        // Define valore padrão para o álbum
         $this->albumName = 'Foto de perfil';
         $this->albumType = '1';
 
-        // Cria um hash para futuras transações
-        $userToken = bin2hex(random_bytes(32)); // há redundância aqui, pois está gerando dois hashs.
-
-        // Iniciar transação para garantir consistência dos dados
         $this->conn->beginTransaction();
-
-        // Criptografa a senha
         $this->password = password_hash($this->password, PASSWORD_DEFAULT);
 
         try {
-            // 1. Inserir dados do usuário na tabela userdata
-            $queryUser = "INSERT INTO {$this->tableNames['usr']} 
-                  (nome_completo, nome_usuario, email, senha_hash, nivel_acesso) 
-                  VALUES (:name, :nickname, :email, :password, :rank)";
-
+            // 1. Inserir usuário
+            $queryUser = "INSERT INTO {$this->tableNames['usr']} (nome_completo, nome_usuario, email, senha_hash, nivel_acesso) VALUES (:name, :nickname, :email, :password, :rank)";
             $stmtUser = $this->conn->prepare($queryUser);
             $stmtUser->bindParam(':name', $this->name);
             $stmtUser->bindParam(':nickname', $this->nickname);
@@ -74,29 +63,19 @@ if (!defined('APP_RAN')) {
             $stmtUser->bindParam(':password', $this->password);
             $stmtUser->bindParam(':rank', $this->rank);
             $stmtUser->execute();
-
-            // Obter o ID do usuário recém-inserido
             $newUserId = $this->conn->lastInsertId();
 
-            // 2. Inserir dados da imagem na tabela albuns
-            $queryPicture = "INSERT INTO {$this->tableNames['alb']}
-                     (id_usuario, nome_album, tipo_album) 
-                     VALUES (:newUserId, :albumName, :albumType)";
-
-            $stmtPicture = $this->conn->prepare($queryPicture);
-            $stmtPicture->bindParam(':newUserId', $newUserId);
-            $stmtPicture->bindParam(':albumName', $this->albumName);
-            $stmtPicture->bindParam(':albumType', $this->albumType);
-            $stmtPicture->execute();
-
-            // Obter o ID da imagem recém-inserida
+            // 2. Inserir álbum
+            $queryAlbum = "INSERT INTO {$this->tableNames['alb']} (id_usuario, nome_album, tipo_album) VALUES (:newUserId, :albumName, :albumType)";
+            $stmtAlbum = $this->conn->prepare($queryAlbum);
+            $stmtAlbum->bindParam(':newUserId', $newUserId);
+            $stmtAlbum->bindParam(':albumName', $this->albumName);
+            $stmtAlbum->bindParam(':albumType', $this->albumType);
+            $stmtAlbum->execute();
             $newAlbumId = $this->conn->lastInsertId();
 
-            // 3. Inserir dados da tabela imagem
-            $queryProfilePic = "INSERT INTO {$this->tableNames['fot']}
-                        (album_id, id_usuario, caminho_arquivo, nome_foto, perfil) 
-                        VALUES (:newAlbumId, :newUserId, :directory, :profilePicture, :isProfile)";
-
+            // 3. Inserir foto
+            $queryProfilePic = "INSERT INTO {$this->tableNames['fot']} (album_id, id_usuario, caminho_arquivo, nome_foto, perfil) VALUES (:newAlbumId, :newUserId, :directory, :profilePicture, :isProfile)";
             $stmtProfilePic = $this->conn->prepare($queryProfilePic);
             $stmtProfilePic->bindParam(':newAlbumId', $newAlbumId);
             $stmtProfilePic->bindParam(':newUserId', $newUserId);
@@ -105,66 +84,34 @@ if (!defined('APP_RAN')) {
             $stmtProfilePic->bindParam(':isProfile', $this->isProfile);
             $stmtProfilePic->execute();
 
-            // 4. Verificar se o trigger para a criação automática de tokens já existe
-            $triggerExists = $this->checkTriggerExists('trg_criar_token_novo_usuario');
+            // --- INÍCIO DA LÓGICA DO TOKEN (O PONTO PRINCIPAL DA CORREÇÃO) ---
 
-            // Se o trigger não existir, criar um novo
-            if (!$triggerExists) {
-                $triggerQuery = "CREATE TRIGGER trg_criar_token_novo_usuario
-                       AFTER INSERT ON {$this->tableNames['usr']}
-                       FOR EACH ROW
-                       BEGIN
-                         INSERT INTO {$this->tableNames['tok']} (token, id_usuario)
-                         VALUES (UNHEX(?), NEW.uid);
-                       END";
+            // 4. Gerar o token de autenticação
+            $userToken = bin2hex(random_bytes(32)); // Gera um token seguro de 64 caracteres
 
-                $stmtTrigger = $this->conn->prepare($triggerQuery);
-                $stmtTrigger->execute([str_replace('0x', '', bin2hex($userToken))]);
-            }
+            // 5. Calcular a data de expiração (7 dias a partir de agora)
+            $expiryDate = (new DateTime())->add(new DateInterval('P7D'))->format('Y-m-d H:i:s');
 
-            // 5. Inserir token do usuário na tabela usertoken
-            /*$queryToken = "INSERT INTO {$this->tableNames['tok']}
-                   (token, id_usuario) 
-                   VALUES (:userToken, :newUserId)";
-
+            // 6. Inserir o token na tabela de tokens
+            $queryToken = "INSERT INTO {$this->tableNames['tok']} (id_usuario, token, data_expiracao) VALUES (:id_usuario, :token, :data_expiracao)";
             $stmtToken = $this->conn->prepare($queryToken);
-            $stmtToken->bindParam(':userToken', $userToken);
-            $stmtToken->bindParam(':newUserId', $newUserId);
-            $stmtToken->execute();*/
+            $stmtToken->bindParam(':id_usuario', $newUserId);
+            $stmtToken->bindParam(':token', $userToken);
+            $stmtToken->bindParam(':data_expiracao', $expiryDate);
+            $stmtToken->execute();
 
-            // Confirmar todas as operações
-            $this->conn->commit();
+            // --- FIM DA LÓGICA DO TOKEN ---
 
-            //6. Inserir registro no histórico
-            $description = 'Criação de conta ';
-            $this->createUserHistory($description, $newUserId);
+            $this->conn->commit(); // Confirma todas as operações (usuário, album, foto e token)
+            $this->createUserHistory('Criação de conta', $newUserId);
             return true;
 
         } catch (Exception $e) {
-            // Em caso de erro, reverter todas as alterações
             $this->conn->rollBack();
+            // Lembre-se de restaurar o código de log de erro aqui!
+            error_log("Erro em User->createUser: " . $e->getMessage());
             return false;
         }
-    }
-
-    /**
-     * Verifica se um trigger específico já existe no banco de dados
-     *
-     * @param string $triggerName Nome do trigger a ser verificado
-     * @return bool Retorna true se o trigger existir, false caso contrário
-     */
-    private function checkTriggerExists($triggerName): bool{
-        $query = "SELECT COUNT(*) AS trigger_exists
-          FROM information_schema.triggers
-          WHERE trigger_name = :triggerName";
-
-        $stmt = $this->conn->prepare($query);
-        // Utiliza bindValue em vez de bindParam para valor literal
-        $stmt->bindValue(':triggerName', $triggerName);
-        $stmt->execute();
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        return (int)$result['trigger_exists'] === 1;
     }
 
     public function __destruct(){
@@ -174,73 +121,124 @@ if (!defined('APP_RAN')) {
         }
     }
 
-    /**
-     * @throws RandomException
-     */
     public function authenticateUser(): bool
     {
-        if (empty($this->nickname) || empty($this->password)) {
+        try {
+            // Etapa 1: Apenas verifica a senha e obtém o ID do usuário (1 query).
+            $userId = $this->verifyCredentials();
+            if (!$userId) {
+                return false; // Usuário ou senha incorretos.
+            }
+
+            // Etapa 2: Com o ID válido, busca TODOS os dados de uma só vez usando sua função existente (1 query).
+            $fullUserData = $this->getUserById($userId);
+            if (!$fullUserData) {
+                error_log("Falha crítica: Credenciais válidas para o ID {$userId}, mas getUserById não retornou dados.");
+                return false;
+            }
+
+            // Etapa 3: Gerencia o token com os dados já em mãos (lógica em PHP, só acessa o BD se precisar).
+            $tokenData = $this->manageUserToken($userId, $fullUserData);
+
+            // Etapa 4: Preenche a sessão com os dados completos e o token válido.
+            $this->populateSession($userId, $fullUserData, $tokenData);
+
+            $this->createUserHistory('Login bem-sucedido', $userId);
+            return true;
+
+        } catch (Exception $e) {
+            error_log("Erro no fluxo de autenticação: " . $e->getMessage());
             return false;
         }
-
-        // A query agora busca também o token existente e sua data de expiração
-        $query = "SELECT u.id_usuario, u.senha_hash, t.token, t.data_expiracao
-              FROM {$this->tableNames['usr']} u
-              LEFT JOIN {$this->tableNames['tok']} t ON u.id_usuario = t.id_usuario
-              WHERE u.nome_usuario = :nickname";
-
-        try {
-            $stmt = $this->conn->prepare($query);
-            $stmt->bindParam(':nickname', $this->nickname);
-            $stmt->execute();
-
-            if ($stmt->rowCount() > 0) {
-                $row = $stmt->fetch(PDO::FETCH_ASSOC);
-                if (password_verify($this->password, $row['senha_hash'])) {
-
-                    $userId = $row['id_usuario'];
-                    $existingToken = $row['token'];
-                    $tokenExpiry = $row['data_expiracao'] ? new DateTime($row['data_expiracao']) : null;
-                    $now = new DateTime();
-
-                    // LÓGICA DE GERENCIAMENTO DO TOKEN
-                    $userToken = $existingToken;
-                    // Se o token não existe OU se já expirou, gera um novo.
-                    if (!$existingToken || !$tokenExpiry || $tokenExpiry < $now) {
-                        $userToken = bin2hex(random_bytes(32));
-                        $newExpiryDate = $now->add(new DateInterval('P7D'))->format('Y-m-d H:i:s'); // Expira em 7 dias
-
-                        // Usa INSERT ... ON DUPLICATE KEY UPDATE para inserir ou atualizar o token.
-                        // Isso requer que a coluna id_usuario na tabela de tokens seja uma chave única (UNIQUE KEY).
-                        // ALTER TABLE `tokens_autenticacao` ADD UNIQUE KEY `idx_id_usuario_unico` (`id_usuario`);
-                        $tokenQuery = "INSERT INTO {$this->tableNames['tok']} (id_usuario, token, data_expiracao)
-                                   VALUES (:id, :token, :expiry)
-                                   ON DUPLICATE KEY UPDATE token = :token, data_expiracao = :expiry";
-
-                        $tokenStmt = $this->conn->prepare($tokenQuery);
-                        $tokenStmt->bindParam(':id', $userId);
-                        $tokenStmt->bindParam(':token', $userToken);
-                        $tokenStmt->bindParam(':expiry', $newExpiryDate);
-                        $tokenStmt->execute();
-                    }
-
-                    // Após garantir que temos um token válido, buscamos os dados completos para a sessão
-                    $userData = $this->getUserById($userId); // Usando o método que já criamos
-
-                    if ($userData) {
-                        $_SESSION['id'] = $userId;
-                        $_SESSION['logged'] = true;
-                        // Salva os dados completos na sessão
-                        $_SESSION['userData'] = json_encode($userData);
-                        return true;
-                    }
-                }
-            }
-        } catch (Exception $e) { // Captura PDOException e outras
-            error_log("Erro na autenticação: " . $e->getMessage());
-        }
-        return false;
     }
+
+    /**
+     * [HELPER PRIVADO] Apenas verifica as credenciais.
+     * @return int|null O ID do usuário ou null.
+     */
+    private function verifyCredentials(): ?int
+    {
+        if (empty($this->nickname) || empty($this->password)) {
+            return null;
+        }
+        $query = "SELECT id_usuario, senha_hash FROM {$this->tableNames['usr']} WHERE nome_usuario = :nickname";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':nickname', $this->nickname);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($row && password_verify($this->password, $row['senha_hash'])) {
+            return (int)$row['id_usuario'];
+        }
+        return null;
+    }
+
+    /**
+     * [HELPER PRIVADO] Gerencia o token para um usuário.
+     * @param int $userId
+     * @param array $userDataFromQuery Dados já buscados, incluindo token e data de expiração.
+     * @return array Dados do token.
+     */
+    private function manageUserToken(int $userId, array $userDataFromQuery): array
+    {
+        $existingToken = $userDataFromQuery['userToken'] ?? null;
+        $tokenExpiryStr = $userDataFromQuery['tokenDate'] ?? null; // Ajustado para usar tokenDate de acordo com getUserById
+        $tokenExpiry = $tokenExpiryStr ? new DateTime($tokenExpiryStr) : null;
+        $now = new DateTime();
+
+        // Se o token não existe OU se já expirou, gera um novo.
+        if (!$existingToken || !$tokenExpiry || $tokenExpiry < $now) {
+            $userToken = bin2hex(random_bytes(32));
+            $newExpiryDate = (clone $now)->add(new DateInterval('P7D'))->format('Y-m-d H:i:s');
+
+            $tokenQuery = "INSERT INTO {$this->tableNames['tok']} (id_usuario, token, data_expiracao, data_criacao)
+                       VALUES (:id, :token, :expiry, :created)
+                       ON DUPLICATE KEY UPDATE token = :token, data_expiracao = :expiry";
+            $tokenStmt = $this->conn->prepare($tokenQuery);
+            $tokenStmt->execute([
+                ':id' => $userId,
+                ':token' => $userToken,
+                ':expiry' => $newExpiryDate,
+                ':created' => $now->format('Y-m-d H:i:s')
+            ]);
+
+            return ['userToken' => $userToken, 'tokenDate' => $now->format('Y-m-d H:i:s')];
+        }
+
+        // Se o token existente ainda é válido, apenas o retorna.
+        return ['userToken' => $existingToken, 'tokenDate' => $tokenExpiryStr];
+    }
+
+    /**
+     * [HELPER PRIVADO] Preenche as variáveis de sessão.
+     * @param int $userId
+     * @param array $profileData
+     * @param array $tokenData
+     */
+    private function populateSession(int $userId, array $profileData, array $tokenData): void
+    {
+        $_SESSION['id'] = $userId;
+        $_SESSION['logged'] = true;
+
+        // Usa os dados já formatados de getUserById
+        $_SESSION['userData'] = json_encode([
+            'userId'      => $profileData['userId'],
+            'name'        => $profileData['name'],
+            'email'       => $profileData['email'],
+            'rank'        => $profileData['rank'],
+            'nickname'    => $profileData['nickname'],
+            'theme'       => $profileData['theme'],
+            'profileUser' => $profileData['profileUser'],
+        ]);
+
+        // Usa os dados do token gerenciado
+        $_SESSION['tokenUserData'] = json_encode([
+            'userToken'   => $tokenData['userToken'],
+            'tokenDate'   => $tokenData['tokenDate'],
+            'userId'      => $userId,
+        ]);
+    }
+
 
 
     public function updateUser(): bool{
@@ -259,7 +257,7 @@ if (!defined('APP_RAN')) {
         $passwordUpdated = false;
         if (!empty($this->newPassword) && !empty($this->confirmPassword) && !empty($this->oldPassword)) {
             // Verificar se a senha atual está correta antes de permitir a alteração
-            $checkPasswordQuery = "SELECT upassword FROM " . $this->tableNames['usr'] . " WHERE uid = :id";
+            $checkPasswordQuery = "SELECT upassword FROM " . $this->tableNames['usr'] . " WHERE id_usuario = :id";
             $checkStmt = $this->conn->prepare($checkPasswordQuery);
             $checkStmt->bindParam(':id', $this->id);
             $checkStmt->execute();
@@ -277,7 +275,7 @@ if (!defined('APP_RAN')) {
         }
 
         // Finaliza a consulta com a condição WHERE
-        $query .= " WHERE uid = :id";
+        $query .= " WHERE id_usuario = :id";
 
         try {
             // Prepara e executa a consulta
@@ -318,7 +316,7 @@ if (!defined('APP_RAN')) {
     //TODO: a fazer FUNCIONALIDADE DELETEACCOUNT.
     public function deleteAccount() {
         if (!empty($this->email) && !empty($this->password)) {
-            $query = "SELECT uid, uemail, upassword FROM " . $this->tableNames['usr'] . " 
+            $query = "SELECT id_usuario, uemail, upassword FROM " . $this->tableNames['usr'] . " 
             WHERE uemail = :email AND upassword = :upassword";
     
             try {
@@ -367,7 +365,7 @@ if (!defined('APP_RAN')) {
 
         $querySelect = "SELECT h.description, h.dateIn FROM " . $this->tableNames['usr'] .
             " u inner join ".$this->tableNames['his'].
-            " h ON u.uid = h.uidUserFK WHERE u.uid = :id ORDER BY h.cod desc LIMIT " . $registro . ";";
+            " h ON u.id_usuario = h.uidUserFK WHERE u.uid = :id ORDER BY h.cod desc LIMIT " . $registro . ";";
 
         try {
           $stmt = $this->conn->prepare($querySelect);
@@ -516,14 +514,14 @@ if (!defined('APP_RAN')) {
     {
         error_log("Model/User.php - getIdByToken: userToken recebido: " . $userToken);
         try {
-            $query = "SELECT uid FROM {$this->tableNames['tok']} WHERE token = :userToken";
+            $query = "SELECT id_usuario FROM {$this->tableNames['tok']} WHERE token = :userToken";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':userToken', $userToken, PDO::PARAM_STR);
             $stmt->execute();
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if ($result && isset($result['uid'])) {
-                return $result['uid'];
+            if ($result && isset($result['id_usuario'])) {
+                return $result['id_usuario'];
             } else {
                 return null;
             }

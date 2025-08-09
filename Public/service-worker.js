@@ -10,7 +10,6 @@ const urlsToCache = [
     //IndexedDB;
     '/controle-de-ponto/Public/JS/indexedDB/Config.js',
     '/controle-de-ponto/Public/JS/indexedDB/Model.js',
-    '/controle-de-ponto/Public/JS/indexedDB/Controller.js',
 
     //Index/index;
     '/controle-de-ponto/Public/View/Index/index.php',

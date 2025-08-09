@@ -11,9 +11,10 @@ async function handleRegisterSubmit(event) {
 
     submitButton.disabled = true;
     responseElement.textContent = 'Registrando...';
+    responseElement.className = 'text-muted';
 
     try {
-        const response = await fetch('/controle-de-ponto/Public/Api/register.php', {
+        const response = await fetch('/controle-de-ponto/Public/Api/regist.php', {
             method: 'POST',
             body: new URLSearchParams(data)
         });

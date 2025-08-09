@@ -1,7 +1,7 @@
 // ========================
 // 📁 authController.js
 // ========================
-import { getUserByNickname, storeAuthData, isTokenValid } from '../indexedDB/Model.js';
+import { getUserByNickname, storeAuthData, isTokenValid, getUserTokenByUserId } from '../indexedDB/Model.js';
 
 // Manipular envio do formulário de login
 async function handleLoginSubmit(e) {
@@ -25,10 +25,10 @@ async function handleLoginSubmit(e) {
             });
             const result = await response.json();
 
-            if (result.success && result.userData) {
-                await storeAuthData(result.userData);
-                localStorage.setItem('activeUserId', result.userData.userId);
-                localStorage.setItem('userToken', result.userData.userToken);
+            if (result.success && result.session) {
+                await storeAuthData(result.session);
+                localStorage.setItem('activeUserId', result.session.userId);
+                localStorage.setItem('userToken', result.session.userToken);
                 window.location.href = "../User/index.php";
             } else {
                 alert(result.message || "Falha na autenticação.");
