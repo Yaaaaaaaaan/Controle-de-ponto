@@ -14,34 +14,59 @@ import {
 // ========================
 
 // Adicionar um novo usuário
-async function upsertUser(user) {
+async function upsertUser(userObjectToSave) {
     try {
-        // Garantir que temos um objeto de usuário válido
-        if (!user || !user.nickname) {
-            throw new Error("Objeto de usuário ou nickname inválido.");
+        if (!userObjectToSave || !userObjectToSave.nickname) {
+            throw new Error("Objeto de usuário ou nickname inválido para upsertUser.");
         }
 
         const db = await initializeDB();
         const transaction = db.transaction(userDataStoreName, 'readwrite');
         const userDataStore = transaction.objectStore(userDataStoreName);
 
-        // put() adiciona se não existe, ou atualiza se já existe. Perfeito!
-        const putRequest = userDataStore.put(user);
+        // --- LÓGICA DE PRESERVAÇÃO CENTRALIZADA ---
+
+        // 1. Antes de salvar, busca o registro que já existe no banco de dados.
+        // Isso nos permite ver se já existe um hash offline que precisa ser preservado.
+        const existingUser = await new Promise((resolve, reject) => {
+            const getRequest = userDataStore.get(userObjectToSave.nickname);
+            getRequest.onsuccess = () => resolve(getRequest.result);
+            getRequest.onerror = () => {
+                // Mesmo se der erro ao buscar, continuamos, pois pode ser um usuário novo.
+                console.warn("Não foi possível encontrar usuário existente para merge. Pode ser um novo usuário.", getRequest.error);
+                resolve(undefined);
+            };
+        });
+
+        // 2. Mescla os dados de forma inteligente.
+        // O novo objeto (userObjectToSave) é a fonte da verdade,
+        // mas garantimos que o hash do objeto antigo seja mantido se ele existir.
+        const finalUserObject = {
+            ...userObjectToSave, // Começa com todos os dados novos que vieram (do login ou da sincronização)
+            offlinePasswordHash: existingUser?.offlinePasswordHash || userObjectToSave.offlinePasswordHash
+            // A linha acima significa:
+            // - Use o hash do 'existingUser', SE ELE EXISTIR.
+            // - Caso contrário (||), use o hash do 'userObjectToSave' (o que acontece no primeiro login, quando o hash é passado).
+        };
+
+        // --- FIM DA LÓGICA DE PRESERVAÇÃO ---
+
+        // 3. Salva o objeto final e mesclado, que agora garantidamente contém o hash se ele existia.
+        const putRequest = userDataStore.put(finalUserObject);
 
         return new Promise((resolve, reject) => {
             putRequest.onsuccess = () => {
-                console.log("Usuário adicionado/atualizado com sucesso:", user.nickname);
-                // Retorna o objeto do usuário para consistência com outras funções
-                resolve(user);
+                console.log(`upsertUser (INTELIGENTE): Sucesso ao salvar/atualizar '${finalUserObject.nickname}'. Objeto final:`, finalUserObject);
+                resolve(finalUserObject);
             };
             putRequest.onerror = () => {
-                console.error('Erro no put do usuário:', putRequest.error);
+                console.error(`upsertUser (INTELIGENTE): ERRO ao salvar/atualizar '${finalUserObject.nickname}'.`, putRequest.error);
                 reject('Erro ao adicionar/atualizar usuário: ' + putRequest.error);
             };
         });
     } catch (error) {
-        console.error('Erro em addOrUpdateUser:', error);
-        throw error; // Propaga o erro
+        console.error('Erro em upsertUser (INTELIGENTE):', error);
+        throw error;
     }
 }
 
@@ -399,31 +424,40 @@ async function syncIndexedDBToServer(userToken, theme) {
 // Sincronizar dados do servidor com o IndexedDB
 async function syncServerToIndexedDB() {
     try {
-        // Verificar se estamos online
         if (!navigator.onLine) {
             console.log("Dispositivo offline, sincronização adiada");
             return false;
         }
 
-        // Buscar dados do usuário
+        // 1. Busca os dados mais recentes do servidor
         const userResponse = await fetch('../../Api/userData.php');
-        const userData = await userResponse.json();
+        const serverData = await userResponse.json();
 
-        if (userData && userData.userData) {
-            if (Array.isArray(userData.userData)) {
-                // Processar múltiplos usuários
-                for (const user of userData.userData) {
-                    await upsertUser(user);
-                    if (user.userToken && user.id) {
-                        await setUserToken(user.userToken, user.id);
-                    }
-                }
-            } else if (typeof userData.userData === 'object') {
-                // Processar um único usuário
-                await upsertUser(userData.userData);
-                if (userData.userData.userToken && userData.userData.id) {
-                    await setUserToken(userData.userData.userToken, userData.userData.id);
-                }
+        if (serverData && serverData.userData) {
+            // Usa um nome claro para o objeto que veio do servidor
+            const userDataFromServer = serverData.userData;
+
+            // --- INÍCIO DA CORREÇÃO ---
+
+            // 2. ANTES de salvar, primeiro busca o registro local ATUAL para ver se ele tem um hash.
+            // Usa o nickname que veio do servidor como chave para encontrar o usuário local.
+            const localUser = await getUserByNickname(userDataFromServer.nickname);
+
+            // 3. Verificamos se há um hash offline no registro local.
+            if (localUser && localUser.offlinePasswordHash) {
+                // 4. Se houver, garantimos que ele seja PRESERVADO no objeto que veio do servidor.
+                // Adiciona a propriedade de volta ao objeto antes de salvá-lo.
+                userDataFromServer.offlinePasswordHash = localUser.offlinePasswordHash;
+                console.log("syncServerToIndexedDB: Hash offline preservado durante a sincronização.");
+            }
+            // --- FIM DA CORREÇÃO ---
+
+            // 5. Agora sim, salva o objeto atualizado (e completo).
+            await upsertUser(userDataFromServer);
+
+            // A lógica para o token continua a mesma...
+            if (userDataFromServer.userToken && userDataFromServer.userId) {
+                await setUserToken(userDataFromServer.userToken, userDataFromServer.userId);
             }
         }
 
@@ -462,25 +496,39 @@ async function syncServerToIndexedDB() {
 }
 
 // Função para armazenar dados de autenticação no IndexedDB
-async function storeAuthData(userData) {
+/**
+ * Armazena os dados semi-persistentes do usuário no IndexedDB.
+ * @param {object} userDataFromApi - O objeto de dados do usuário que veio da API.
+ * @param {string} offlinePasswordHash - O hash gerado no cliente para validação offline.
+ */
+async function storeAuthData(userDataFromApi, offlinePasswordHash) {
     try {
-        if (!userData || !userData.nickname || !userData.userToken) {
-            console.error("Dados de autenticação inválidos");
+        if (!userDataFromApi || !userDataFromApi.nickname) {
+            console.error("storeAuthData: Dados do usuário vindos da API são inválidos.");
             return false;
         }
 
-        // Armazenar dados do usuário
-        await upsertUser(userData);
+        // Monta o objeto final que será o nosso "userData" semi-persistente.
+        // Ele contém tudo da API mais o hash offline.
+        const finalUserData = {
+            ...userDataFromApi,
+            offlinePasswordHash: offlinePasswordHash
+        };
 
-        // Armazenar token
-        if (userData.id) {
-            await setUserToken(userData.userToken, userData.id);
+        console.log("storeAuthData: Objeto 'userData' final a ser salvo no IndexedDB:", finalUserData);
+
+        // 1. Salva o userData completo no Object Store 'userData'.
+        await upsertUser(finalUserData);
+
+        // 2. Salva o token de sessão no Object Store 'userToken'.
+        if (finalUserData.userId) {
+            await setUserToken(finalUserData.userToken, finalUserData.userId);
         }
 
-        console.log("Dados de autenticação armazenados com sucesso");
         return true;
+
     } catch (error) {
-        console.error("Erro ao armazenar dados de autenticação:", error);
+        console.error("Erro em storeAuthData:", error);
         return false;
     }
 }

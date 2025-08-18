@@ -77,7 +77,7 @@ function mostrarCardDetalhes(month, value) {
     const monthName = date.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
 
     monthNameElement.textContent = monthName.charAt(0).toUpperCase() + monthName.slice(1);
-    monthTotalElement.textContent = `Total de ${value} dias`;
+    monthTotalElement.textContent = `Total  aaaa ${value} dias`;
     detailCard.style.display = 'block';
 
     const detailContent = document.getElementById('detailContent');

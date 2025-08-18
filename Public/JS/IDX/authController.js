@@ -1,9 +1,92 @@
 // ========================
-// 📁 authController.js
+// 📁 authController.js (Refatorado)
 // ========================
 import { getUserByNickname, storeAuthData, isTokenValid, getUserTokenByUserId } from '../indexedDB/Model.js';
 
-// Manipular envio do formulário de login
+// --- FUNÇÃO DE LOGIN ONLINE ---
+// Tenta autenticar contra o servidor. Se falhar, aciona o fallback para o modo offline.
+async function handleOnlineLogin(nickname, password) {
+    console.log("Modo Online: Tentando autenticar via API...");
+    try {
+        const response = await fetch('/controle-de-ponto/Public/Api/auth.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nickname, password })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Falha na resposta do servidor: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+
+        if (result.success && result.session) {
+            const userDataFromServer = result.session;
+
+
+            // 1. LÓGICA DE SESSÃO (localStorage - dados voláteis)
+            // Gerenciando o que é chamado de 'sessionData'.
+            localStorage.setItem('activeUserId', userDataFromServer.userId);
+            localStorage.setItem('userToken', userDataFromServer.userToken);
+
+            // 2. LÓGICA DE DADOS SEMI-PERSISTENTES (IndexedDB - para offline)
+            // Prepara o objeto 'userData' completo para ser salvo no IndexedDB.
+            const offlinePasswordHash = await hashPassword(password);
+
+            // Chama a função do Model para salvar o 'userData' completo.
+            // Passa o objeto que veio do servidor e o hash gerado.
+            await storeAuthData(userDataFromServer, offlinePasswordHash);
+
+            // 3. REDIRECIONAMENTO
+            window.location.href = "../User/index.php";
+
+        } else {
+            alert(result.message || "Falha na autenticação.");
+        }
+    } catch (error) {
+        console.warn("Falha na comunicação com o servidor. Acionando fallback para modo offline.", error);
+        await handleOfflineLogin(nickname, password);
+    }
+}
+
+// --- FUNÇÃO DE LOGIN OFFLINE ---
+// Valida as credenciais do usuário contra os dados salvos localmente no IndexedDB.
+async function handleOfflineLogin(nickname, password) {
+    console.log("Modo Offline: Autenticando localmente...");
+
+    if (!password) {
+        alert("Por favor, digite sua senha para acesso offline.");
+        return;
+    }
+
+    const user = await getUserByNickname(nickname);
+    if (!user || !user.offlinePasswordHash) {
+        alert("Usuário não encontrado ou não configurado para acesso offline. Conecte-se à internet para o primeiro login.");
+        return;
+    }
+
+    const enteredPasswordHash = await hashPassword(password);
+
+    if (enteredPasswordHash === user.offlinePasswordHash) {
+        console.log("Autenticação offline bem-sucedida.");
+        const tokenData = await getUserTokenByUserId(user.userId);
+
+        if (tokenData && await isTokenValid(tokenData.token)) {
+            localStorage.setItem('activeUserId', user.userId);
+            localStorage.setItem('userToken', tokenData.token);
+        } else {
+            console.warn("Token de sessão offline expirado.");
+            localStorage.setItem('activeUserId', user.userId);
+            localStorage.removeItem('userToken');
+        }
+        window.location.href = "../User/index.php";
+    } else {
+        alert("Senha incorreta.");
+    }
+}
+
+// --- FUNÇÃO PRINCIPAL (HANDLER DO SUBMIT) ---
+// Orquestra qual função de login chamar.
 async function handleLoginSubmit(e) {
     e.preventDefault();
     const nickname = document.getElementById("nickname").value;
@@ -15,53 +98,22 @@ async function handleLoginSubmit(e) {
     }
 
     if (navigator.onLine) {
-        // --- NOVA LÓGICA ONLINE ---
-        console.log("Modo Online: Autenticando via API...");
-        try {
-            const response = await fetch('/controle-de-ponto/Public/Api/auth.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nickname, password })
-            });
-            const result = await response.json();
-
-            if (result.success && result.session) {
-                await storeAuthData(result.session);
-                localStorage.setItem('activeUserId', result.session.userId);
-                localStorage.setItem('userToken', result.session.userToken);
-                window.location.href = "../User/index.php";
-            } else {
-                alert(result.message || "Falha na autenticação.");
-            }
-        } catch (error) {
-            console.error("Erro ao tentar fazer login online:", error);
-            alert("Ocorreu um erro de comunicação.");
-        }
+        // Se o NAVEGADOR diz que tem rede, tentamos a via online (que tem fallback).
+        await handleOnlineLogin(nickname, password);
     } else {
-        console.log("Modo Offline: Tentando reativar sessão local...");
-        if (!password) {
-            // Em modo offline, a senha não é necessária para reativar, mas o campo não pode estar vazio
-            // para a experiência do usuário. Você pode optar por esconder o campo de senha se estiver offline.
-        }
-
-        const user = await getUserByNickname(nickname);
-        if (!user) {
-            alert("Usuário não encontrado no cache local. Conecte-se à internet para o primeiro login.");
-            return;
-        }
-
-        // Busca o token associado a este usuário no IndexedDB
-        const tokenData = await getUserTokenByUserId(user.userId);
-
-        if (tokenData && await isTokenValid(tokenData.token)) {
-            console.log("Sessão offline válida encontrada. Reativando...");
-            localStorage.setItem('activeUserId', user.userId);
-            localStorage.setItem('userToken', tokenData.token);
-            window.location.href = "../User/index.php";
-        } else {
-            alert("Sua sessão offline expirou. Conecte-se à internet para renová-la.");
-        }
+        // Se o NAVEGADOR já sabe que não tem rede, vamos direto para o offline.
+        await handleOfflineLogin(nickname, password);
     }
+}
+
+// Função de hash (continua a mesma)
+async function hashPassword(password) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    return hashHex;
 }
 
 // --- PONTO DE ENTRADA DO SCRIPT ---

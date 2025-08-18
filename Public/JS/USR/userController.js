@@ -230,26 +230,42 @@ function updateTheme(isDark) {
     document.body.dataset.bsTheme = isDark ? 'dark' : 'light';
 }
 
-async function handleLogout() {
-    try {
-        console.log("Encerrando sessão ativa...");
+async function handleLogout(event) {
+    // 1. Previne o comportamento padrão do link <a>
+    event.preventDefault();
 
-        // 1. Remove APENAS os ponteiros da sessão ativa do localStorage.
+    try {
+        console.log("Iniciando processo de logout...");
+
+        // 2. AÇÕES ESSENCIAIS (CLIENT-SIDE) - Acontecem sempre!
+        // Remove as "chaves de ignição" para deslogar o usuário da aplicação local.
         localStorage.removeItem('activeUserId');
         localStorage.removeItem('userToken');
-        console.log("Sessão local encerrada.");
+        console.log("Sessão local (localStorage) encerrada com sucesso.");
 
-        // 2. Notifica o servidor (se online) para destruir a sessão PHP.
+        // 3. AÇÃO CONDICIONAL (SERVER-SIDE) - "Melhor esforço"
+        // Tenta notificar o servidor para encerrar a sessão PHP, mas não impede o logout
+        // do cliente se a comunicação falhar.
         if (navigator.onLine) {
-            await fetch('/controle-de-ponto/Public/Api/logout.php');
-            console.log("Sessão do servidor encerrada.");
+            console.log("Online. Notificando o servidor para encerrar a sessão...");
+            try {
+                // Usamos fetch sem 'await' ou dentro de um try/catch próprio
+                // para não bloquear o redirecionamento.
+                await fetch('/controle-de-ponto/Public/Api/logout.php');
+                console.log("Notificação de encerramento enviada ao servidor.");
+            } catch (serverError) {
+                console.warn("Não foi possível notificar o servidor sobre o logout. A sessão no servidor pode permanecer ativa até expirar.", serverError);
+            }
         }
 
-        // 3. Redireciona para a página de login.
-        window.location.href = '/controle-de-ponto/Public/View/Index/';
-
     } catch (error) {
-        console.error("Ocorreu um erro durante o logout:", error);
+        // Este catch agora pegaria erros do localStorage, que são muito raros.
+        console.error("Ocorreu um erro inesperado durante a limpeza local do logout:", error);
+    } finally {
+        // 4. AÇÃO FINAL E GARANTIDA - Acontece sempre!
+        // Redireciona o usuário para a página de login, completando o logout.
+        console.log("Redirecionando para a página de login...");
+        window.location.href = '/controle-de-ponto/Public/View/Index/';
     }
 }
 

@@ -182,31 +182,38 @@ if (!defined('APP_RAN')) {
     private function manageUserToken(int $userId, array $userDataFromQuery): array
     {
         $existingToken = $userDataFromQuery['userToken'] ?? null;
-        $tokenExpiryStr = $userDataFromQuery['tokenDate'] ?? null; // Ajustado para usar tokenDate de acordo com getUserById
+
+        // MUDANÇA: Use a nova chave 'tokenExpiry' que acabamos de adicionar
+        $tokenExpiryStr = $userDataFromQuery['tokenExpiry'] ?? null;
+
+        $tokenCreationStr = $userDataFromQuery['tokenDate'] ?? null; // Mantemos a data de criação para retorno
         $tokenExpiry = $tokenExpiryStr ? new DateTime($tokenExpiryStr) : null;
         $now = new DateTime();
 
-        // Se o token não existe OU se já expirou, gera um novo.
+        // Esta condição agora funcionará corretamente
         if (!$existingToken || !$tokenExpiry || $tokenExpiry < $now) {
+            error_log("Gerando novo token para o usuário ID: {$userId}. Motivo: Token inexistente ou expirado.");
             $userToken = bin2hex(random_bytes(32));
+            $nowForDb = $now->format('Y-m-d H:i:s');
             $newExpiryDate = (clone $now)->add(new DateInterval('P7D'))->format('Y-m-d H:i:s');
 
             $tokenQuery = "INSERT INTO {$this->tableNames['tok']} (id_usuario, token, data_expiracao, data_criacao)
-                       VALUES (:id, :token, :expiry, :created)
-                       ON DUPLICATE KEY UPDATE token = :token, data_expiracao = :expiry";
+                   VALUES (:id, :token, :expiry, :created)
+                   ON DUPLICATE KEY UPDATE token = VALUES(token), data_expiracao = VALUES(data_expiracao)";
+
             $tokenStmt = $this->conn->prepare($tokenQuery);
             $tokenStmt->execute([
                 ':id' => $userId,
                 ':token' => $userToken,
                 ':expiry' => $newExpiryDate,
-                ':created' => $now->format('Y-m-d H:i:s')
+                ':created' => $nowForDb
             ]);
 
-            return ['userToken' => $userToken, 'tokenDate' => $now->format('Y-m-d H:i:s')];
+            return ['userToken' => $userToken, 'tokenDate' => $nowForDb, 'tokenExpiry' => $newExpiryDate];
         }
 
         // Se o token existente ainda é válido, apenas o retorna.
-        return ['userToken' => $existingToken, 'tokenDate' => $tokenExpiryStr];
+        return ['userToken' => $existingToken, 'tokenDate' => $tokenCreationStr, 'tokenExpiry' => $tokenExpiryStr];
     }
 
     /**
@@ -587,7 +594,7 @@ if (!defined('APP_RAN')) {
         // Query que une as tabelas para pegar todos os dados necessários
         $query = "SELECT u.id_usuario, u.nome_completo, u.nome_usuario, u.nivel_acesso, u.email, u.tema_padrao,
                      f.nome_foto,
-                     t.token AS userToken, t.data_criacao AS tokenDate
+                     t.token AS userToken, t.data_criacao AS tokenDate, t.data_expiracao
               FROM {$this->tableNames['usr']} u
               LEFT JOIN {$this->tableNames['fot']} f ON u.id_usuario = f.id_usuario AND f.perfil = 1
               LEFT JOIN {$this->tableNames['tok']} t ON u.id_usuario = t.id_usuario
@@ -611,7 +618,8 @@ if (!defined('APP_RAN')) {
                     'theme' => (int)$row['tema_padrao'],
                     'profileUser' => $row['nome_foto'],
                     'userToken' => $row['userToken'],
-                    'tokenDate' => $row['tokenDate']
+                    'tokenDate' => $row['tokenDate'],
+                    'tokenExpiry' => $row['data_expiracao']
                 ];
             }
             return null;

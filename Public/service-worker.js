@@ -15,6 +15,7 @@ const urlsToCache = [
     '/controle-de-ponto/Public/View/Index/index.php',
     '/controle-de-ponto/Public/CSS/IDX/style.css',
     '/controle-de-ponto/Public/JS/IDX/authController.js',
+    '/controle-de-ponto/Public/JS/IDX/registerController.js',
 
     //Layout; (não necessário, pois ambos inicializam o cache)
     //'/controle-de-ponto/Public/View/Layout/menu.php',
@@ -41,7 +42,8 @@ const urlsToCache = [
     '/controle-de-ponto/Public/View/Housekeeping/users.php',
 
     //Demais arquivos;
-    '/controle-de-ponto/Public/JS/script.js'
+    '/controle-de-ponto/Public/JS/script.js',
+    '/controle-de-ponto/Public/Api/SystemPics/offlineLogo.png'
 
 ];
 self.addEventListener('install', function(event) {
