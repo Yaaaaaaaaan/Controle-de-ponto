@@ -69,17 +69,32 @@ async function handleOfflineLogin(nickname, password) {
 
     if (enteredPasswordHash === user.offlinePasswordHash) {
         console.log("Autenticação offline bem-sucedida.");
+
+        // --- INÍCIO DA CORREÇÃO ---
+        // Buscamos o token que está no IndexedDB.
         const tokenData = await getUserTokenByUserId(user.userId);
 
-        if (tokenData && await isTokenValid(tokenData.token)) {
-            localStorage.setItem('activeUserId', user.userId);
+        // AQUI ESTÁ A MUDANÇA CRÍTICA:
+        // Se a autenticação por senha foi bem-sucedida, nós SEMPRE definimos
+        // o token no localStorage para permitir o acesso à aplicação.
+        // O token é necessário para saber quem é o utilizador ativo, mesmo que esteja expirado.
+        localStorage.setItem('activeUserId', user.userId);
+
+        if (tokenData && tokenData.token) {
             localStorage.setItem('userToken', tokenData.token);
+            // Verificamos a validade do token apenas para AVISAR no console.
+            if (!await isTokenValid(tokenData.token)) {
+                console.warn("Token de sessão offline expirado. A sincronização com o servidor falhará até o próximo login online.");
+            }
         } else {
-            console.warn("Token de sessão offline expirado.");
-            localStorage.setItem('activeUserId', user.userId);
+            // Se por algum motivo não houver token, removemo-lo para evitar inconsistências.
             localStorage.removeItem('userToken');
         }
+
+        // Redirecionamos o utilizador para a página principal.
         window.location.href = "../User/index.php";
+        // --- FIM DA CORREÇÃO ---
+
     } else {
         alert("Senha incorreta.");
     }

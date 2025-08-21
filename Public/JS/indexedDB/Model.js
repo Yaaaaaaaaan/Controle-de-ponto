@@ -6,7 +6,8 @@ import {
     userDataStoreName,
     pointControlStoreName,
     userTokenStoreName,
-    syncQueueStoreName
+    syncQueueStoreName,
+    obterHoraFormatada
 } from './Config.js';
 
 // ========================
@@ -33,7 +34,7 @@ async function upsertUser(userObjectToSave) {
             getRequest.onsuccess = () => resolve(getRequest.result);
             getRequest.onerror = () => {
                 // Mesmo se der erro ao buscar, continuamos, pois pode ser um usuário novo.
-                console.warn("Não foi possível encontrar usuário existente para merge. Pode ser um novo usuário.", getRequest.error);
+                console.warn(`[${obterHoraFormatada()}] Não foi possível encontrar usuário existente para merge. Pode ser um novo usuário.`, getRequest.error);
                 resolve(undefined);
             };
         });
@@ -56,16 +57,16 @@ async function upsertUser(userObjectToSave) {
 
         return new Promise((resolve, reject) => {
             putRequest.onsuccess = () => {
-                console.log(`upsertUser (INTELIGENTE): Sucesso ao salvar/atualizar '${finalUserObject.nickname}'. Objeto final:`, finalUserObject);
+                console.log(`[${obterHoraFormatada()}] upsertUser (INTELIGENTE): Sucesso ao salvar/atualizar '${finalUserObject.nickname}'. Objeto final:`, finalUserObject);
                 resolve(finalUserObject);
             };
             putRequest.onerror = () => {
-                console.error(`upsertUser (INTELIGENTE): ERRO ao salvar/atualizar '${finalUserObject.nickname}'.`, putRequest.error);
-                reject('Erro ao adicionar/atualizar usuário: ' + putRequest.error);
+                console.error(`[${obterHoraFormatada()}] upsertUser (INTELIGENTE): ERRO ao salvar/atualizar '${finalUserObject.nickname}'.`, putRequest.error);
+                reject(`[${obterHoraFormatada()}] Erro ao adicionar/atualizar usuário: ` + putRequest.error);
             };
         });
     } catch (error) {
-        console.error('Erro em upsertUser (INTELIGENTE):', error);
+        console.error(`[${obterHoraFormatada()}] Erro em upsertUser (INTELIGENTE):`, error);
         throw error;
     }
 }
@@ -84,7 +85,7 @@ async function getUserById(id) {
             getRequest.onerror = () => reject('Erro ao obter usuário: ' + getRequest.error);
         });
     } catch (error) {
-        console.error('Erro ao obter usuário por ID:', error);
+        console.error(`[${obterHoraFormatada()}] Erro ao obter usuário por ID:`, error);
         return null;
     }
 }
@@ -102,7 +103,7 @@ async function getUserByNickname(nickname) {
             getRequest.onerror = () => reject('Erro ao obter usuário: ' + getRequest.error);
         });
     } catch (error) {
-        console.error('Erro ao obter usuário por nickname:', error);
+        console.error(`[${obterHoraFormatada()}] Erro ao obter usuário por nickname:`, error);
         return null;
     }
 }
@@ -121,7 +122,7 @@ async function getUserByToken(token) {
             getRequest.onerror = () => reject('Erro ao obter usuário por token: ' + getRequest.error);
         });
     } catch (error) {
-        console.error('Erro ao obter usuário por token:', error);
+        console.error(`[${obterHoraFormatada()}] Erro ao obter usuário por token:`, error);
         return null;
     }
 }
@@ -137,14 +138,14 @@ async function deleteUser(nickname) {
 
         return new Promise((resolve, reject) => {
             deleteRequest.onsuccess = () => {
-                console.log("Usuário deletado com sucesso:", nickname);
+                console.log(`[${obterHoraFormatada()}] Usuário deletado com sucesso:`, nickname);
                 resolve();
             };
-            deleteRequest.onerror = () => reject('Erro ao deletar usuário: ' + deleteRequest.error);
+            deleteRequest.onerror = () => reject(`[${obterHoraFormatada()}] Erro ao deletar usuário: ` + deleteRequest.error);
         });
     } catch (error) {
-        console.error('Erro ao deletar usuário:', error);
-        throw new Error('Erro ao deletar usuário: ' + error);
+        console.error(`[${obterHoraFormatada()}] Erro ao deletar usuário:`, error);
+        throw new Error(`[${obterHoraFormatada()}] Erro ao deletar usuário: ` + error);
     }
 }
 
@@ -161,7 +162,7 @@ async function getAllUsers() {
             request.onerror = () => reject(request.error);
         });
     } catch (error) {
-        console.error("Erro ao obter todos os usuários:", error);
+        console.error(`[${obterHoraFormatada()}] Erro ao obter todos os usuários:`, error);
         return [];
     }
 }
@@ -178,7 +179,7 @@ async function addPointControl(pointData) {
         const pointControlStore = transaction.objectStore(pointControlStoreName);
 
         // Garantir que temos os campos necessários
-        if (!pointData.uidUserFK || !pointData.status) {
+        if (!pointData.userId || !pointData.status) {
             throw new Error('Dados de controle de ponto incompletos');
         }
 
@@ -191,14 +192,14 @@ async function addPointControl(pointData) {
 
         return new Promise((resolve, reject) => {
             addRequest.onsuccess = () => {
-                console.log("Registro de ponto adicionado com sucesso");
+                console.log(`[${obterHoraFormatada()}] Registro de ponto adicionado com sucesso`);
                 resolve(addRequest.result);
             };
-            addRequest.onerror = () => reject('Erro ao adicionar dados de controle de ponto: ' + addRequest.error);
+            addRequest.onerror = () => reject(`[${obterHoraFormatada()}] Erro ao adicionar dados de controle de ponto: ` + addRequest.error);
         });
     } catch (error) {
-        console.error('Erro ao adicionar dados de controle de ponto:', error);
-        throw new Error('Erro ao adicionar dados de controle de ponto: ' + error);
+        console.error(`[${obterHoraFormatada()}] Erro ao adicionar dados de controle de ponto:`, error);
+        throw new Error(`[${obterHoraFormatada()}] Erro ao adicionar dados de controle de ponto: ` + error);
     }
 }
 
@@ -213,10 +214,10 @@ async function getPointControlByUserId(userId) {
 
         return new Promise((resolve, reject) => {
             request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject('Erro ao obter registros de ponto: ' + request.error);
+            request.onerror = () => reject(`[${obterHoraFormatada()}] Erro ao obter registros de ponto: ` + request.error);
         });
     } catch (error) {
-        console.error('Erro ao obter registros de ponto por usuário:', error);
+        console.error(`[${obterHoraFormatada()}] Erro ao obter registros de ponto por usuário:`, error);
         return [];
     }
 }
@@ -231,11 +232,45 @@ async function getAllPointControl() {
 
         return new Promise((resolve, reject) => {
             request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject('Erro ao obter todos os registros de ponto: ' + request.error);
+            request.onerror = () => reject(`[${obterHoraFormatada()}] Erro ao obter todos os registros de ponto: ` + request.error);
         });
     } catch (error) {
-        console.error('Erro ao obter todos os registros de ponto:', error);
+        console.error(`[${obterHoraFormatada()}] Erro ao obter todos os registros de ponto:`, error);
         return [];
+    }
+}
+
+// Função para deletar os registros por id de usuário
+async function deletePointControlByUserId(userId) {
+    try {
+        const db = await initializeDB();
+        const transaction = db.transaction(pointControlStoreName, 'readwrite');
+        const store = transaction.objectStore(pointControlStoreName);
+        const index = store.index('userIdIdx'); // Usa o índice de ID de usuário
+        const request = index.openCursor(IDBKeyRange.only(userId)); // Abre um cursor para o ID específico
+
+        request.onsuccess = (event) => {
+            const cursor = event.target.result;
+            if (cursor) {
+                // Encontrou um registro para este usuário, então deleta.
+                store.delete(cursor.primaryKey);
+                cursor.continue(); // Procura pelo próximo registro do mesmo usuário
+            }
+        };
+
+        return new Promise((resolve, reject) => {
+            transaction.oncomplete = () => {
+                console.log(`[${obterHoraFormatada()}] Registros de ponto para o usuário ${userId} foram limpos com sucesso.`);
+                resolve();
+            };
+            transaction.onerror = (event) => {
+                console.error(`[${obterHoraFormatada()}] Erro ao deletar registros de ponto para o usuário ${userId}:`, event.target.error);
+                reject(event.target.error);
+            };
+        });
+    } catch (error) {
+        console.error(`[${obterHoraFormatada()}] Erro em deletePointControlByUserId:`, error);
+        throw error;
     }
 }
 
@@ -244,30 +279,31 @@ async function getAllPointControl() {
 // ========================
 
 // Adicionar ou atualizar um token de usuário
-async function setUserToken(token, userId) {
+async function setUserToken(tokenData) { // Agora recebe o objeto completo
     try {
         const db = await initializeDB();
         const transaction = db.transaction(userTokenStoreName, 'readwrite');
         const userTokenStore = transaction.objectStore(userTokenStoreName);
 
-        const tokenData = {
-            token: token,
-            uidUserFK: userId,
-            lastUpdated: new Date().toISOString()
-        };
+        if (!tokenData || !tokenData.token) {
+            throw new Error("Objeto de token inválido para setUserToken.");
+        }
 
         const putRequest = userTokenStore.put(tokenData);
 
         return new Promise((resolve, reject) => {
             putRequest.onsuccess = () => {
-                console.log("Token de usuário atualizado com sucesso");
-                resolve(tokenData);
+                console.log(`[${obterHoraFormatada()}] | setUserToken: Token para userId ${tokenData.userId} salvo/atualizado com sucesso.`);
+                resolve();
             };
-            putRequest.onerror = () => reject('Erro ao atualizar token de usuário: ' + putRequest.error);
+            putRequest.onerror = (event) => {
+                console.error(`[${obterHoraFormatada()}] | setUserToken: Erro ao salvar token.`, event.target.error);
+                reject(event.target.error);
+            };
         });
     } catch (error) {
-        console.error('Erro ao atualizar token de usuário:', error);
-        throw new Error('Erro ao atualizar token de usuário: ' + error);
+        console.error(`[${obterHoraFormatada()}] | Erro ao inicializar setUserToken:`, error);
+        throw error;
     }
 }
 
@@ -285,7 +321,7 @@ async function fetchUserDataByToken(token) {
         });
 
         if (response.status === 401) {
-            console.warn("Sessão no servidor expirada ou inválida.");
+            console.warn(`[${obterHoraFormatada()}] Sessão no servidor expirada ou inválida.`);
             // Aqui você pode acionar uma lógica de logout forçado
             return null;
         }
@@ -294,7 +330,7 @@ async function fetchUserDataByToken(token) {
         return result.success ? result.userData : null;
 
     } catch (error) {
-        console.error("Erro de rede ao buscar dados por token:", error);
+        console.error(`[${obterHoraFormatada()}] Erro de rede ao buscar dados por token:`, error);
         return null;
     }
 }
@@ -311,10 +347,10 @@ async function getUserTokenByUserId(userId) {
 
         return new Promise((resolve, reject) => {
             request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject('Erro ao obter token por userId: ' + request.error);
+            request.onerror = () => reject(`[${obterHoraFormatada()}] Erro ao obter token por userId: ` + request.error);
         });
     } catch (error) {
-        console.error('Erro em getUserTokenByUserId:', error);
+        console.error(`[${obterHoraFormatada()}] Erro em getUserTokenByUserId:`, error);
         return null;
     }
 }
@@ -335,20 +371,20 @@ async function isTokenValid(token) {
                     return;
                 }
 
-                // Verificar se o token não expirou (24 horas)
-                const lastUpdated = new Date(tokenData.lastUpdated);
-                const now = new Date();
-                const diffHours = (now - lastUpdated) / (1000 * 60 * 60);
+
+
+
+
 
                 resolve(diffHours < 24);
             };
             getRequest.onerror = () => {
-                console.error('Erro ao verificar token:', getRequest.error);
+                console.error(`[${obterHoraFormatada()}] Erro ao verificar token:`, getRequest.error);
                 resolve(false);
             };
         });
     } catch (error) {
-        console.error('Erro ao verificar validade do token:', error);
+        console.error(`[${obterHoraFormatada()}] Erro ao verificar validade do token:`, error);
         return false;
     }
 }
@@ -363,12 +399,12 @@ async function processUserData() {
         const response = await fetch('../../Api/userData.php');
         const fullData = await response.json();
 
-        console.log("processUserData: Resposta do servidor:", fullData);
+        console.log(`[${obterHoraFormatada()}] processUserData: Resposta do servidor:`, fullData);
 
         const serverUserData = fullData.userData;
 
         if (!serverUserData || typeof serverUserData !== 'object' || Object.keys(serverUserData).length === 0) {
-            console.error("Dados do usuário inválidos ou vazios do servidor.");
+            console.error(`[${obterHoraFormatada()}] Dados do usuário inválidos ou vazios do servidor.`);
             return null;
         }
 
@@ -382,7 +418,7 @@ async function processUserData() {
 
         return serverUserData;
     } catch (error) {
-        console.error("Erro ao processar dados do usuário:", error);
+        console.error(`[${obterHoraFormatada()}] Erro ao processar dados do usuário:`, error);
         return null;
     }
 }
@@ -397,7 +433,7 @@ async function syncIndexedDBToServer(userToken, theme) {
 
         // Verificar se estamos online
         if (!navigator.onLine) {
-            console.log("Dispositivo offline, sincronização adiada");
+            console.log(`[${obterHoraFormatada()}] Dispositivo offline, sincronização adiada`);
             return false;
         }
 
@@ -409,14 +445,14 @@ async function syncIndexedDBToServer(userToken, theme) {
 
         const data = await response.json();
         if (data.success) {
-            console.log("Dados sincronizados com o servidor com sucesso!");
+            console.log(`[${obterHoraFormatada()}] Dados sincronizados com o servidor com sucesso!`);
             return true;
         } else {
-            console.error("Erro ao sincronizar dados com o servidor:", data.message);
+            console.error(`[${obterHoraFormatada()}] Erro ao sincronizar dados com o servidor:`, data.message);
             return false;
         }
     } catch (error) {
-        console.error("Erro ao comunicar com o servidor:", error);
+        console.error(`[${obterHoraFormatada()}] Erro ao comunicar com o servidor:`, error);
         return false;
     }
 }
@@ -425,7 +461,12 @@ async function syncIndexedDBToServer(userToken, theme) {
 async function syncServerToIndexedDB() {
     try {
         if (!navigator.onLine) {
-            console.log("Dispositivo offline, sincronização adiada");
+            console.log(`[${obterHoraFormatada()}] Dispositivo offline, sincronização adiada`);
+            return false;
+        }
+        const activeUserId = localStorage.getItem('activeUserId');
+        if (!activeUserId) {
+            console.warn(`[${obterHoraFormatada()}] syncServerToIndexedDB: Nenhum utilizador ativo encontrado no localStorage. Sincronização abortada.`);
             return false;
         }
 
@@ -436,7 +477,10 @@ async function syncServerToIndexedDB() {
         if (serverData && serverData.userData) {
             // Usa um nome claro para o objeto que veio do servidor
             const userDataFromServer = serverData.userData;
-
+            if (String(userDataFromServer.userId) !== String(activeUserId)) {
+                console.error(`[${obterHoraFormatada()}] syncServerToIndexedDB: Conflito de dados! Utilizador ativo é ${activeUserId}, mas o servidor enviou dados para ${userDataFromServer.userId}. Sincronização abortada.`);
+                return false;
+            }
             // --- INÍCIO DA CORREÇÃO ---
 
             // 2. ANTES de salvar, primeiro busca o registro local ATUAL para ver se ele tem um hash.
@@ -448,7 +492,7 @@ async function syncServerToIndexedDB() {
                 // 4. Se houver, garantimos que ele seja PRESERVADO no objeto que veio do servidor.
                 // Adiciona a propriedade de volta ao objeto antes de salvá-lo.
                 userDataFromServer.offlinePasswordHash = localUser.offlinePasswordHash;
-                console.log("syncServerToIndexedDB: Hash offline preservado durante a sincronização.");
+                console.log(`[${obterHoraFormatada()}] syncServerToIndexedDB: Hash offline preservado durante a sincronização.`);
             }
             // --- FIM DA CORREÇÃO ---
 
@@ -465,32 +509,33 @@ async function syncServerToIndexedDB() {
         const pointResponse = await fetch('../../Api/pointControl.php');
         const pointData = await pointResponse.json();
 
-        if (pointData && pointData.pointControl && Array.isArray(pointData.pointControl)) {
+        // Verificamos se temos o ID do usuário que estamos sincronizando (vindo da primeira parte da função)
+        const currentUserId = serverData?.userData?.userId;
+
+        if (pointData && pointData.pointControl && Array.isArray(pointData.pointControl) && currentUserId) {
+            // 1. CHAMA A NOVA FUNÇÃO para deletar apenas os registros do usuário atual.
+            await deletePointControlByUserId(currentUserId);
+
+            // 2. ADICIONA OS NOVOS DADOS vindos do servidor.
             const db = await initializeDB();
             const transaction = db.transaction(pointControlStoreName, 'readwrite');
             const pointControlStore = transaction.objectStore(pointControlStoreName);
 
-            // Limpar dados antigos
-            await new Promise((resolve, reject) => {
-                const clearRequest = pointControlStore.clear();
-                clearRequest.onsuccess = resolve;
-                clearRequest.onerror = reject;
-            });
-
-            // Adicionar novos dados
             for (const point of pointData.pointControl) {
-                await new Promise((resolve, reject) => {
-                    const addRequest = pointControlStore.add(point);
-                    addRequest.onsuccess = resolve;
-                    addRequest.onerror = reject;
-                });
+                // Garantimos que o registro tenha o userId correto antes de salvar
+                point.userId = currentUserId;
+                pointControlStore.add(point);
             }
-        }
 
-        console.log("Sincronização com o servidor concluída com sucesso");
+            await new Promise(resolve => transaction.oncomplete = resolve);
+            console.log(`[${obterHoraFormatada()}] Novos registros de ponto para o usuário ${currentUserId} foram adicionados.`);
+        }
+// --- FIM DA CORREÇÃO ---
+
+        console.log(`[${obterHoraFormatada()}] Sincronização com o servidor concluída com sucesso`);
         return true;
     } catch (error) {
-        console.error("Erro ao sincronizar dados com o servidor:", error);
+        console.error(`[${obterHoraFormatada()}] Erro ao sincronizar dados com o servidor:`, error);
         return false;
     }
 }
@@ -501,34 +546,42 @@ async function syncServerToIndexedDB() {
  * @param {object} userDataFromApi - O objeto de dados do usuário que veio da API.
  * @param {string} offlinePasswordHash - O hash gerado no cliente para validação offline.
  */
-async function storeAuthData(userDataFromApi, offlinePasswordHash) {
+async function storeAuthData(dataFromServer, offlinePasswordHash) {
     try {
-        if (!userDataFromApi || !userDataFromApi.nickname) {
-            console.error("storeAuthData: Dados do usuário vindos da API são inválidos.");
-            return false;
-        }
+        // 1. DESESTRUTURAÇÃO: Separa o objeto grande em variáveis distintas.
+        const {
+            batata, name, email, rank, nickname, theme, profileUser, // <- Para userData
+            userToken, tokenDate, tokenExpiry // <- Para userToken
+        } = dataFromServer;
 
-        // Monta o objeto final que será o nosso "userData" semi-persistente.
-        // Ele contém tudo da API mais o hash offline.
-        const finalUserData = {
-            ...userDataFromApi,
+        if (!nickname || !userToken) { throw new Error("Dados do servidor inválidos."); }
+
+        // 2. MONTA E SALVA o objeto userData (limpo, sem dados de token)
+        const userDataToStore = {
+            userId: userId,
+            name: name,
+            email: email,
+            rank: rank,
+            nickname: nickname,
+            theme: theme,
+            profileUser: profileUser,
             offlinePasswordHash: offlinePasswordHash
         };
+        await upsertUser(userDataToStore);
+        console.log(`[${obterHoraFormatada()}] | storeAuthData: Objeto 'userData' salvo:`, userDataToStore);
 
-        console.log("storeAuthData: Objeto 'userData' final a ser salvo no IndexedDB:", finalUserData);
-
-        // 1. Salva o userData completo no Object Store 'userData'.
-        await upsertUser(finalUserData);
-
-        // 2. Salva o token de sessão no Object Store 'userToken'.
-        if (finalUserData.userId) {
-            await setUserToken(finalUserData.userToken, finalUserData.userId);
-        }
+        // 3. MONTA E SALVA o objeto userToken
+        const tokenDataToStore = {
+            token: userToken,
+            userId: userId,
+            tokenDate: tokenDate,
+            tokenExpiry: tokenExpiry
+        };
+        await setUserToken(tokenDataToStore);
 
         return true;
-
     } catch (error) {
-        console.error("Erro em storeAuthData:", error);
+        console.error(`[${obterHoraFormatada()}] | Erro em storeAuthData:`, error);
         return false;
     }
 }
@@ -542,18 +595,18 @@ async function addPointControlRecordToServer(status) {
     try {
         // Validar se o status foi fornecido
         if (typeof status === 'undefined') {
-            console.error("Erro ao bater o ponto: o status não foi especificado.");
+            console.error(`[${obterHoraFormatada()}] Erro ao bater o ponto: o status não foi especificado.`);
             return false;
         }
 
         // Verificar se estamos online
         if (!navigator.onLine) {
-            console.log("Dispositivo offline. Ação de bater o ponto será sincronizada depois.");
+            console.log(`[${obterHoraFormatada()}] Dispositivo offline. Ação de bater o ponto será sincronizada depois.`);
             // Aqui você poderia salvar a tentativa em uma fila no IndexedDB para sincronizar depois.
             return false;
         }
 
-        console.log(`Enviando registro de ponto para o servidor com status: ${status}`);
+        console.log(`[${obterHoraFormatada()}] Enviando registro de ponto para o servidor com status: ${status}`);
 
         // AQUI ESTÁ A OPÇÃO 3!
         const response = await fetch('../../Api/pointControl.php', {
@@ -568,17 +621,17 @@ async function addPointControlRecordToServer(status) {
         const data = await response.json();
 
         if (data.success) {
-            console.log("Ponto batido com sucesso no servidor!");
+            console.log(`[${obterHoraFormatada()}] Ponto batido com sucesso no servidor!`);
             // Após o sucesso, você pode querer atualizar os dados locais
             // chamando a função que busca os dados de ponto novamente.
             return true;
         } else {
-            console.error("Erro ao bater o ponto no servidor:", data.message);
+            console.error(`[${obterHoraFormatada()}] Erro ao bater o ponto no servidor:`, data.message);
             return false;
         }
 
     } catch (error) {
-        console.error("Erro fatal ao comunicar com o servidor para bater o ponto:", error);
+        console.error(`[${obterHoraFormatada()}] Erro fatal ao comunicar com o servidor para bater o ponto:`, error);
         return false;
     }
 }
@@ -603,16 +656,16 @@ async function clearObjectStore(storeName) {
 
         return new Promise((resolve, reject) => {
             clearRequest.onsuccess = () => {
-                console.log(`Object Store '${storeName}' limpo com sucesso.`);
+                console.log(`[${obterHoraFormatada()}] Object Store '${storeName}' limpo com sucesso.`);
                 resolve();
             };
             clearRequest.onerror = (event) => {
-                console.error(`Erro ao limpar o Object Store '${storeName}':`, event.target.error);
+                console.error(`[${obterHoraFormatada()}] Erro ao limpar o Object Store '${storeName}':`, event.target.error);
                 reject(event.target.error);
             };
         });
     } catch (error) {
-        console.error(`Erro ao iniciar a transação para limpar '${storeName}':`, error);
+        console.error(`[${obterHoraFormatada()}] Erro ao iniciar a transação para limpar '${storeName}':`, error);
         throw error;
     }
 }
@@ -645,6 +698,9 @@ async function clearSyncQueue() {
 }
 
 export {
+    //funções de serviço
+    obterHoraFormatada,
+
     // Funções de usuário
     upsertUser,
     getUserById,

@@ -67,10 +67,22 @@ function initializeDB() {
     });
 }
 
+function obterHoraFormatada() {
+    const agora = new Date();
+    const horas = String(agora.getHours()).padStart(2, '0');
+    const minutos = String(agora.getMinutes()).padStart(2, '0');
+    const segundos = String(agora.getSeconds()).padStart(2, '0');
+
+    // A função retorna a string com a hora montada
+    return `${horas}:${minutos}:${segundos}`;
+}
+
+
 export {
     initializeDB,
     userDataStoreName,
     pointControlStoreName,
     userTokenStoreName,
-    syncQueueStoreName
+    syncQueueStoreName,
+    obterHoraFormatada
 };

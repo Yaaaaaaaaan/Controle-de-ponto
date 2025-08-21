@@ -24,28 +24,15 @@ $password = $data['password'] ?? null;
 if (!$nickname || !$password) {
     sendJson(['success' => false, 'message' => 'Nickname e senha são obrigatórios.'], 400);
 }
-
 $userController = new UserController();
-$isAuthenticated = $userController->authenticateUser($nickname, $password);
+// A função agora retorna os dados diretamente ou null
+$responseData = $userController->authenticateUser($nickname, $password);
 
-if ($isAuthenticated) {
-    $tokenData = isset($_SESSION['tokenUserData']) ? json_decode($_SESSION['tokenUserData'], true) : null;
-    $userData = isset($_SESSION['userData']) ? json_decode($_SESSION['userData'], true) : null;
-    if ($userData && $tokenData) {
-        $responseData = array_merge($userData, $tokenData);
-        sendJson(['success' => true, 'session' => $responseData]);
-    } else {
-        sendJson(['success' => false, 'message' => 'Erro ao recuperar dados da sessão após o login.'], 500);
-    }
-    /*
-     $userData = $userController->getUserData(); // Pega os dados da sessão recém-criada
-     if ($userData) {
-        sendJson(['success' => true, 'userData' => $userData]);
-    } else {
-        sendJson(['success' => false, 'message' => 'Erro ao recuperar dados da sessão após o login.'], 500);
-    }
-    */
+if ($responseData) {
+    // Se recebeu os dados, envia-os na resposta
+    sendJson(['success' => true, 'session' => $responseData]);
 } else {
+    // Se recebeu null, a autenticação falhou
     sendJson(['success' => false, 'message' => 'Usuário ou senha incorretos.'], 401);
 }
 ?>

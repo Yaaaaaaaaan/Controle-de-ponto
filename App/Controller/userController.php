@@ -54,16 +54,11 @@ class UserController {
      * @throws RandomException
      */
 
-    public function authenticateUser($nickname, $password): array {
+    public function authenticateUser($nickname, $password): ?array {
         $this->user->nickname = filter_var($nickname, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $this->user->password = $password;
 
-        if($this->user->authenticateUser()) {
-            return ['success' => true, 'message' => 'Usuário autenticado com sucesso.'];
-
-        } else {
-            return ['success' => false, 'message' => 'Usuário não autenticado.'];
-        }
+        return $this->user->authenticateUser();
     }
 
     public function updateUser($name, $id, $email, $nickname, $oldPassword, $newPassword, $confirmPassword, $defaultTheme): array{

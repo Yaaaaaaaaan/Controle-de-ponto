@@ -306,7 +306,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 data: new Date(record.dateIn).toLocaleDateString('pt-BR'),
                 nome: record.nome || 'Usuário',
                 status: statusDesc,
-                id: record.uidUserFK
+                id: record.userId
             });
         });
 

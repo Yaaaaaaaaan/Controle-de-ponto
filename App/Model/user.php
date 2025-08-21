@@ -121,34 +121,33 @@ if (!defined('APP_RAN')) {
         }
     }
 
-    public function authenticateUser(): bool
+    public function authenticateUser(): ?array
     {
         try {
-            // Etapa 1: Apenas verifica a senha e obtém o ID do usuário (1 query).
+
             $userId = $this->verifyCredentials();
-            if (!$userId) {
-                return false; // Usuário ou senha incorretos.
-            }
+            if (!$userId) return null;
 
-            // Etapa 2: Com o ID válido, busca TODOS os dados de uma só vez usando sua função existente (1 query).
             $fullUserData = $this->getUserById($userId);
-            if (!$fullUserData) {
-                error_log("Falha crítica: Credenciais válidas para o ID {$userId}, mas getUserById não retornou dados.");
-                return false;
-            }
 
-            // Etapa 3: Gerencia o token com os dados já em mãos (lógica em PHP, só acessa o BD se precisar).
+
+            if (!$fullUserData) return null;
+
             $tokenData = $this->manageUserToken($userId, $fullUserData);
 
-            // Etapa 4: Preenche a sessão com os dados completos e o token válido.
-            $this->populateSession($userId, $fullUserData, $tokenData);
+            // Monta o objeto final
+            $finalResponseData = array_merge($fullUserData, $tokenData);
 
+            // Popula a sessão (ainda útil para partes do PHP que usam a sessão)
+            $this->populateSession($userId, $fullUserData, $tokenData);
             $this->createUserHistory('Login bem-sucedido', $userId);
-            return true;
+
+            // RETORNA O OBJETO COMPLETO
+            return $finalResponseData;
 
         } catch (Exception $e) {
             error_log("Erro no fluxo de autenticação: " . $e->getMessage());
-            return false;
+            return null;
         }
     }
 
@@ -182,37 +181,40 @@ if (!defined('APP_RAN')) {
     private function manageUserToken(int $userId, array $userDataFromQuery): array
     {
         $existingToken = $userDataFromQuery['userToken'] ?? null;
-
-        // MUDANÇA: Use a nova chave 'tokenExpiry' que acabamos de adicionar
         $tokenExpiryStr = $userDataFromQuery['tokenExpiry'] ?? null;
-
-        $tokenCreationStr = $userDataFromQuery['tokenDate'] ?? null; // Mantemos a data de criação para retorno
+        $tokenCreationStr = $userDataFromQuery['tokenDate'] ?? null;
         $tokenExpiry = $tokenExpiryStr ? new DateTime($tokenExpiryStr) : null;
         $now = new DateTime();
 
-        // Esta condição agora funcionará corretamente
-        if (!$existingToken || !$tokenExpiry || $tokenExpiry < $now) {
-            error_log("Gerando novo token para o usuário ID: {$userId}. Motivo: Token inexistente ou expirado.");
+        $isExpired = $tokenExpiry ? $tokenExpiry < $now : true;
+
+        if (!$existingToken || !$tokenExpiry || $isExpired) {
+            // LOG ADICIONADO PARA DEPURAÇÃO
+            $reason = ". Motivo: " .
+                (!$existingToken ? 'Token não existia. ' : '') .
+                (!$tokenExpiry ? 'Data de expiração não existia. ' : '') .
+                ($isExpired ? 'Token expirado em ' . ($tokenExpiry ? $tokenExpiry->format('Y-m-d H:i:s') : 'N/A') . '. ' : '');
+            error_log("DECISÃO: Gerando NOVO token para usuário ID {$userId}{$reason}");
+
             $userToken = bin2hex(random_bytes(32));
             $nowForDb = $now->format('Y-m-d H:i:s');
             $newExpiryDate = (clone $now)->add(new DateInterval('P7D'))->format('Y-m-d H:i:s');
 
+            // (O resto da lógica de INSERT/UPDATE continua o mesmo)
             $tokenQuery = "INSERT INTO {$this->tableNames['tok']} (id_usuario, token, data_expiracao, data_criacao)
                    VALUES (:id, :token, :expiry, :created)
                    ON DUPLICATE KEY UPDATE token = VALUES(token), data_expiracao = VALUES(data_expiracao)";
 
             $tokenStmt = $this->conn->prepare($tokenQuery);
             $tokenStmt->execute([
-                ':id' => $userId,
-                ':token' => $userToken,
-                ':expiry' => $newExpiryDate,
-                ':created' => $nowForDb
+                ':id' => $userId, ':token' => $userToken, ':expiry' => $newExpiryDate, ':created' => $nowForDb
             ]);
 
             return ['userToken' => $userToken, 'tokenDate' => $nowForDb, 'tokenExpiry' => $newExpiryDate];
         }
 
-        // Se o token existente ainda é válido, apenas o retorna.
+        // LOG ADICIONADO PARA DEPURAÇÃO
+        error_log("DECISÃO: Reutilizando token existente para usuário ID {$userId}. Expira em: " . $tokenExpiry->format('Y-m-d H:i:s'));
         return ['userToken' => $existingToken, 'tokenDate' => $tokenCreationStr, 'tokenExpiry' => $tokenExpiryStr];
     }
 
@@ -227,7 +229,7 @@ if (!defined('APP_RAN')) {
         $_SESSION['id'] = $userId;
         $_SESSION['logged'] = true;
 
-        // Usa os dados já formatados de getUserById
+        // A sessão 'userData' está correta.
         $_SESSION['userData'] = json_encode([
             'userId'      => $profileData['userId'],
             'name'        => $profileData['name'],
@@ -238,10 +240,10 @@ if (!defined('APP_RAN')) {
             'profileUser' => $profileData['profileUser'],
         ]);
 
-        // Usa os dados do token gerenciado
         $_SESSION['tokenUserData'] = json_encode([
             'userToken'   => $tokenData['userToken'],
             'tokenDate'   => $tokenData['tokenDate'],
+            'tokenExpiry' => $tokenData['tokenExpiry'],
             'userId'      => $userId,
         ]);
     }
