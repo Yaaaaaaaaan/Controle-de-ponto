@@ -1,5 +1,6 @@
-# docker-compose.yml (Versão Corrigida)
+# docker-compose.yml
 
+# Controle-de-ponto
 services:
   web:
     build: .  # 1. Diz ao Compose para construir a imagem usando o Dockerfile na pasta atual
@@ -18,12 +19,32 @@ services:
     environment:
       # 3. As credenciais AGORA CORRESPONDEM ao seu db.php, exceto a senha
       MYSQL_ROOT_PASSWORD: '' # Senha do root vazia (não recomendado para produção)
-      MYSQL_DATABASE: controle_ponto_db # Nome do banco de dados correto
+      MYSQL_DATABASE: controle_ponto_db
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes" # Permite que o root tenha senha vazia
     volumes:
       # 4. Monta o seu script SQL para inicializar o banco de dados na primeira vez
       - ./App/Config/db.sql:/docker-entrypoint-initdb.d/init.sql
       - db_data:/var/lib/mysql
 
+  # --- ADGuard (gestor de DNS local) ---
+  adguard:
+    image: adguard/adguardhome # A imagem oficial do AdGuard Home
+    container_name: adguard_dns
+    ports:
+      # Porta para o serviço de DNS (precisa de UDP e TCP)
+      - "53:53/udp"
+      - "53:53/tcp"
+      # Porta para a interface web de administração
+      - "3000:3000/tcp"
+      # Portas para DNS-over-HTTPS (DoH), se o seu router não usar a porta 80
+      # - "80:80/tcp"
+    volumes:
+      # Mapeia volumes para guardar as configurações e dados de trabalho do AdGuard
+      - adguard_work:/opt/adguardhome/work
+      - adguard_conf:/opt/adguardhome/conf
+    restart: unless-stopped
+
 volumes:
   db_data:
+  adguard_work:
+  adguard_conf:
