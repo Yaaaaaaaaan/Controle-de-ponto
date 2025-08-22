@@ -7,117 +7,123 @@ Controle-de-Ponto/
 │   │   ├── db.php                                                             # Construtor de acesso ao banco de dados
 │   │   ├── db.sql                                                                          # Arquivo do banco de dados
 │   │   └── árvore de diretórios.txt                                                                  # Você está aqui!
+│   │
 │   ├── Controller/
 │   │   ├── .htaccess                                                    # Controlador de acesso a diretório e arquivos
 │   │   ├── pictureController.php
 │   │   ├── PointController.php
 │   │   ├── SystemController.php
 │   │   └── UserController.php
+│   │
 │   ├── Model/
 │   │   ├── PointControl.php
 │   │   └── User.php
+│   │
 │   ├── Persistence
 │   │   ├── Errors/
 │   │   │   └── ErroUserdata.txt
+│   │   │
 │   │   ├── UserProfileImages/
 │   │   │   ├── (Random Images)
 │   │   │   └── Profile.png
+│   │   │
 │   │   └── .htaccess                                                    # Controlador de acesso a diretório e arquivos
+│   │
 │   └── .htaccess                                                        # Controlador de acesso a diretório e arquivos
+│
 ├── Public/
+│   ├── Api/
+│   │   ├── SystemPics
+│   │   │   ├── logo.png
+│   │   │   ├── logoOld.png
+│   │   │   └── offlineLogo.png
+│   │   │
+│   │   ├── auth.php
+│   │   ├── logout.php
+│   │   ├── pointControl.php
+│   │   ├── regist.php
+│   │   ├── sync.php
+│   │   ├── userData.php
+│   │   └── userToken.php
+│   │
 │   ├── CSS/
 │   │   ├── HKG/
 │   │   │   ├── dashboard.css
 │   │   │   └── handworking.css
+│   │   │
 │   │   ├── IDX/
 │   │   │   └── style.css
+│   │   │
 │   │   ├── USR/
 │   │   │   ├── dashboard.css
 │   │   │   └── handworking.css
+│   │   │
 │   │   └── boostrap.min.css
+│   │
 │   ├── JS/
 │   │   ├── chartjs/
-│   │   │   ├── auto/
-│   │   │   │   ├── auto.cjs
-│   │   │   │   ├── auto.d.ts
-│   │   │   │   ├── auto.js
-│   │   │   │   └── package.json
-│   │   │   ├── dist/
-│   │   │   │   ├── chunks/
-│   │   │   │   ├── controllers/
-│   │   │   │   ├── core/
-│   │   │   │   ├── elements/
-│   │   │   │   ├── helpers/
-│   │   │   │   ├── platform/
-│   │   │   │   ├── plugins/
-│   │   │   │   ├── scales/
-│   │   │   │   ├── types/
-│   │   │   │   ├── chart.cjs
-│   │   │   │   ├── chart.js
-│   │   │   │   ├── chart.umd.js
-│   │   │   │   ├── helpers.cjs
-│   │   │   │   ├── helpers.js
-│   │   │   │   ├── index.d.ts
-│   │   │   │   ├── index.umd.d.ts
-│   │   │   │   └── types.d.ts
-│   │   │   ├── helpers/
-│   │   │   │   ├── helpers.cjs
-│   │   │   │   ├── helpers.d.ts
-│   │   │   │   ├── helpers.js
-│   │   │   │   └── package.json
-│   │   │   ├── LICENSE.md
-│   │   │   ├── README.md
-│   │   │   └── package.json
+│   │   │   └── ... (framework files)
+│   │   │
+│   │   ├── Core/
+│   │   │   └── syncController.js
+│   │   │
 │   │   ├── HKG/
 │   │   │   └── indexDashboard.js
+│   │   │
 │   │   ├── IDX/
-│   │   │   └── authController.js
+│   │   │   ├── authController.js
+│   │   │   └── registerController.js
+│   │   │
 │   │   ├── indexedDB/
 │   │   │   ├── Config.js                                                       # Cria o banco de dados e as storeNames
 │   │   │   └── Model.js                                                    # Manipula os dados das storeNames com CRUD
+│   │   │
 │   │   ├── USR/
 │   │   │   ├── indexDashboard.js                                       # Cria a parte lógica do dashboard e seus dados
 │   │   │   ├── userController.js
 │   │   │   └── userInterface.js                               # Faz o papel de View com os dados recebidos do Model.js
-│   │   ├── Core/
-│   │   │   ├── syncController.js                                       #
-│   │   │   ├── userController.js
-│   │   │   └── userInterface.js                               #
+│   │   │
 │   │   ├── bootstrap.bundle.js
-│   │   │   └── bootstrap.bundle.min.js
+│   │   │   └── ... (framework file)
+│   │   │
 │   │   ├── color-modes.js
-│   │   ├── authController.js
 │   │   └── script.js
-│   ├── Api/
-│   │   ├── SystemPics
-│   │   │   └── logo.png
-│   │   ├── logout.php
-│   │   ├── pointControl.php
-│   │   ├── sync.php
-│   │   ├── userData.php
-│   │   └── userToken.php
+│   │
+│   ├── System/
+│   │   └── healthCheck.php
+│   │
 │   ├── View/
 │   │   ├── Errors/
 │   │   │   ├── .htaccess                                                # Controlador de acesso a diretório e arquivos
 │   │   │   └── forbidden.php
+│   │   │
 │   │   ├── Housekeeping/
 │   │   │   ├── index.php
 │   │   │   └── users.php
+│   │   │
 │   │   ├── Index/
 │   │   │   ├── .htaccess                                                # Controlador de acesso a diretório e arquivos
 │   │   │   ├── index.php
 │   │   │   └── register.php
+│   │   │
 │   │   ├── Layout/
 │   │   │   ├── menu.php
 │   │   │   └── menu_housekeep.php
-│   │   └── User/
-│   │       ├── .htaccess                                                # Controlador de acesso a diretório e arquivos
-│   │       ├── community.php
-│   │       ├── index.php
-│   │       ├── notes.php
-│   │       └── settings.php
-│   ├── service-worker.js
-│   └── .htaccess                                                        # Controlador de acesso a diretório e arquivos
+│   │   │
+│   │   ├── User/
+│   │   │   ├── .htaccess                                                # Controlador de acesso a diretório e arquivos
+│   │   │   ├── community.php
+│   │   │   ├── index.php
+│   │   │   ├── notes.php
+│   │   │   └── settings.php
+│   │   │
+│   │   └── index.php
+│   │
+│   ├── .htaccess                                                        # Controlador de acesso a diretório e arquivos
+│   └── service-worker.js
+│
+│
+├── docker-compose.yml
 ├── index.php
 ├── leia.txt
 ├── qodana.yaml

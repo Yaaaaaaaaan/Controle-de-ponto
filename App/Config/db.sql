@@ -8,122 +8,99 @@ USE `controle_ponto_db`;
 
 -- --------------------------------------------------------
 
---
--- Estrutura da tabela: `usuarios`
--- Armazena os dados de login e informações básicas dos usuários.
---
-CREATE TABLE IF NOT EXISTS `usuarios` (
-                            `id_usuario` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-                            `nome_completo` varchar(100) DEFAULT NULL,
-                            `nome_usuario` varchar(50) DEFAULT NULL,
-                            `email` varchar(88) DEFAULT NULL,
-                            `senha_hash` varchar(255) DEFAULT NULL,
-                            `nivel_acesso` int(2) DEFAULT NULL COMMENT 'Ex: 1 para Admin, 2 para Usuário Padrão',
-                            `tema_padrao` tinyint(1) NOT NULL DEFAULT 0,
-                            PRIMARY KEY (`id_usuario`),
-                            UNIQUE KEY `idx_email_unico` (`email`),
-                            UNIQUE KEY `idx_nome_usuario_unico` (`nome_usuario`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+create table usuarios
+(
+    id_usuario    bigint unsigned auto_increment
+        primary key,
+    nome_completo varchar(100)         null,
+    nome_usuario  varchar(50)          null,
+    email         varchar(88)          null,
+    senha_hash    varchar(255)         null,
+    nivel_acesso  int(2)               null comment 'Ex: 1 para Admin, 2 para Usuário Padrão',
+    tema_padrao   tinyint(1) default 0 not null,
+    constraint idx_email_unico
+        unique (email),
+    constraint idx_nome_usuario_unico
+        unique (nome_usuario)
+);
 
--- --------------------------------------------------------
+create table albuns
+(
+    album_id       bigint unsigned auto_increment
+        primary key,
+    id_usuario     bigint unsigned                      not null,
+    nome_album     varchar(255)                         not null,
+    tipo_album     bigint unsigned                      null,
+    data_definicao datetime default current_timestamp() not null,
+    constraint fk_albuns_usuario
+        foreign key (id_usuario) references usuarios (id_usuario)
+            on delete cascade
+);
 
---
--- Estrutura da tabela: `tokens_autenticacao`
--- Armazena tokens para sessões persistentes ou "lembrar de mim".
---
-CREATE TABLE IF NOT EXISTS `tokens_autenticacao` (
-    `token_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    `id_usuario` BIGINT UNSIGNED NOT NULL,
-    `token` VARCHAR(255) NOT NULL,
-    `data_criacao` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP(),
-    `data_expiracao` DATETIME NOT NULL,
-    PRIMARY KEY (`token_id`),
-    FOREIGN KEY (`id_usuario`) REFERENCES `usuarios`(`id_usuario`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+create table fotos
+(
+    foto_id         bigint unsigned auto_increment
+        primary key,
+    album_id        bigint unsigned                        not null,
+    id_usuario      bigint unsigned                        not null,
+    caminho_arquivo varchar(255)                           not null,
+    nome_foto       text                                   not null,
+    legenda_foto    text                                   null,
+    perfil          tinyint(1) default 0                   null,
+    data_upload     datetime   default current_timestamp() not null,
+    constraint fotos_ibfk_1
+        foreign key (id_usuario) references usuarios (id_usuario)
+            on delete cascade,
+    constraint fotos_ibfk_2
+        foreign key (album_id) references albuns (album_id)
+            on delete cascade
+);
 
--- --------------------------------------------------------
+create index album_id
+    on fotos (album_id);
 
---
--- Estrutura da tabela: `albuns`
--- Associa uma ou mais fotos a um album.
---
-CREATE TABLE IF NOT EXISTS `albuns` (
-                          `album_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-                          `id_usuario` BIGINT UNSIGNED NOT NULL,
-                          `nome_album` varchar(255) NOT NULL,
-                          `tipo_album` bigint unsigned,
-                          `data_definicao` datetime NOT NULL DEFAULT current_timestamp(),
-                          PRIMARY KEY (`album_id`),
-                          CONSTRAINT `fk_albuns_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+create index id_usuario
+    on fotos (id_usuario);
 
--- --------------------------------------------------------
+create table historicos_acoes
+(
+    historico_id    bigint unsigned auto_increment
+        primary key,
+    id_usuario      bigint unsigned                      not null,
+    descricao       text                                 null,
+    data_ocorrencia datetime default current_timestamp() not null,
+    constraint fk_historico_usuario
+        foreign key (id_usuario) references usuarios (id_usuario)
+            on delete cascade
+);
 
---
--- Estrutura da tabela: `fotos`
--- Armazena metadados de todas as imagens enviadas pelos usuários.
---
-CREATE TABLE IF NOT EXISTS `fotos` (
-                         `foto_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-                         `album_id` BIGINT UNSIGNED NOT NULL,
-                         `id_usuario` BIGINT UNSIGNED NOT NULL,
-                         `caminho_arquivo` varchar(255) NOT NULL,
-                         `nome_foto` text NOT NULL,
-                         `legenda_foto` text DEFAULT NULL,
-                         `perfil` tinyint(1) DEFAULT 0,
-                         `data_upload` datetime NOT NULL DEFAULT current_timestamp(),
-                         PRIMARY KEY (`foto_id`),
-                         FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`) ON DELETE CASCADE,
-                         FOREIGN KEY (`album_id`) REFERENCES `albuns` (`album_id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+create table registros_ponto
+(
+    registro_id   bigint unsigned auto_increment
+        primary key,
+    id_usuario    bigint unsigned                            not null,
+    data_registro date                                       not null,
+    status        varchar(50) default 'Verificação pendente' null,
+    observacao    text                                       null,
+    constraint idx_usuario_data_unica
+        unique (id_usuario, data_registro),
+    constraint fk_ponto_usuario
+        foreign key (id_usuario) references usuarios (id_usuario)
+            on delete cascade
+);
 
--- --------------------------------------------------------
+create table tokens_autenticacao
+(
+    token_id       bigint unsigned auto_increment
+        primary key,
+    id_usuario     bigint unsigned                      not null,
+    token          varchar(255)                         not null,
+    data_criacao   datetime default current_timestamp() not null,
+    data_expiracao datetime                             not null,
+    constraint idx_id_usuario_unico
+        unique (id_usuario),
+    constraint tokens_autenticacao_ibfk_1
+        foreign key (id_usuario) references usuarios (id_usuario)
+            on delete cascade
+);
 
---
--- Estrutura da tabela: `historicos_acoes`
--- Registra um log de ações importantes realizadas pelos usuários no sistema.
---
-CREATE TABLE IF NOT EXISTS `historicos_acoes` (
-                                    `historico_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-                                    `id_usuario` BIGINT UNSIGNED NOT NULL,
-                                    `descricao` text DEFAULT NULL,
-                                    `data_ocorrencia` datetime NOT NULL DEFAULT current_timestamp(),
-                                    PRIMARY KEY (`historico_id`),
-                                    KEY `fk_historico_usuario` (`id_usuario`),
-                                    CONSTRAINT `fk_historico_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Estrutura da tabela: `registros_ponto`
--- Armazena as marcações de ponto dos usuários.
---
-CREATE TABLE IF NOT EXISTS `registros_ponto` (
-                                   `registro_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-                                   `id_usuario` BIGINT UNSIGNED NOT NULL,
-                                   `data_registro` date NOT NULL,
-                                   `status` varchar(50) DEFAULT 'Verificação pendente',
-                                   `observacao` text DEFAULT NULL,
-                                   PRIMARY KEY (`registro_id`),
-                                   UNIQUE KEY `idx_usuario_data_unica` (`id_usuario`, `data_registro`),
-                                   CONSTRAINT `fk_ponto_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-
--- --------------------------------------------------------
-
---
--- Gatilho (Trigger): `trg_criar_token_novo_usuario`
--- Cria um token inicial para um usuário assim que ele é inserido na tabela `usuarios`.
---
-DELIMITER $$
-CREATE TRIGGER IF NOT EXISTS `trg_criar_token_novo_usuario` AFTER INSERT ON `usuarios` FOR EACH ROW
-BEGIN
-    -- Gera um token aleatório e o insere na tabela de tokens.
-    INSERT INTO tokens_autenticacao (id_usuario, token)
-    VALUES (NEW.id_usuario, SHA2(UUID(), 256));
-END $$
-DELIMITER ;
-
-COMMIT;
