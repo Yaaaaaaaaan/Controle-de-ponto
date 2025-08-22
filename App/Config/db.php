@@ -3,7 +3,8 @@ if (!defined('APP_RAN')) {
     die('Acesso não permitido.');
 }
 class Database {
-    private $host = 'localhost';
+    // 1. O host agora é o nome do serviço do banco de dados no docker-compose.yml
+    private $host = 'db';
     private $db_name = 'controle_ponto_db';
     private $username = 'root';
     private $password = '';
