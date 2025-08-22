@@ -32,8 +32,8 @@ services:
     container_name: adguard_dns
     ports:
       # Porta para o serviço de DNS (precisa de UDP e TCP)
-      - "53:53/udp"
-      - "53:53/tcp"
+      - "5353:53/udp"
+      - "5353:53/tcp"
       # Porta para a interface web de administração
       - "3000:3000/tcp"
       # Portas para DNS-over-HTTPS (DoH), se o seu router não usar a porta 80
