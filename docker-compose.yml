@@ -1,6 +1,5 @@
 # docker-compose.yml (Versão Corrigida)
 
-version: "3.8"
 services:
   web:
     build: .  # 1. Diz ao Compose para construir a imagem usando o Dockerfile na pasta atual
