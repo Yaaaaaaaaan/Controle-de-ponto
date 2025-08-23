@@ -5,7 +5,7 @@ services:
   web:
     build: .  # 1. Diz ao Compose para construir a imagem usando o Dockerfile na pasta atual
     ports:
-      - "8080:80"
+      - "0.0.0.0:8080:80"
     volumes:
       # 2. Monta o diretório inteiro do projeto, não apenas a pasta Public
       - ./:/var/www/html
