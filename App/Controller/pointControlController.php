@@ -16,11 +16,11 @@ class PointController {
         $this->pointControl = new PointControl($this->db);
     }
 
-    public function insertPointControl(int $userId, string $status, ?string $date = null): bool {
+    public function insertPointControl(int $userId, string $status, ?string $obs = null, ?string $date = null): bool {
         if (empty($userId) || empty($status)) {
             return false;
         }
-        return $this->pointControl->insertPointControl($userId, $status, $date);
+        return $this->pointControl->insertPointControl($userId, $status, $obs, $date);
     }
 
     public function getPointControlByUserId(int $userId): array {

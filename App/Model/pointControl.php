@@ -47,23 +47,24 @@ class PointControl
      * @param string|null $date A data do registo (formato Y-m-d). Se for nulo, usa a data atual.
      * @return bool Retorna true em caso de sucesso, false caso contrário.
      */
-    public function insertPointControl(int $userId, string $status, ?string $date = null): bool
+    public function insertPointControl(int $userId, string $status, ?string $obs = null, ?string $date = null): bool
     {
         $data_registro = $date ?? date('Y-m-d');
 
-        $query = "INSERT INTO {$this->tableName} (id_usuario, data_registro, status) 
-                  VALUES (:id_usuario, :data_registro, :status)
+        $query = "INSERT INTO {$this->tableName} (id_usuario, data_registro, status, observacao) 
+                  VALUES (:id_usuario, :data_registro, :status, :obs)
                   ON DUPLICATE KEY UPDATE status = VALUES(status)";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id_usuario', $userId);
         $stmt->bindParam(':data_registro', $data_registro);
         $stmt->bindParam(':status', $status);
+        $stmt->bindParam(':obs', $obs);
 
         try {
             if ($stmt->execute()) {
                 // Se o ponto foi inserido, cria o registo de histórico usando a nova função.
-                $historyDescription = "Registo de ponto bem-sucedido: {$status} | Data: {$data_registro}";
+                $historyDescription = "Registo de ponto {$obs} bem-sucedido: {$status} | Data: {$data_registro}";
                 $this->createUserHistory($historyDescription, $userId);
                 return true;
             }

@@ -46,11 +46,12 @@ if (!empty($actions)) {
             switch ($action['type']) {
                 case 'CREATE_POINT':
                     $status = $action['payload']['status'] ?? 'Status não definido';
+                    $obs = $obs = $action['payload']['obs'] ?? null;
                     $timestamp = $action['timestamp'] ?? null;
                     $actionDate = $timestamp ? date('Y-m-d', strtotime($timestamp)) : null;
 
                     // A chamada para insertPointControl já cria o registro de histórico através do Model.
-                    $success = $pointController->insertPointControl($userId, $status, $actionDate);
+                    $success = $pointController->insertPointControl($userId, $status, $obs, $actionDate);
                     break;
 
                 case 'updateTheme':

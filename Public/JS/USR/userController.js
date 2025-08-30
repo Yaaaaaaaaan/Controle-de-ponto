@@ -50,11 +50,12 @@ async function handleOfflinePresence() {
 
     console.log("Nenhum registro local para hoje. Salvando...");
     const status = "Verificação pendente";
+    const obs = "offline";
 
     const newPointRecord = { userId: activeUserId, status, dateIn: today };
     await addPointControl(newPointRecord); // Salva na UI
 
-    const action = { type: 'CREATE_POINT', payload: { status }, timestamp: new Date().toISOString() };
+    const action = { type: 'CREATE_POINT', payload: { status, obs }, timestamp: new Date().toISOString() };
     await addActionToSyncQueue(action); // Salva na fila de sincronização
 
     alert('Você está offline. A sua presença foi registada.');
