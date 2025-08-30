@@ -311,7 +311,8 @@ async function setUserToken(tokenData) { // Agora recebe o objeto completo
 async function fetchUserDataByToken(token) {
     if (!token) return null;
     try {
-        const response = await fetch('/Public/Api/userToken.php', {
+        // MODIFICADO: Chama o novo endpoint unificado
+        const response = await fetch('/Public/Api/initialData.php', {
             method: 'GET',
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -319,21 +320,19 @@ async function fetchUserDataByToken(token) {
 
         const result = await response.json();
 
-        // A resposta agora vem como { success: true, data: { userData: ..., tokenData: ... } }
         if (result.success && result.data) {
-            // Desestrutura os dados recebidos
-            const { userData, tokenData } = result.data;
+            const { userData, tokenData, pointControlData } = result.data;
 
-            // Antes de retornar, já salvamos os dados nos locais corretos no IndexedDB
-            // Passamos null para o hash, pois a função upsertUser inteligente irá preservar o que já existe.
-            await storeAuthData(userData, tokenData, null);
+            // Salva os dados nos locais corretos no IndexedDB
+            await upsertUser(userData);
+            await setUserToken({ ...tokenData, token: tokenData.userToken, userId: userData.userId });
+            await replaceUserPointControl(userData.userId, pointControlData);
 
-            // Retorna apenas os dados do perfil para a UI, como esperado.
-            return userData;
+            return userData; // Retorna apenas os dados do perfil para a UI
         }
         return null;
     } catch (error) {
-        console.error(`[${obterHoraFormatada()}] Erro de rede ao buscar dados por token:`, error);
+        console.error(`[${obterHoraFormatada()}] Erro de rede ao buscar dados iniciais:`, error);
         return null;
     }
 }
@@ -510,7 +509,7 @@ async function syncServerToIndexedDB() {
         }
 
         // Buscar dados de controle de ponto
-        const pointResponse = await fetch('../../Api/pointControl.php');
+        const pointResponse = await fetch('/Public/Api/pControl.php');
         const pointData = await pointResponse.json();
 
         // Verificamos se temos o ID do usuário que estamos sincronizando (vindo da primeira parte da função)
@@ -592,45 +591,27 @@ async function addPointControlRecordToServer(status) {
             return false;
         }
 
-        if (!navigator.onLine) {
-            console.log(`[${obterHoraFormatada()}] Dispositivo offline. Ação será adicionada à fila de sincronização.`);
-            // Esta função só deve ser chamada online, a lógica offline está no userController.js
-            return false;
-        }
-
-        // --- INÍCIO DA MUDANÇA ---
-
-        // 1. Obter o token de autenticação do localStorage.
         const userToken = localStorage.getItem('userToken');
-
-        // 2. Se não houver token, a requisição não pode ser autenticada.
         if (!userToken) {
             console.error(`[${obterHoraFormatada()}] Erro ao bater o ponto: Token de utilizador não encontrado.`);
             alert("Sessão inválida. Por favor, faça o login novamente.");
             return false;
         }
 
-        // --- FIM DA MUDANÇA ---
-
         console.log(`[${obterHoraFormatada()}] Enviando registo de ponto para o servidor com status: ${status}`);
 
-        // O caminho da API foi corrigido para ser absoluto, como nas outras chamadas.
-        const response = await fetch('/Public/Api/pointControl.php', {
+        const response = await fetch('/Public/Api/pControl.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                // 3. Adiciona o cabeçalho 'Authorization' com o token.
-                // O formato "Bearer <token>" é um padrão de mercado.
                 'Authorization': `Bearer ${userToken}`
             },
-            // O corpo da requisição agora envia apenas o que o PHP espera.
             body: JSON.stringify({
                 status: status
             })
         });
 
         if (!response.ok) {
-            // Se a resposta for 401 (Não Autorizado) ou outro erro, trata aqui.
             console.error(`[${obterHoraFormatada()}] Erro do servidor ao bater o ponto:`, response.status, response.statusText);
             alert('Falha na autenticação ao registar o ponto. A sua sessão pode ter expirado.');
             return false;
@@ -647,12 +628,42 @@ async function addPointControlRecordToServer(status) {
         }
 
     } catch (error) {
+        // --- A CORREÇÃO ESTÁ AQUI ---
         console.error(`[${obterHoraFormatada()}] Erro fatal ao comunicar com o servidor para bater o ponto:`, error);
-        return false;
+        // Depois de registrar o erro, nós o relançamos para que o chamador (userController.js) possa capturá-lo.
+        throw error;
     }
 }
 
+// NOVA FUNÇÃO: Limpa os registros de um usuário e insere os novos
+async function replaceUserPointControl(userId, newRecords) {
+    const db = await initializeDB();
+    const transaction = db.transaction(pointControlStoreName, 'readwrite');
+    const store = transaction.objectStore(pointControlStoreName);
+    const index = store.index('userIdIdx');
+    const request = index.openCursor(IDBKeyRange.only(userId));
 
+    // 1. Deleta os registros antigos
+    request.onsuccess = (event) => {
+        const cursor = event.target.result;
+        if (cursor) {
+            store.delete(cursor.primaryKey);
+            cursor.continue();
+        }
+    };
+
+    // 2. Espera a transação de delete terminar e insere os novos
+    return new Promise((resolve, reject) => {
+        transaction.oncomplete = () => {
+            const addTransaction = db.transaction(pointControlStoreName, 'readwrite');
+            const addStore = addTransaction.objectStore(pointControlStoreName);
+            newRecords.forEach(record => addStore.put(record)); // 'put' é mais seguro que 'add'
+            addTransaction.oncomplete = resolve;
+            addTransaction.onerror = reject;
+        };
+        transaction.onerror = reject;
+    });
+}
 
 // =============================
 // Funções de controle de acesso
@@ -701,7 +712,18 @@ async function getSyncQueue() {
     const db = await initializeDB();
     const transaction = db.transaction(syncQueueStoreName, 'readonly');
     const store = transaction.objectStore(syncQueueStoreName);
-    return store.getAll();
+    const request = store.getAll(); // Pega a requisição
+
+    // Embrulha a requisição em uma Promise para garantir que `await` funcione corretamente
+    return new Promise((resolve, reject) => {
+        request.onsuccess = () => {
+            resolve(request.result); // Resolve a Promise com o array de ações
+        };
+        request.onerror = (event) => {
+            console.error(`[${obterHoraFormatada()}] Erro ao buscar a fila de sincronização:`, event.target.error);
+            reject(event.target.error);
+        };
+    });
 }
 
 //Manipulação do histórico de uso do sistema offline
@@ -742,6 +764,7 @@ export {
     syncIndexedDBToServer,
     syncServerToIndexedDB,
     storeAuthData,
+    replaceUserPointControl,
 
     // Funções de controle de acesso
     clearObjectStore,

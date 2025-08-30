@@ -1,4 +1,6 @@
 <?php
+
+
 if (!defined('APP_RAN')) {
     die('Acesso não permitido.');
 }
@@ -13,10 +15,29 @@ class PointControl
         'his' => 'historicos_acoes',
         'reg' => 'registros_ponto'
     ];
+    private $tableName  = 'registros_ponto';
 
     public function __construct($db)
     {
         $this->conn = $db;
+    }
+
+    /**
+     * Adicionada para padronizar a criação de histórico, assim como na classe User.
+     * @param string $description A descrição da ação.
+     * @param int $userId O ID do usuário que realizou a ação.
+     * @return bool
+     */
+    public function createUserHistory(string $description, int $userId): bool {
+        try {
+            // Delega a responsabilidade para o Model de Histórico
+            $historyModel = new History($this->conn);
+            return $historyModel->create($userId, $description);
+        } catch (Exception $e) {
+            // Adiciona contexto ao erro para facilitar a depuração
+            error_log("Erro ao delegar criação de histórico a partir do PointControl->createUserHistory: " . $e->getMessage());
+            return false;
+        }
     }
 
     /**
@@ -28,11 +49,9 @@ class PointControl
      */
     public function insertPointControl(int $userId, string $status, ?string $date = null): bool
     {
-        // CORRIGIDO: A data agora é tratada corretamente.
         $data_registro = $date ?? date('Y-m-d');
 
-        // CORRIGIDO: O nome da tabela agora é o correto do array.
-        $query = "INSERT INTO {$this->tableNames['reg']} (id_usuario, data_registro, status) 
+        $query = "INSERT INTO {$this->tableName} (id_usuario, data_registro, status) 
                   VALUES (:id_usuario, :data_registro, :status)
                   ON DUPLICATE KEY UPDATE status = VALUES(status)";
 
@@ -43,14 +62,9 @@ class PointControl
 
         try {
             if ($stmt->execute()) {
-                // Se o ponto foi inserido, cria o registo de histórico.
-                try {
-                    $historyModel = new History($this->conn);
-                    $historyDescription = "Registo de ponto criado com status: '{$status}' para a data {$data_registro}";
-                    $historyModel->create($userId, $historyDescription);
-                } catch (Exception $e) {
-                    error_log("Falha ao criar entrada de histórico em PointControl->insertPointControl(): " . $e->getMessage());
-                }
+                // Se o ponto foi inserido, cria o registo de histórico usando a nova função.
+                $historyDescription = "Registo de ponto bem-sucedido: {$status} | Data: {$data_registro}";
+                $this->createUserHistory($historyDescription, $userId);
                 return true;
             }
         } catch (PDOException $e) {
@@ -60,15 +74,9 @@ class PointControl
         return false;
     }
 
-    /**
-     * Busca todos os registos de ponto de um utilizador.
-     * @param int $userId
-     * @return array
-     */
     public function getByUserId(int $userId): array {
-        // CORRIGIDO: Renomeado de getPointControl para getByUserId para padronização.
         $query = "SELECT registro_id as cod, id_usuario as userId, data_registro as dateIn, status 
-                  FROM {$this->tableNames['reg']} 
+                  FROM {$this->tableName} 
                   WHERE id_usuario = :id_usuario 
                   ORDER BY data_registro ASC";
 
@@ -112,7 +120,6 @@ class PointControl
     }
 
     public function updatePresenceHousekeeping($userIdToValidate, $code, $description) {
-        // CORRIGIDO: Nomes das colunas atualizados (id_usuario, registro_id)
         $query = "UPDATE {$this->tableNames['reg']} SET status = :description
                     WHERE id_usuario = :userIdToValidate AND registro_id = :code";
         $stmt = $this->conn->prepare($query);
@@ -120,7 +127,16 @@ class PointControl
         $stmt->bindParam(':userIdToValidate', $userIdToValidate);
         $stmt->bindParam(':code', $code);
 
-        return $stmt->execute();
+        $success = $stmt->execute();
+
+        // Adiciona um registro de histórico se a atualização for bem-sucedida
+        if ($success) {
+            $historyDescription = "Status do registro de ponto cód: {$code} atualizado para '{$description}'";
+            // O ID do usuário para o histórico é aquele que foi validado.
+            $this->createUserHistory($historyDescription, $userIdToValidate);
+        }
+
+        return $success;
     }
 }
 ?>

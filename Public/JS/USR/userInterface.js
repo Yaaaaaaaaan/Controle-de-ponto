@@ -2,6 +2,7 @@
 
 import { upsertUser, getUserById, fetchUserDataByToken, obterHoraFormatada } from '../indexedDB/Model.js';
 import { initializeSyncController } from '../Core/syncController.js'; // Importamos o inicializador
+import { initializeConnectionChecker } from '../Core/connectionChecker.js';
 
 // --- Variáveis Globais ---
 let isFirstLoad = true;
@@ -125,11 +126,9 @@ async function initializeUserData() {
 // --- PONTO DE ENTRADA DO SCRIPT ---
 
 document.addEventListener('DOMContentLoaded', () => {
-    // A única coisa que o DOMContentLoaded faz é chamar a função principal.
-    initializeUserData();
-
-    // Inicia o controlador de sincronização (que agora contém o setInterval)
+    initializeConnectionChecker();
     initializeSyncController();
+    initializeUserData();
 });
 
 // Exporta a promessa para que outros módulos possam esperar pelos dados.

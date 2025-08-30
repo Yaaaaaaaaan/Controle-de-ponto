@@ -12,7 +12,7 @@ Controle-de-Ponto/
 │   │   ├── .htaccess                                                    # Controlador de acesso a diretório e arquivos
 │   │   ├── historyController.php
 │   │   ├── pictureController.php
-│   │   ├── PointController.php
+│   │   ├── PointControlController.php
 │   │   ├── SystemController.php
 │   │   └── UserController.php
 │   │
@@ -42,7 +42,7 @@ Controle-de-Ponto/
 │   │   │
 │   │   ├── auth.php
 │   │   ├── logout.php
-│   │   ├── pointControl.php
+│   │   ├── pControl.php
 │   │   ├── regist.php
 │   │   ├── sync.php
 │   │   ├── userData.php

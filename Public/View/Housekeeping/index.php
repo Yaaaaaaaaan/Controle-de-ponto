@@ -1,7 +1,7 @@
 <?php
 define('APP_RAN', true);
 require '../layout/menu_housekeep.php';
-include_once __DIR__ . '/../../../App/controller/pointController.php';
+include_once __DIR__ . '/../../../App/controller/pointControlController.php';
 
 // Dados serão carregados do IndexedDB pelo JavaScript
 

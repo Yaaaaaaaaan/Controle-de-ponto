@@ -1,7 +1,5 @@
 <?php
 
-namespace History;
-
 if (!defined('APP_RAN')) {
     die('Acesso não permitido.');
 }

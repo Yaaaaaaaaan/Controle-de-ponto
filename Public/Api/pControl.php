@@ -11,7 +11,7 @@ require_once __DIR__ . '/../../App/Config/db.php';
 // FIM DA CORREÇÃO
 
 require_once __DIR__ . '/../../App/Controller/UserController.php';
-require_once __DIR__ . '/../../App/Controller/PointController.php';
+require_once __DIR__ . '/../../App/Controller/pointControlController.php';
 
 // A função sendJson permanece a mesma
 function sendJson($data, $httpCode = 200) {

@@ -6,19 +6,16 @@ date_default_timezone_set('America/Sao_Paulo');
 header('Content-Type: application/json');
 
 // Dependências
-// INÍCIO DA CORREÇÃO
-// Adicione a inclusão do arquivo de banco de dados
-require_once __DIR__ . '/../../App/Config/db.php';
-// FIM DA CORREÇÃO
 require_once __DIR__ . '/../../App/Controller/UserController.php';
-require_once __DIR__ . '/../../App/Controller/PointController.php';
-require_once __DIR__ . '/../../App/Controller/HistoryController.php';
+require_once __DIR__ . '/../../App/Controller/pointControlController.php';
+// A dependência do HistoryController não é mais necessária aqui
+
 function sendJson($data, $httpCode = 200) {
     http_response_code($httpCode);
-    echo json_encode($data);
+    echo json_encode($data, JSON_UNESCAPED_UNICODE);
     exit;
 }
-// 1. RECEBER E VALIDAR DADOS DO CLIENTE
+
 $data = json_decode(file_get_contents('php://input'), true);
 $userToken = $data['userToken'] ?? null;
 $actions = $data['actions'] ?? [];
@@ -27,78 +24,63 @@ if (!$userToken) {
     sendJson(['success' => false, 'message' => 'Token de autenticação ausente.'], 400);
 }
 
-// 2. AUTENTICAR O UTILIZADOR VIA TOKEN
+// Autenticação
 $userController = new UserController();
 $userId = $userController->getUserIdByTokenForSync($userToken);
 if (!$userId) {
     sendJson(['success' => false, 'message' => 'Token inválido ou sessão expirada.'], 401);
 }
 
-// 3. INSTANCIAR CONTROLLERS
-// INÍCIO DA CORREÇÃO
-// 1. Crie a instância do banco de dados e obtenha a conexão
-$database = new Database();
-$db = $database->getConnection();
+// Controllers
+$pointController = new PointController();
 
-// 2. Passe a conexão ($db) para os construtores
-$pointController = new PointController($db);
-$historyController = new HistoryController\HistoryController(); // O seu HistoryController usa namespace
-// FIM DA CORREÇÃO
-
-
-// 4. PROCESSAR A FILA DE AÇÕES (A "IDA")
+// Processamento da Fila de Ações
 if (!empty($actions)) {
-    foreach ($actions as $action) {
-        $success = false;
-        $historyDescription = '';
+    // Adicionado um try-catch para robustez
+    try {
+        foreach ($actions as $action) {
+            if (!isset($action['type'])) continue;
 
-        switch ($action['type']) {
-            case 'CREATE_POINT':
-                // --- INÍCIO DA MUDANÇA ---
-                $status = $action['payload']['status'] ?? 'Status não definido';
+            $success = false;
 
-                // 1. Extrai o timestamp da ação offline.
-                $timestamp = $action['timestamp'] ?? null;
+            switch ($action['type']) {
+                case 'CREATE_POINT':
+                    $status = $action['payload']['status'] ?? 'Status não definido';
+                    $timestamp = $action['timestamp'] ?? null;
+                    $actionDate = $timestamp ? date('Y-m-d', strtotime($timestamp)) : null;
 
-                // 2. Converte o timestamp para o formato de data (Y-m-d).
-                $actionDate = $timestamp ? date('Y-m-d', strtotime($timestamp)) : null;
+                    // A chamada para insertPointControl já cria o registro de histórico através do Model.
+                    $success = $pointController->insertPointControl($userId, $status, $actionDate);
+                    break;
 
-                // 3. Passa a data extraída para o controller.
-                $success = $pointController->insertPointControl($userId, $status, $actionDate);
-                // --- FIM DA MUDANÇA ---
+                case 'updateTheme':
+                    $theme = $action['payload']['theme'] ?? 0;
+                    // O método updateUserTheme já cria seu próprio histórico também.
+                    $success = $userController->updateUserTheme($userId, $theme);
+                    break;
+            }
 
-                $historyDescription = "Ponto sincronizado do modo offline com status: {$status} para a data {$actionDate}";
-                break;
-
-            // Exemplo de como seria para outra ação:
-            /*
-            case 'UPDATE_USER_NAME':
-                $newName = $action['payload']['name'] ?? '';
-                $success = $userController->updateUserName($userId, $newName); // Supondo que este método existe
-                $historyDescription = "Nome de utilizador atualizado offline para: {$newName}";
-                break;
-            */
+            if (!$success) {
+                // Se uma ação falhar, interrompe o processo para evitar inconsistência de dados.
+                throw new Exception('Falha ao processar a ação: ' . $action['type']);
+            }
         }
-
-        if ($success && !empty($historyDescription)) {
-            $historyController->createHistoryEntry($userId, $historyDescription);
-        } else if (!$success) {
-            sendJson(['success' => false, 'message' => 'Falha ao processar a ação: ' . ($action['type'] ?? 'desconhecida')], 500);
-        }
+    } catch (Exception $e) {
+        // Se qualquer ação dentro do loop falhar, envia uma resposta de erro.
+        sendJson(['success' => false, 'message' => $e->getMessage()], 500);
     }
 }
 
-// 5. PREPARAR OS DADOS ATUALIZADOS (A "VOLTA")
-$updatedPointControlData = $pointController->getByUserId($userId);
-// Assumindo que você tenha um método em UserController para buscar os dados completos por ID
-$updatedFullData = $userController->getUserByToken($userId);
+// Preparar dados de retorno
+$updatedPointControlData = $pointController->getPointControlByUserId($userId);
+$updatedFullData = $userController->getUserByToken($userToken);
 
-// 6. ENVIAR RESPOSTA DE SUCESSO COM DADOS FRESCOS
+// Enviar resposta de sucesso
 sendJson([
     'success' => true,
     'message' => 'Sincronização concluída com sucesso.',
-    'userData' => $updatedFullData['userData'],
-    'tokenData' => $updatedFullData['tokenData'],
+    'userData' => $updatedFullData['userData'] ?? null,
+    'tokenData' => $updatedFullData['tokenData'] ?? null,
     'pointControlData' => $updatedPointControlData
 ]);
 ?>

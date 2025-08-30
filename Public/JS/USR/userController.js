@@ -1,63 +1,80 @@
 // No ficheiro: userController.js (VERSÃO REFATORADA)
 
-import { addActionToSyncQueue, addPointControlRecordToServer, addPointControl, syncServerToIndexedDB } from '../indexedDB/Model.js';
+import {
+    addActionToSyncQueue,
+    addPointControlRecordToServer,
+    addPointControl,
+    syncServerToIndexedDB,
+    getPointControlByUserId
+} from '../indexedDB/Model.js';
 import { userDataPromise } from './userInterface.js'; // Importa a promessa
+import { isOnline } from '../Core/connectionChecker.js';
 
 async function handleOnlinePresence() {
     console.log("Online: A confirmar presença diretamente no servidor...");
-    const success = await addPointControlRecordToServer("Verificação pendente");
-    if (success) {
-        alert('Presença confirmada com sucesso online!');
-        // Sincroniza os dados de "volta" para garantir que a UI é atualizada com todos os dados.
-        await syncServerToIndexedDB();
-        window.location.reload();
-    } else {
-        alert('Falha ao confirmar a presença online.');
-        // Opcional: Adicionar à fila de sincronização como um fallback se a API falhar.
-        const action = { type: 'CREATE_POINT', payload: { status: 'Verificação pendente' }, timestamp: new Date().toISOString() };
-        await addActionToSyncQueue(action);
+    try {
+        const success = await addPointControlRecordToServer("Verificação pendente");
+        if (success) {
+            alert('Presença confirmada com sucesso online!');
+            await syncServerToIndexedDB();
+            window.location.reload();
+        } else {
+            alert('Falha ao confirmar a presença online.');
+        }
+    } catch (error) {
+        // ESTE BLOCO É A CHAVE DA SOLUÇÃO:
+        // Se o 'fetch' falhar por falta de rede, o erro é capturado aqui.
+        console.warn("A tentativa online falhou por erro de rede. Acionando modo offline.", error);
+        // Em vez de parar, ele chama a função offline para continuar o processo.
+        await handleOfflinePresence();
     }
 }
 
+// FUNÇÃO OFFLINE (Com a lógica anti-duplicação)
 async function handleOfflinePresence() {
-    console.log("Offline: A registar ponto localmente e a adicionar à fila de sincronização.");
+    console.log("Offline: Tentando registrar ponto localmente.");
     const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
     if (!activeUserId || isNaN(activeUserId)) {
         alert("Erro: Sessão de utilizador inválida.");
         return;
     }
+
+    const today = new Date().toISOString().split('T')[0];
+    const localRecords = await getPointControlByUserId(activeUserId);
+    const hasRecordForToday = localRecords.some(record => record.dateIn === today);
+
+    if (hasRecordForToday) {
+        alert('Você já registou a sua presença hoje no modo offline.');
+        return;
+    }
+
+    console.log("Nenhum registro local para hoje. Salvando...");
     const status = "Verificação pendente";
 
-    // 1. Salva na 'pointControl' para que o utilizador veja a atualização na UI.
-    const newPointRecord = { userId: activeUserId, status, dateIn: new Date().toISOString().split('T')[0] };
-    await addPointControl(newPointRecord);
+    const newPointRecord = { userId: activeUserId, status, dateIn: today };
+    await addPointControl(newPointRecord); // Salva na UI
 
-    // 2. Salva na 'syncQueue' para ser enviado ao servidor mais tarde.
     const action = { type: 'CREATE_POINT', payload: { status }, timestamp: new Date().toISOString() };
-    await addActionToSyncQueue(action);
+    await addActionToSyncQueue(action); // Salva na fila de sincronização
 
     alert('Você está offline. A sua presença foi registada.');
     window.location.reload();
 }
 
-
-// --- 3. FUNÇÃO PRINCIPAL SIMPLIFICADA ---
+// FUNÇÃO PRINCIPAL SIMPLIFICADA
 async function handleConfirmPresenceClick(event) {
     const button = event.currentTarget;
     button.disabled = true;
     button.textContent = 'A processar...';
 
     try {
-        if (navigator.onLine) {
-            await handleOnlinePresence();
-        } else {
-            await handleOfflinePresence();
-        }
+        // A lógica é sempre tentar online. Se a rede falhar,
+        // a própria handleOnlinePresence se encarrega de chamar a handleOfflinePresence.
+        await handleOnlinePresence();
     } catch (error) {
-        console.error("Erro ao confirmar presença:", error);
-        alert('Ocorreu um erro ao confirmar a presença.');
+        console.error("Erro inesperado ao confirmar presença:", error);
+        alert('Ocorreu um erro inesperado.');
     } finally {
-        // Reverte o estado do botão independentemente do resultado.
         button.disabled = false;
         button.textContent = 'Confirmar Presença';
     }

@@ -1,17 +1,16 @@
-// No ficheiro: /controle-de-ponto/Public/JS/Core/syncController.js (VERSÃO CORRIGIDA)
+// No ficheiro: /controle-de-ponto/Public/JS/Core/syncController.js (VERSÃO ATUALIZADA)
 
-import { getSyncQueue, clearSyncQueue, syncServerToIndexedDB, obterHoraFormatada} from '../indexedDB/Model.js';
-
+import { getSyncQueue, clearSyncQueue, obterHoraFormatada } from '../indexedDB/Model.js';
+// Não precisamos mais do syncServerToIndexedDB daqui, pois a sincronização de "volta"
+// será feita dentro do próprio processSyncQueue.
 
 async function processSyncQueue() {
+    // A lógica interna de processSyncQueue continua a mesma...
     const userToken = localStorage.getItem('userToken');
     const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
     if (!userToken || !activeUserId) { return; }
 
     const actions = await getSyncQueue();
-    // Se a fila estiver vazia, não há nada para enviar.
-    // Em produção, você pode querer adicionar uma lógica para sincronizar
-    // periodicamente mesmo com a fila vazia para buscar atualizações.
     if (actions.length === 0) {
         console.log(`[${obterHoraFormatada()}] syncController: Fila de sincronização vazia.`);
         return;
@@ -32,18 +31,15 @@ async function processSyncQueue() {
 
         if (result.success) {
             await clearSyncQueue();
+            console.log(`[${obterHoraFormatada()}] syncController: Fila limpa com sucesso.`);
 
-            // --- PROCESSAR OS DADOS DE "VOLTA" ---
-            if (result.userData) {
-                // A função upsertUser inteligente já preserva o hash offline
-                await upsertUser(result.userData);
-            }
-            if (result.pointControlData) {
-                await replaceUserPointControl(activeUserId, result.pointControlData);
-            }
+            // Opcional, mas recomendado: Sincronizar os dados de volta para garantir consistência.
+            // A sua API sync.php já retorna os dados atualizados, podemos usá-los para atualizar o IndexedDB
+            // ou simplesmente chamar uma função de sincronização geral.
+            // Para simplicidade, vamos apenas recarregar a página, que já dispara uma nova sincronização.
 
             alert("Suas ações offline foram sincronizadas com sucesso!");
-            window.location.reload(); // Recarrega para exibir os dados mais recentes
+            window.location.reload();
         } else {
             console.error(`[${obterHoraFormatada()}] A sincronização falhou:`, result.message);
         }
@@ -57,11 +53,18 @@ async function processSyncQueue() {
  * Inicializa os listeners e o loop de sincronização.
  */
 function initializeSyncController() {
-    window.addEventListener('online', processSyncQueue);
+    // ATENÇÃO: A LÓGICA DE INICIALIZAÇÃO MUDOU!
 
-    if (navigator.onLine) {
-        processSyncQueue();
-    }
+    // 1. Removemos o listener antigo do navegador.
+    // window.removeEventListener('online', processSyncQueue);
+
+    // 2. Adicionamos o listener para o nosso novo evento personalizado.
+    window.addEventListener('app:online', processSyncQueue);
+
+    console.log(`[${obterHoraFormatada()}] SyncController agora está ouvindo pelo evento 'app:online'.`);
+
+    // 3. A tentativa inicial de sincronização agora é responsabilidade do connectionChecker.
+    // Ele fará a primeira verificação no carregamento e, se estiver online, disparará o evento.
 }
 
 export { initializeSyncController };

@@ -1,9 +1,5 @@
 <?php
 
-namespace HistoryController;
-
-use Database;
-use History\History;
 
 if (!defined('APP_RAN')) {
     die('Acesso não permitido.');

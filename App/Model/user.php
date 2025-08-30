@@ -6,8 +6,8 @@ if (!defined('APP_RAN')) {
     die('Acesso não permitido');
 }
 
-require_once __DIR__ . '/History.php';
-use History\History;
+require_once __DIR__ . '/history.php';
+
 
 #[AllowDynamicProperties] class User{
     private $conn;
@@ -600,12 +600,13 @@ use History\History;
     {
         error_log("Model/User.php - updateTheme: userId recebido: " . $userId . ", theme recebido: " . $theme);
         try {
-            $query = "UPDATE {$this->tableNames['usr']} SET udefaultTheme = :theme WHERE uid = :id";
+            // CORREÇÃO: Altera 'udefaultTheme' para 'tema_padrao' e 'uid' para 'id_usuario'
+            $query = "UPDATE {$this->tableNames['usr']} SET tema_padrao = :theme WHERE id_usuario = :id";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':theme', $theme, PDO::PARAM_INT);
             $stmt->bindParam(':id', $userId, PDO::PARAM_INT);
             $result = $stmt->execute();
-            error_log("Model/User.php - updateTheme: Resultado da execução: " . ($result ? 'true' : 'false'));
+
             if (!$result) {
                 error_log("Model/User.php - updateTheme: Erro SQL - " . print_r($stmt->errorInfo(), true));
             }
