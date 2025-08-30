@@ -3,7 +3,7 @@
 
 
 if (!defined('APP_RAN')) {
-  die('Acesso não permitido');
+    die('Acesso não permitido');
 }
 
 require_once __DIR__ . '/History.php';
@@ -362,7 +362,7 @@ use History\History;
         if (!empty($this->email) && !empty($this->password)) {
             $query = "SELECT id_usuario, uemail, upassword FROM " . $this->tableNames['usr'] . " 
             WHERE uemail = :email AND upassword = :upassword";
-    
+
             try {
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam(':email', $this->email);
@@ -379,7 +379,7 @@ use History\History;
                 return false;
             }
         }
-    
+
         return false;
     }
 
@@ -401,25 +401,25 @@ use History\History;
             " h ON u.id_usuario = h.uidUserFK WHERE u.uid = :id ORDER BY h.cod desc LIMIT " . $registro . ";";
 
         try {
-          $stmt = $this->conn->prepare($querySelect);
-          $stmt->bindParam(':id', $userId);
-          $stmt->bindParam('', $this->$registro);
-          $stmt->execute();
-          $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-          if($result){
-              //Inserir registro no histórico
-              $description = 'Consulta de histórico ';
-              $this->createUserHistory($description, $this->id);
-          }
-          return $result;
+            $stmt = $this->conn->prepare($querySelect);
+            $stmt->bindParam(':id', $userId);
+            $stmt->bindParam('', $this->$registro);
+            $stmt->execute();
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            if($result){
+                //Inserir registro no histórico
+                $description = 'Consulta de histórico ';
+                $this->createUserHistory($description, $this->id);
+            }
+            return $result;
         } catch(PDOException $e) {
-          echo "Error: " . $e->getMessage();
-          return false;
+            echo "Error: " . $e->getMessage();
+            return false;
         }
-      }
+    }
 
-      
-      public function setPictures($picture, $directory): bool{ //insere imagens no banco de dados.
+
+    public function setPictures($picture, $directory): bool{ //insere imagens no banco de dados.
         $this->picture = $picture;
         $this->directory = $directory;
         $this->id = $_SESSION['id'];
@@ -428,16 +428,16 @@ use History\History;
         $stmt->bindValue(':id', $this->id);
         $stmt->bindValue(':directory', $this->directory);
         $stmt->bindValue(':picture', $this->picture);
-    
+
         if ($stmt->execute()) {
             $_SESSION['lastImageProfileUser'] = $this->directory;
             return true;
         } else {
             return false;
         }
-      }
+    }
 
-      public function getUserPictures($userId) {
+    public function getUserPictures($userId) {
         $querySelect = "SELECT cod, path, description FROM " . $this->tableNames['fot'] . " WHERE uidUserFK = :userId ORDER BY dateload DESC LIMIT 3";
         $stmt = $this->conn->prepare($querySelect);
         $stmt->bindParam(':userId', $userId);

@@ -2,9 +2,9 @@
 
 namespace History;
 
-    if (!defined('APP_RAN')) {
-        die('Acesso não permitido.');
-    }
+if (!defined('APP_RAN')) {
+    die('Acesso não permitido.');
+}
 
 class History{
     private $conn;
@@ -15,7 +15,7 @@ class History{
         $this->conn = $db;
     }
 
-   // Cria
+    // Cria
     public function create(int $userId, string $description): bool
     {
         // Captura o endereço IP do utilizador, tal como a função antiga fazia.

@@ -1,18 +1,18 @@
-// /Public/JS/Core/syncController.js
-import {
-    getSyncQueue,
-    clearSyncQueue,
-    syncServerToIndexedDB,
-    obterHoraFormatada
-} from '../indexedDB/Model.js';
+// No ficheiro: /controle-de-ponto/Public/JS/Core/syncController.js (VERSÃO CORRIGIDA)
+
+import { getSyncQueue, clearSyncQueue, syncServerToIndexedDB, obterHoraFormatada} from '../indexedDB/Model.js';
+
 
 async function processSyncQueue() {
     const userToken = localStorage.getItem('userToken');
-    const activeUserId = parseInt(localStorage.getItem('activeUserId') || '0', 10);
-    if (!userToken || !activeUserId) return;
+    const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
+    if (!userToken || !activeUserId) { return; }
 
     const actions = await getSyncQueue();
-    if (!Array.isArray(actions) || actions.length === 0) {
+    // Se a fila estiver vazia, não há nada para enviar.
+    // Em produção, você pode querer adicionar uma lógica para sincronizar
+    // periodicamente mesmo com a fila vazia para buscar atualizações.
+    if (actions.length === 0) {
         console.log(`[${obterHoraFormatada()}] syncController: Fila de sincronização vazia.`);
         return;
     }
@@ -20,34 +20,48 @@ async function processSyncQueue() {
     console.log(`[${obterHoraFormatada()}] syncController: A enviar ${actions.length} ações para o servidor...`);
 
     try {
-        const resp = await fetch('/Public/Api/sync.php', {
+        const response = await fetch('/Public/Api/sync.php', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${userToken}`
-            },
-            body: JSON.stringify({ actions })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userToken, actions })
         });
 
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const result = await resp.json();
-        if (!result?.success) throw new Error(result?.message || 'Falha na sincronização');
+        if (!response.ok) throw new Error(`[${obterHoraFormatada()}] Erro do servidor: ${response.status}`);
 
-        // Limpa a fila local
-        await clearSyncQueue();
+        const result = await response.json();
 
-        // Baixa do servidor (perfil + pontos) para “voltar” tudo consistente
-        await syncServerToIndexedDB();
+        if (result.success) {
+            await clearSyncQueue();
 
-        console.log(`[${obterHoraFormatada()}] syncController: Fila sincronizada.`);
-    } catch (err) {
-        console.error(`[${obterHoraFormatada()}] syncController: Erro de rede ou JSON inválido ao tentar sincronizar fila:`, err);
+            // --- PROCESSAR OS DADOS DE "VOLTA" ---
+            if (result.userData) {
+                // A função upsertUser inteligente já preserva o hash offline
+                await upsertUser(result.userData);
+            }
+            if (result.pointControlData) {
+                await replaceUserPointControl(activeUserId, result.pointControlData);
+            }
+
+            alert("Suas ações offline foram sincronizadas com sucesso!");
+            window.location.reload(); // Recarrega para exibir os dados mais recentes
+        } else {
+            console.error(`[${obterHoraFormatada()}] A sincronização falhou:`, result.message);
+        }
+
+    } catch (error) {
+        console.error(`[${obterHoraFormatada()}] syncController: Erro de rede ou JSON inválido ao tentar sincronizar fila:`, error);
     }
 }
 
+/**
+ * Inicializa os listeners e o loop de sincronização.
+ */
 function initializeSyncController() {
     window.addEventListener('online', processSyncQueue);
-    if (navigator.onLine) processSyncQueue();
+
+    if (navigator.onLine) {
+        processSyncQueue();
+    }
 }
 
-export { initializeSyncController, processSyncQueue };
+export { initializeSyncController };
