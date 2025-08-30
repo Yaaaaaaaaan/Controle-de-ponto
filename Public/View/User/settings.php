@@ -160,26 +160,7 @@
                                         </div>
                                     </div>
                                     <hr class="my-4">
-                                    <?php
-                                        if($_POST){
-                                            echo $_SESSION['response'];
-                                            if (isset($_SESSION['response']) && strpos($_SESSION['response'], 'Alterações feitas com sucesso!') !== false){
-                                                echo "
-                                                        <script>
-                                                            // Força uma nova requisição para atualizar o localStorage
-                                                            document.addEventListener('DOMContentLoaded', function() {
-                                                                // Primeiro atualiza o localStorage
-                                                                processUserData().then(() => {
-                                                                    // Depois preenche os campos do formulário
-                                                                    updateUIElements();
-                                                                });
-                                                            });
-                                                        </script>
-                                                    ";
-                                            }
-                                            unset($_SESSION['response']);
-                                        }
-                                    ?>
+
                                 <form action="settings.php" id="formUserData" method="post" class="needs-validation" novalidate>
                                     <button name="submeter" value="submeter" class="w-100 btn-lg btn btn-success" type="submit">Submeter</button>
                                 </form>
@@ -228,25 +209,21 @@
                             </div>
                         </form>
 
-                        <!--<form method="post" id="profilePicForm">
-                            <div class="image-container">
-                                <?php foreach ($pictures as $picture) : ?>
-                                    <label class="image-radio-container">
-                                        <input type="radio" name="selectedPicture" value="<?= $picture['cod']; ?>">
-                                        <img src="<?= $picture['path']; ?>" class="d-block w-100" alt="Foto de Perfil">
-                                    </label>
-                                <?php endforeach; ?>
-                            </div>
-                            <text class="text-body-secondary">Essas são suas últimas três fotos adicionadas, Selecione uma.</text>
-                            <div class="d-flex justify-content-center mt-3">
-                                <button type="button" id="updateProfilePicBtn" class="btn btn-outline-primary w-100">Atualizar Foto de Perfil</button>
-                            </div>
-                        </form>-->
+
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+        <script type="module">
+            import { initSettingsController } from '/Public/JS/USR/settingsController.js';
+            import { initializeSyncController } from '/Public/JS/Core/syncController.js';
+
+            document.addEventListener('DOMContentLoaded', () => {
+                initSettingsController();
+                initializeSyncController();
+            });
+        </script>
     </body>
 </html>

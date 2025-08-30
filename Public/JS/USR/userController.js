@@ -1,41 +1,68 @@
 // No ficheiro: userController.js (VERSÃO REFATORADA)
 
-import { addActionToSyncQueue, addPointControlRecordToServer, syncServerToIndexedDB } from '../indexedDB/Model.js';
+import { addActionToSyncQueue, addPointControlRecordToServer, addPointControl, syncServerToIndexedDB } from '../indexedDB/Model.js';
 import { userDataPromise } from './userInterface.js'; // Importa a promessa
 
+async function handleOnlinePresence() {
+    console.log("Online: A confirmar presença diretamente no servidor...");
+    const success = await addPointControlRecordToServer("Verificação pendente");
+    if (success) {
+        alert('Presença confirmada com sucesso online!');
+        // Sincroniza os dados de "volta" para garantir que a UI é atualizada com todos os dados.
+        await syncServerToIndexedDB();
+        window.location.reload();
+    } else {
+        alert('Falha ao confirmar a presença online.');
+        // Opcional: Adicionar à fila de sincronização como um fallback se a API falhar.
+        const action = { type: 'CREATE_POINT', payload: { status: 'Verificação pendente' }, timestamp: new Date().toISOString() };
+        await addActionToSyncQueue(action);
+    }
+}
+
+async function handleOfflinePresence() {
+    console.log("Offline: A registar ponto localmente e a adicionar à fila de sincronização.");
+    const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
+    if (!activeUserId || isNaN(activeUserId)) {
+        alert("Erro: Sessão de utilizador inválida.");
+        return;
+    }
+    const status = "Verificação pendente";
+
+    // 1. Salva na 'pointControl' para que o utilizador veja a atualização na UI.
+    const newPointRecord = { userId: activeUserId, status, dateIn: new Date().toISOString().split('T')[0] };
+    await addPointControl(newPointRecord);
+
+    // 2. Salva na 'syncQueue' para ser enviado ao servidor mais tarde.
+    const action = { type: 'CREATE_POINT', payload: { status }, timestamp: new Date().toISOString() };
+    await addActionToSyncQueue(action);
+
+    alert('Você está offline. A sua presença foi registada.');
+    window.location.reload();
+}
+
+
+// --- 3. FUNÇÃO PRINCIPAL SIMPLIFICADA ---
 async function handleConfirmPresenceClick(event) {
     const button = event.currentTarget;
     button.disabled = true;
-    button.textContent = 'Enviando...';
+    button.textContent = 'A processar...';
 
     try {
         if (navigator.onLine) {
-            // Lógica ONLINE que estava no index.php
-            const success = await addPointControlRecordToServer("Verificação pendente");
-            if (success) {
-                alert('Presença confirmada com sucesso!');
-                await syncServerToIndexedDB(); // Atualiza os dados locais com os do servidor
-                window.location.reload(); // Recarrega para redesenhar o gráfico
-            } else {
-                alert('Falha ao confirmar a presença.');
-            }
+            await handleOnlinePresence();
         } else {
-            // Lógica OFFLINE que já estava aqui
-            const action = {
-                type: 'addPoint',
-                payload: { status: 'Verificação pendente' } // Use o mesmo status
-            };
-            await addActionToSyncQueue(action);
-            alert('Você está offline. Sua presença foi registrada e será sincronizada quando houver conexão.');
+            await handleOfflinePresence();
         }
     } catch (error) {
         console.error("Erro ao confirmar presença:", error);
         alert('Ocorreu um erro ao confirmar a presença.');
     } finally {
+        // Reverte o estado do botão independentemente do resultado.
         button.disabled = false;
         button.textContent = 'Confirmar Presença';
     }
 }
+
 
 async function handleLogout(event) {
     event.preventDefault();

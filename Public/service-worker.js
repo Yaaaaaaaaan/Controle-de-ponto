@@ -23,24 +23,24 @@ const urlsToCache = [
     //'/Public/View/Layout/menu_housekeep.php',
 
     //User/index;
-    //'/Public/View/User/index.php',
+    '/Public/View/User/index.php',
     '/Public/CSS/USR/dashboard.css',
     '/Public/JS/USR/indexDashboard.js',
 
     //User/settings;
-    //'/Public/View/User/settings.php',
+    '/Public/View/User/settings.php',
     '/Public/CSS/USR/handworking.css',
     '/Public/JS/USR/userController.js',
 
     //User/community;
-    //'/Public/View/User/community.php',
+    '/Public/View/User/community.php',
 
     //Housekeeping/index;
-    //'/Public/View/Housekeeping/index.php',
+    '/Public/View/Housekeeping/index.php',
     '/Public/JS/HKG/indexDashboard.js',
 
     //Housekeeping/users;
-    //'/Public/View/Housekeeping/users.php',
+    '/Public/View/Housekeeping/users.php',
 
     //Demais arquivos;
     '/Public/JS/script.js',
@@ -75,7 +75,7 @@ self.addEventListener('fetch', event => {
     // Isso corrige o erro com requisições POST para sync.php. O navegador
     // simplesmente tentará a requisição, que falhará se estiver offline (comportamento correto).
     if (event.request.method !== 'GET') {
-        console.log('SW: Ignorando requisição não-GET:', event.request.method, event.request.url);
+        //console.log('SW: Ignorando requisição não-GET:', event.request.method, event.request.url);
         return; // Deixa o navegador lidar com a requisição.
     }
 

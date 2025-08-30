@@ -1,102 +1,126 @@
 <?php
-//include_once '../../../App/Config/db.php';
-//include_once '../../../App/Model/pointControl.php';
-require_once __DIR__ . '/../Config/db.php';
-require_once __DIR__ . '/../Model/pointControl.php';
-
 if (!defined('APP_RAN')) {
     die('Acesso não permitido.');
 }
-class PointController{
-    private $db;
-    private $pointControl;
 
-    public function __construct(){
-        $database = new Database();
-        $this->db = $database->getConnection();
-        $this->pointControl = new PointControl($this->db);
-    }
+require_once __DIR__ . '/history.php';
 
-    public function insertPointControl($id, $status): array
+class PointControl
+{
+    private $conn;
+    private $tableNames = [
+        'usr' => 'usuarios',
+        'his' => 'historicos_acoes',
+        'reg' => 'registros_ponto'
+    ];
+
+    public function __construct($db)
     {
-        if (empty($id) || !isset($status)) {
-            return ['success' => false, 'message' => 'Dados inválidos.'];
-        }
-
-        if ($this->pointControl->insertPointControl($id, $status)) {
-            return ['success' => true, 'message' => 'Presença confirmada com sucesso.'];
-        } else {
-            // Se o Model retornou false, a causa mais provável é o registro duplicado.
-            return ['success' => false, 'message' => 'O ponto para hoje já foi registrado.'];
-        }
+        $this->conn = $db;
     }
 
-    public function getPointControl($id): array {
-        return $this->pointControl->getPointControl($id);
-    }
+    /**
+     * Cria um novo registo de ponto.
+     * @param int $userId O ID do utilizador.
+     * @param string $status O status do registo.
+     * @param string|null $date A data do registo (formato Y-m-d). Se for nulo, usa a data atual.
+     * @return bool Retorna true em caso de sucesso, false caso contrário.
+     */
+    public function insertPointControl(int $userId, string $status, ?string $date = null): bool
+    {
+        // CORRIGIDO: A data agora é tratada corretamente.
+        $data_registro = $date ?? date('Y-m-d');
 
-    public function getPointControlUsers(): array{
+        // CORRIGIDO: O nome da tabela agora é o correto do array.
+        $query = "INSERT INTO {$this->tableNames['reg']} (id_usuario, data_registro, status) 
+                  VALUES (:id_usuario, :data_registro, :status)
+                  ON DUPLICATE KEY UPDATE status = VALUES(status)";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id_usuario', $userId);
+        $stmt->bindParam(':data_registro', $data_registro);
+        $stmt->bindParam(':status', $status);
+
         try {
-            $resultados = $this->pointControl->getPointControlUsersData();
-
-            $labels = [];
-            $dataPoints = [];
-            $detalhes = [];
-
-            foreach ($resultados as $row) {
-                $labels[] = $row['description'];
-                $dataPoints[] = (int)$row['count'];
-                $detalhes[$row['description']] = json_decode('[' . $row['detalhes'] . ']', true);
+            if ($stmt->execute()) {
+                // Se o ponto foi inserido, cria o registo de histórico.
+                try {
+                    $historyModel = new History($this->conn);
+                    $historyDescription = "Registo de ponto criado com status: '{$status}' para a data {$data_registro}";
+                    $historyModel->create($userId, $historyDescription);
+                } catch (Exception $e) {
+                    error_log("Falha ao criar entrada de histórico em PointControl->insertPointControl(): " . $e->getMessage());
+                }
+                return true;
             }
+        } catch (PDOException $e) {
+            error_log("Erro em PointControl->insertPointControl(): " . $e->getMessage());
+        }
 
-            return [
-                'labels' => $labels,
-                'dataPoints' => $dataPoints,
-                'detalhes' => $detalhes
-            ];
+        return false;
+    }
 
-        } catch (Exception $e) {
-            error_log("Erro no controller ao processar dados: " . $e->getMessage());
-            return [
-                'labels' => [],
-                'dataPoints' => [],
-                'detalhes' => []
-            ];
+    /**
+     * Busca todos os registos de ponto de um utilizador.
+     * @param int $userId
+     * @return array
+     */
+    public function getByUserId(int $userId): array {
+        // CORRIGIDO: Renomeado de getPointControl para getByUserId para padronização.
+        $query = "SELECT registro_id as cod, id_usuario as userId, data_registro as dateIn, status 
+                  FROM {$this->tableNames['reg']} 
+                  WHERE id_usuario = :id_usuario 
+                  ORDER BY data_registro ASC";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id_usuario', $userId);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getPointControlUsersData(): array
+    {
+        try{
+            // CORRIGIDO: Adicionado espaço em branco antes do alias 'u'.
+            $query = "SELECT 
+                p.status,
+                COUNT(*) as count,
+                GROUP_CONCAT(
+                    JSON_OBJECT(
+                        'cod', p.registro_id,
+                        'data', DATE_FORMAT(p.data_registro, '%d/%m/%Y'),
+                        'nome', u.nome_completo,
+                        'status', p.status,
+                        'id', p.id_usuario
+                    )
+                ) as detalhes
+                FROM {$this->tableNames['reg']} p
+                INNER JOIN {$this->tableNames['usr']} u ON p.id_usuario = u.id_usuario
+                WHERE p.data_registro >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
+                GROUP BY p.status
+                ORDER BY count DESC";
+
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        } catch (PDOException $e) {
+            error_log("Erro na query getPointControlUsersData: " . $e->getMessage());
+            return [];
         }
     }
 
-    public function validatePresence($userId, $userIdToValidate, $description, $code){ //Tudo aqui é transformação
-        $currentDate = date("Y-m-d");
-        $descriptionToValidate = "Já verificado";
-        $this->user->validatePresence($userId);
-        $this->user->validatePresence($userIdToValidate);
-        $this->user->validatePresence($description);
-        $this->user->validatePresence($code);
-        $this->user->validatePresence($currentDate);
-        $this->user->validatePresence($descriptionToValidate);
+    public function updatePresenceHousekeeping($userIdToValidate, $code, $description) {
+        // CORRIGIDO: Nomes das colunas atualizados (id_usuario, registro_id)
+        $query = "UPDATE {$this->tableNames['reg']} SET status = :description
+                    WHERE id_usuario = :userIdToValidate AND registro_id = :code";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':description', $description);
+        $stmt->bindParam(':userIdToValidate', $userIdToValidate);
+        $stmt->bindParam(':code', $code);
 
-
-        return true;
-    }
-
-    public function updatePresenceHousekeeping($userIdToValidate, $code, $description){
-        if ($description == 1) {
-            $descriptionTranslated = "Verificação pendente";
-        } else if ($description == 2) {
-            $descriptionTranslated = "Já verificado";
-        } else if ($description == 3) {
-            $descriptionTranslated = "Recusado";
-        } else {
-            error_log("Valor inválido para descrição: " . $description);
-            return false;
-        }
-        $result = $this->pointControl->updatePresenceHousekeeping($userIdToValidate, $code, $descriptionTranslated);
-        if ($result) {
-            echo "200 OK.";
-        } else {
-            echo "400 Bad Request.";
-        }
-        return $result;
+        return $stmt->execute();
     }
 }
 ?>

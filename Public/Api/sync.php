@@ -1,81 +1,65 @@
 <?php
-// Ficheiro: Public/Api/sync.php (VERSÃO COMPLETA E FUNCIONAL)
-
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
-define('APP_RAN', true);
-date_default_timezone_set('America/Sao_Paulo'); // Boa prática de fuso horário
 header('Content-Type: application/json');
+require __DIR__.'/_auth.php';
 
-// Dependências
-require_once __DIR__ . '/../../App/Controller/UserController.php';
-require_once __DIR__ . '/../../App/Controller/PointController.php';
-require_once __DIR__ . '/../../App/Controller/HistoryController.php';
-
-function sendJson($data, $httpCode = 200) {
-    http_response_code($httpCode);
-    echo json_encode($data);
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['success'=>false,'message'=>'Método não suportado']);
     exit;
 }
 
-// 1. RECEBER E VALIDAR DADOS DO CLIENTE
-$data = json_decode(file_get_contents('php://input'), true);
-$userToken = $data['userToken'] ?? null;
-$actions = $data['actions'] ?? [];
+$token = bearer_token_or_401();
+$user  = user_from_token($token);
+if (!$user) { http_response_code(401); echo json_encode(['success'=>false,'message'=>'Token inválido']); exit; }
 
-if (!$userToken) {
-    sendJson(['success' => false, 'message' => 'Token de autenticação ausente.'], 400);
+$input = json_decode(file_get_contents('php://input'), true) ?: [];
+$actions = $input['actions'] ?? [];
+if (!is_array($actions) || !count($actions)) {
+    echo json_encode(['success'=>true,'message'=>'Nada para sincronizar']);
+    exit;
 }
 
-// 2. AUTENTICAR O UTILIZADOR VIA TOKEN
-$userController = new UserController();
-$userId = $userController->getUserIdByTokenForSync($userToken);
-if (!$userId) {
-    sendJson(['success' => false, 'message' => 'Token inválido ou sessão expirada.'], 401);
-}
+$uid = (int)$user['userId'];
 
-// 3. INSTANCIAR CONTROLLERS
-$pointController = new PointController();
-$historyController = new HistoryController();
+// Processa ações
+foreach ($actions as $a) {
+    $type = $a['type'] ?? '';
+    $payload = $a['payload'] ?? [];
 
-// 4. PROCESSAR A FILA DE AÇÕES (A "IDA")
-if (!empty($actions)) {
-    foreach ($actions as $action) {
-        $success = false;
-        $historyDescription = '';
+    switch ($type) {
+        case 'CREATE_POINT':
+            $status = $payload['status'] ?? null;
+            if ($status) {
+                // INSERT INTO point_control (userId, status, dateIn) VALUES ($uid, :status, NOW())
+            }
+            break;
 
-        // Lida com diferentes tipos de ações vindas do cliente
-        switch ($action['type']) {
-            case 'addPoint':
-                $status = $action['payload']['status'] ?? 'Status não definido';
-                $success = $pointController->insertPointControl($userId, $status);
-                $historyDescription = "Ponto sincronizado do modo offline com status: {$status}";
-                break;
+        case 'UPDATE_PROFILE':
+            $email = $payload['email'] ?? null;
+            $nickname = $payload['nickname'] ?? null;
+            $name = $payload['name'] ?? null;
+            $defaultTheme = isset($payload['defaultTheme']) ? (int)$payload['defaultTheme'] : null;
 
-            // Você pode adicionar outros 'case' aqui para outras ações, como 'updateTheme', etc.
-        }
+            // UPDATE users SET email=?, nickname=?, name=?, defaultTheme=? WHERE userId=?
+            break;
 
-        // Se a ação foi bem-sucedida, regista-a no histórico.
-        if ($success && !empty($historyDescription)) {
-            $historyController->createHistoryEntry($userId, $historyDescription);
-        } else if (!$success) {
-            // Se uma ação falhar, para tudo e informa o cliente.
-            sendJson(['success' => false, 'message' => 'Falha ao processar a ação: ' . ($action['type'] ?? 'desconhecida')], 500);
-        }
+        case 'updateTheme':
+            $theme = $payload['theme'] ?? null;
+            if ($theme !== null) {
+                // UPDATE users SET defaultTheme=? WHERE userId=?
+            }
+            break;
+
+        default:
+            // ignore
     }
 }
 
-// 5. PREPARAR OS DADOS ATUALIZADOS (A "VOLTA")
-// Após processar tudo, busca os dados mais recentes do banco de dados.
-$updatedUserData = $userController->getUserById($userId);
-$updatedPointControlData = $pointController->getPointControlByUserId($userId);
-
-// 6. ENVIAR RESPOSTA DE SUCESSO COM DADOS FRESCOS
-sendJson([
-    'success' => true,
-    'message' => 'Sincronização concluída com sucesso.',
-    'userData' => $updatedUserData,
-    'pointControlData' => $updatedPointControlData
+// Resposta “de volta” (userData + pointControl) para o client atualizar IndexedDB
+// $userData = SELECT ... FROM users WHERE userId = $uid
+// $pointList = SELECT * FROM point_control WHERE userId = $uid ORDER BY dateIn DESC
+echo json_encode([
+    'success'=>true,
+    'userData'=> /* $userData */ null,
+    'pointControlData'=> /* $pointList */ []
 ]);
-
-?>

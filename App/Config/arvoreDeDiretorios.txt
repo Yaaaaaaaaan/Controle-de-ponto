@@ -134,7 +134,7 @@ Controle-de-Ponto/
 
 
  -------------------------- ------------------ -----------------           # Diagrama da lógica implementada em IndexDB
-PCDB/                                                                       # Nome do Banco de Dados no IndexedDB
+PCDB/                                         # Nome do Banco de Dados no IndexedDB
 ├── Object Store: userData
 │   ├── Chave Primária: 'nickname'
 │   └── Índices:
@@ -155,5 +155,9 @@ PCDB/                                                                       # No
 │
 └── Object Store: syncQueue
     ├── Chave Primária: 'id' (com auto-incremento)
+    ├── Dados:
+    │   ├── type (string, ex: 'CREATE_POINT')
+    │   ├── payload (objeto, ex: { status: '...' })
+    │   └── timestamp (string/data)
     └── Índices:
         └── timestamp (no campo 'timestamp')

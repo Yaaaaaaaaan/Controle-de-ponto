@@ -587,37 +587,59 @@ async function storeAuthData(userData, tokenData, offlinePasswordHash) {
  */
 async function addPointControlRecordToServer(status) {
     try {
-        // Validar se o status foi fornecido
         if (typeof status === 'undefined') {
             console.error(`[${obterHoraFormatada()}] Erro ao bater o ponto: o status não foi especificado.`);
             return false;
         }
 
-        // Verificar se estamos online
         if (!navigator.onLine) {
-            console.log(`[${obterHoraFormatada()}] Dispositivo offline. Ação de bater o ponto será sincronizada depois.`);
-            // Aqui você poderia salvar a tentativa em uma fila no IndexedDB para sincronizar depois.
+            console.log(`[${obterHoraFormatada()}] Dispositivo offline. Ação será adicionada à fila de sincronização.`);
+            // Esta função só deve ser chamada online, a lógica offline está no userController.js
             return false;
         }
 
-        console.log(`[${obterHoraFormatada()}] Enviando registro de ponto para o servidor com status: ${status}`);
+        // --- INÍCIO DA MUDANÇA ---
 
-        // AQUI ESTÁ A OPÇÃO 3!
-        const response = await fetch('../../Api/pointControl.php', {
+        // 1. Obter o token de autenticação do localStorage.
+        const userToken = localStorage.getItem('userToken');
+
+        // 2. Se não houver token, a requisição não pode ser autenticada.
+        if (!userToken) {
+            console.error(`[${obterHoraFormatada()}] Erro ao bater o ponto: Token de utilizador não encontrado.`);
+            alert("Sessão inválida. Por favor, faça o login novamente.");
+            return false;
+        }
+
+        // --- FIM DA MUDANÇA ---
+
+        console.log(`[${obterHoraFormatada()}] Enviando registo de ponto para o servidor com status: ${status}`);
+
+        // O caminho da API foi corrigido para ser absoluto, como nas outras chamadas.
+        const response = await fetch('/Public/Api/pointControl.php', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                // 3. Adiciona o cabeçalho 'Authorization' com o token.
+                // O formato "Bearer <token>" é um padrão de mercado.
+                'Authorization': `Bearer ${userToken}`
+            },
+            // O corpo da requisição agora envia apenas o que o PHP espera.
             body: JSON.stringify({
-                action: 'addRecord', // Informa ao PHP exatamente o que fazer
-                status: status       // Envia o status do ponto
+                status: status
             })
         });
+
+        if (!response.ok) {
+            // Se a resposta for 401 (Não Autorizado) ou outro erro, trata aqui.
+            console.error(`[${obterHoraFormatada()}] Erro do servidor ao bater o ponto:`, response.status, response.statusText);
+            alert('Falha na autenticação ao registar o ponto. A sua sessão pode ter expirado.');
+            return false;
+        }
 
         const data = await response.json();
 
         if (data.success) {
             console.log(`[${obterHoraFormatada()}] Ponto batido com sucesso no servidor!`);
-            // Após o sucesso, você pode querer atualizar os dados locais
-            // chamando a função que busca os dados de ponto novamente.
             return true;
         } else {
             console.error(`[${obterHoraFormatada()}] Erro ao bater o ponto no servidor:`, data.message);
