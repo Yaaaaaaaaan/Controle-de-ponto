@@ -22,7 +22,7 @@
         <script>
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function() {
-                    navigator.serviceWorker.register('/controle-de-ponto/Public/service-worker.js')  // Ajuste o caminho se necessário
+                    navigator.serviceWorker.register('/Public/service-worker.js')  // Ajuste o caminho se necessário
                         .then(function(registration) {
                             console.log('Service Worker registrado com sucesso:', registration.scope);
                         })
@@ -32,7 +32,6 @@
                 });
             }
         </script>
-        <!--<script type="module" src="../../JS/localStorage.js"></script>-->
       </head>
         <body>       
             <nav class="navbar navbar-dark bg-dark fixed-top">

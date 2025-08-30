@@ -1,7 +1,6 @@
 <?php
 define('APP_RAN', true);
 require "../Layout/menu.php";
-// include_once __DIR__ . '/../../../App/controller/pointController.php'; // Este include não parece ser necessário aqui
 ?>
 
 <html>
@@ -28,6 +27,7 @@ require "../Layout/menu.php";
                         <div id="responseNickname" class="user-nickname">@nickname</div>
                         <div id="responseEmail" class="user-email">usuario@email.com</div>
                         <button type="button" id="confirmPresenceBtn" class="btn btn-success badge-action-btn">Confirmar Presença</button>
+                        <p id="responseAction" class="text-center mt-2"></p>
                     </div>
 
                     <div id="detailCard" class="detailCard mt-5">

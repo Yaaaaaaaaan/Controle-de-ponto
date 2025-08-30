@@ -1,71 +1,6 @@
 <?php
     define('APP_RAN', true);
     require '../layout/menu.php';
-
-    // TODO: OTIMIZAR A VERIFICAÇÃO DE LOGIN, REMOVER A SESSION ID E PASSAR A USAR A SESSION USERDATA.
-    if ($_POST) {
-        include_once '../../../App/controller/UserController.php';
-        $userController = new UserController();
-
-        // Verifica se há uma solicitação de histórico de usuário
-        if (isset($_POST['registro'])) {
-            $userHistory = $userController->showUserHistory($_POST['registro']);
-        }
-        // Verifica se o botão de salvar foi clicado
-        if (isset($_POST['salvar']) && $_POST['salvar'] === 'salvar') {
-            if (isset($_FILES['userPicture']) && $_FILES['userPicture']['error'] !== UPLOAD_ERR_NO_FILE) {
-                $userController->insertUserProfilePicture($_FILES['userPicture']);
-                $_SESSION['userData_updated'] = true;
-            }
-        }
-
-        // Verifica se uma imagem existente foi selecionada
-        if (isset($_POST['selectedPicture'])) {
-            $userController->updateProfilePicture($_POST['selectedPicture']);
-            $_SESSION['userData_updated'] = true;
-        }
-
-        // Configuração do tema padrão
-        $defaultTheme = isset($_POST['defaultTheme']) ? 1 : 0;
-
-        // Verifica se existem os campos necessários para atualizar o usuário
-        if (isset($_POST['name']) && isset($_POST['email']) && isset($_POST['nickname'])) {
-            // Processa os campos de senha apenas se todos estiverem preenchidos
-            $oldPassword = '';
-            $newPassword = '';
-            $confirmPassword = '';
-
-            if (!empty($_POST['oldPassword']) && !empty($_POST['newPassword']) && !empty($_POST['confirmPassword'])) {
-                $oldPassword = $_POST['oldPassword'];
-                $newPassword = $_POST['newPassword'];
-                $confirmPassword = $_POST['confirmPassword'];
-            }
-
-            $updateSuccess = $userController->updateUser(
-                $_POST['name'],
-                $_SESSION['id'],
-                $_POST['email'],
-                $_POST['nickname'],
-                $oldPassword,
-                $newPassword,
-                $confirmPassword,
-                $defaultTheme
-            );
-
-            $_SESSION['userData_updated'] = true;
-        }
-    }
-
-    // Carrega as imagens do usuário para a interface
-    include_once '../../../App/controller/pictureController.php';
-    $controller = new pictureController();
-    $pictures = $controller->getUserPictures();
-
-    /*echo '<pre>';
-    var_dump($_SESSION['userData']); // Verifica a string JSON armazenada
-    echo '</pre>';*/
-
-
 ?>
 
 <html>
@@ -74,7 +9,7 @@
     </head>
     <body>
         <div class="container">
-            <main>
+            <main class="mt-5">
                 <div data-bs-spy="scroll" data-bs-target="#navbar-example2"  data-bs-smooth-scroll="true" tabindex="0">
                     <div class="py-4 text-center mt-2 pt-2">
                         <h2 class="mt-4">Configurações</h2>

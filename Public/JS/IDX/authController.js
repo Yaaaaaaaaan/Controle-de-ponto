@@ -8,38 +8,34 @@ import { getUserByNickname, storeAuthData, isTokenValid, getUserTokenByUserId } 
 async function handleOnlineLogin(nickname, password) {
     console.log("Modo Online: Tentando autenticar via API...");
     try {
-        const response = await fetch('/controle-de-ponto/Public/Api/auth.php', {
+        const response = await fetch('/Public/Api/auth.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nickname, password })
         });
 
         if (!response.ok) {
-            throw new Error(`Falha na resposta do servidor: ${response.statusText}`);
+            throw new Error(`Falha na resposta do servidor: ${response.status}`);
         }
 
         const result = await response.json();
 
         if (result.success && result.session) {
-            const userDataFromServer = result.session;
+            // --- AQUI ESTÁ A MUDANÇA ---
+            // Desestruturamos a resposta para obter os objetos já separados pelo back-end
+            const { userData, tokenData } = result.session;
 
+            // 1. Lógica de SESSÃO (localStorage)
+            localStorage.setItem('activeUserId', userData.userId);
+            localStorage.setItem('userToken', tokenData.userToken);
 
-            // 1. LÓGICA DE SESSÃO (localStorage - dados voláteis)
-            // Gerenciando o que é chamado de 'sessionData'.
-            localStorage.setItem('activeUserId', userDataFromServer.userId);
-            localStorage.setItem('userToken', userDataFromServer.userToken);
-
-            // 2. LÓGICA DE DADOS SEMI-PERSISTENTES (IndexedDB - para offline)
-            // Prepara o objeto 'userData' completo para ser salvo no IndexedDB.
+            // 2. LÓGICA DE DADOS SEMI-PERSISTENTES (IndexedDB)
             const offlinePasswordHash = await hashPassword(password);
 
-            // Chama a função do Model para salvar o 'userData' completo.
-            // Passa o objeto que veio do servidor e o hash gerado.
-            await storeAuthData(userDataFromServer, offlinePasswordHash);
+            // 3. Passamos os objetos já separados para o Model.
+            await storeAuthData(userData, tokenData, offlinePasswordHash);
 
-            // 3. REDIRECIONAMENTO
             window.location.href = "../User/index.php";
-
         } else {
             alert(result.message || "Falha na autenticação.");
         }
@@ -48,6 +44,7 @@ async function handleOnlineLogin(nickname, password) {
         await handleOfflineLogin(nickname, password);
     }
 }
+
 
 // --- FUNÇÃO DE LOGIN OFFLINE ---
 // Valida as credenciais do usuário contra os dados salvos localmente no IndexedDB.

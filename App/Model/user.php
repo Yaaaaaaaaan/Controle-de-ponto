@@ -1,10 +1,13 @@
 <?php
 
-use Random\RandomException;
+
 
 if (!defined('APP_RAN')) {
   die('Acesso não permitido');
 }
+
+require_once __DIR__ . '/History.php';
+use History\History;
 
 #[AllowDynamicProperties] class User{
     private $conn;
@@ -103,7 +106,7 @@ if (!defined('APP_RAN')) {
             // --- FIM DA LÓGICA DO TOKEN ---
 
             $this->conn->commit(); // Confirma todas as operações (usuário, album, foto e token)
-            $this->createUserHistory('Criação de conta', $newUserId);
+            $this->createUserHistory('Criação de conta: ', $newUserId);
             return true;
 
         } catch (Exception $e) {
@@ -124,29 +127,99 @@ if (!defined('APP_RAN')) {
     public function authenticateUser(): ?array
     {
         try {
-
             $userId = $this->verifyCredentials();
             if (!$userId) return null;
 
-            $fullUserData = $this->getUserById($userId);
+            // 1. Busca os dados já separados (userData e tokenData)
+            $structuredData = $this->getUserById($userId);
+            if (!$structuredData) return null;
 
+            // 2. Extrai os objetos para variáveis locais para maior clareza
+            $profileData = $structuredData['userData'];
+            $tokenDataFromQuery = $structuredData['tokenData'];
 
-            if (!$fullUserData) return null;
+            // 3. A função manageUserToken agora recebe apenas os dados do token, como esperado.
+            $finalTokenData = $this->manageUserToken($userId, $tokenDataFromQuery);
 
-            $tokenData = $this->manageUserToken($userId, $fullUserData);
-
-            // Monta o objeto final
-            $finalResponseData = array_merge($fullUserData, $tokenData);
-
-            // Popula a sessão (ainda útil para partes do PHP que usam a sessão)
-            $this->populateSession($userId, $fullUserData, $tokenData);
+            // 4. Popula a sessão com os dados corretos e separados.
+            $this->populateSession($userId, $profileData, $finalTokenData);
             $this->createUserHistory('Login bem-sucedido', $userId);
 
-            // RETORNA O OBJETO COMPLETO
-            return $finalResponseData;
+            // 5. Retorna a estrutura aninhada final para o front-end.
+            return [
+                'userData' => $profileData,
+                'tokenData' => $finalTokenData
+            ];
 
         } catch (Exception $e) {
             error_log("Erro no fluxo de autenticação: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    private function manageUserToken(int $userId, array $tokenDataFromQuery): array
+    {
+        $existingToken = $tokenDataFromQuery['userToken'] ?? null;
+        $tokenExpiryStr = $tokenDataFromQuery['tokenExpiry'] ?? null;
+        $tokenCreationStr = $tokenDataFromQuery['tokenDate'] ?? null;
+        $tokenExpiry = $tokenExpiryStr ? new DateTime($tokenExpiryStr) : null;
+        $now = new DateTime();
+
+        $isExpired = $tokenExpiry ? $tokenExpiry < $now : true;
+
+        if (!$existingToken || !$tokenExpiry || $isExpired) {
+            // A sua lógica de criar um novo token está correta e pode continuar a mesma...
+            $userToken = bin2hex(random_bytes(32));
+            $nowForDb = $now->format('Y-m-d H:i:s');
+            $newExpiryDate = (clone $now)->add(new DateInterval('P7D'))->format('Y-m-d H:i:s');
+
+            $tokenQuery = "INSERT INTO {$this->tableNames['tok']} (id_usuario, token, data_expiracao, data_criacao)
+                   VALUES (:id, :token, :expiry, :created)
+                   ON DUPLICATE KEY UPDATE token = VALUES(token), data_expiracao = VALUES(data_expiracao)";
+
+            $tokenStmt = $this->conn->prepare($tokenQuery);
+            $tokenStmt->execute([':id' => $userId, ':token' => $userToken, ':expiry' => $newExpiryDate, ':created' => $nowForDb]);
+
+            return ['userToken' => $userToken, 'tokenDate' => $nowForDb, 'tokenExpiry' => $newExpiryDate];
+        }
+
+        // Se o token for válido, retorna os dados existentes.
+        return ['userToken' => $existingToken, 'tokenDate' => $tokenCreationStr, 'tokenExpiry' => $tokenExpiryStr];
+    }
+
+    // A sua função getUserById que já está correta (não a altere)
+    public function getUserById(int $userId): ?array
+    {
+        $query = "SELECT u.id_usuario, u.nome_completo, u.nome_usuario, u.nivel_acesso, u.email, u.tema_padrao,
+                     f.nome_foto,
+                     t.token AS userToken, t.data_criacao AS tokenDate, t.data_expiracao AS tokenExpiry
+              FROM {$this->tableNames['usr']} u
+              LEFT JOIN {$this->tableNames['fot']} f ON u.id_usuario = f.id_usuario AND f.perfil = 1
+              LEFT JOIN {$this->tableNames['tok']} t ON u.id_usuario = t.id_usuario
+              LEFT JOIN {$this->tableNames['alb']} a ON f.album_id = a.album_id AND a.tipo_album = 1
+              WHERE u.id_usuario = :userId";
+        try {
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':userId', $userId, PDO::PARAM_INT);
+            $stmt->execute();
+
+            if ($stmt->rowCount() > 0) {
+                $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                $profileData = [
+                    'userId'      => (int)$row['id_usuario'], 'name' => $row['nome_completo'],
+                    'email'       => $row['email'], 'rank' => (int)$row['nivel_acesso'],
+                    'nickname'    => $row['nome_usuario'], 'theme' => (int)$row['tema_padrao'],
+                    'profileUser' => $row['nome_foto'],
+                ];
+                $tokenData = [
+                    'userToken'   => $row['userToken'], 'tokenDate'   => $row['tokenDate'],
+                    'tokenExpiry' => $row['tokenExpiry'],
+                ];
+                return ['userData' => $profileData, 'tokenData' => $tokenData];
+            }
+            return null;
+        } catch (PDOException $e) {
+            error_log("Erro em User->getUserById: " . $e->getMessage());
             return null;
         }
     }
@@ -178,45 +251,7 @@ if (!defined('APP_RAN')) {
      * @param array $userDataFromQuery Dados já buscados, incluindo token e data de expiração.
      * @return array Dados do token.
      */
-    private function manageUserToken(int $userId, array $userDataFromQuery): array
-    {
-        $existingToken = $userDataFromQuery['userToken'] ?? null;
-        $tokenExpiryStr = $userDataFromQuery['tokenExpiry'] ?? null;
-        $tokenCreationStr = $userDataFromQuery['tokenDate'] ?? null;
-        $tokenExpiry = $tokenExpiryStr ? new DateTime($tokenExpiryStr) : null;
-        $now = new DateTime();
 
-        $isExpired = $tokenExpiry ? $tokenExpiry < $now : true;
-
-        if (!$existingToken || !$tokenExpiry || $isExpired) {
-            // LOG ADICIONADO PARA DEPURAÇÃO
-            $reason = ". Motivo: " .
-                (!$existingToken ? 'Token não existia. ' : '') .
-                (!$tokenExpiry ? 'Data de expiração não existia. ' : '') .
-                ($isExpired ? 'Token expirado em ' . ($tokenExpiry ? $tokenExpiry->format('Y-m-d H:i:s') : 'N/A') . '. ' : '');
-            error_log("DECISÃO: Gerando NOVO token para usuário ID {$userId}{$reason}");
-
-            $userToken = bin2hex(random_bytes(32));
-            $nowForDb = $now->format('Y-m-d H:i:s');
-            $newExpiryDate = (clone $now)->add(new DateInterval('P7D'))->format('Y-m-d H:i:s');
-
-            // (O resto da lógica de INSERT/UPDATE continua o mesmo)
-            $tokenQuery = "INSERT INTO {$this->tableNames['tok']} (id_usuario, token, data_expiracao, data_criacao)
-                   VALUES (:id, :token, :expiry, :created)
-                   ON DUPLICATE KEY UPDATE token = VALUES(token), data_expiracao = VALUES(data_expiracao)";
-
-            $tokenStmt = $this->conn->prepare($tokenQuery);
-            $tokenStmt->execute([
-                ':id' => $userId, ':token' => $userToken, ':expiry' => $newExpiryDate, ':created' => $nowForDb
-            ]);
-
-            return ['userToken' => $userToken, 'tokenDate' => $nowForDb, 'tokenExpiry' => $newExpiryDate];
-        }
-
-        // LOG ADICIONADO PARA DEPURAÇÃO
-        error_log("DECISÃO: Reutilizando token existente para usuário ID {$userId}. Expira em: " . $tokenExpiry->format('Y-m-d H:i:s'));
-        return ['userToken' => $existingToken, 'tokenDate' => $tokenCreationStr, 'tokenExpiry' => $tokenExpiryStr];
-    }
 
     /**
      * [HELPER PRIVADO] Preenche as variáveis de sessão.
@@ -348,24 +383,13 @@ if (!defined('APP_RAN')) {
         return false;
     }
 
-    public function createUserHistory($description, $userId): bool{
-        try{
-            $ip = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'];
-            $queryInsert = "INSERT INTO {$this->tableNames['his']} (descricao, id_usuario) VALUES (:description, :id)";
-            $stmtHistory = $this->conn->prepare($queryInsert);
-            $newDescription = $description . "Endereço IP: " . $ip;
-            $stmtHistory->bindValue(':description', $newDescription);
-            $stmtHistory->bindParam(':id', $userId);
-            $result = $stmtHistory->execute();
-
-            if (!$result) {
-                error_log("Erro ao inserir no histórico: " . print_r($stmtHistory->errorInfo(), true));
-                return false;
-            }
-            return true;
-
-        }catch (PDOException $e) {
-            error_log("Erro PDO ao inserir no histórico: " . $e->getMessage());
+    public function createUserHistory($description, $userId): bool {
+        try {
+            // Delega a responsabilidade para o Model de Histórico
+            $historyModel = new History($this->conn);
+            return $historyModel->create($userId, $description);
+        } catch (Exception $e) {
+            error_log("Erro ao delegar criação de histórico a partir do User->createUserHistory: " . $e->getMessage());
             return false;
         }
     }
@@ -589,46 +613,6 @@ if (!defined('APP_RAN')) {
         } catch (PDOException $e) {
             error_log("Model/User.php - updateTheme: Erro PDO - " . $e->getMessage());
             return false;
-        }
-    }
-    public function getUserById(int $userId): ?array
-    {
-        // Query que une as tabelas para pegar todos os dados necessários
-        $query = "SELECT u.id_usuario, u.nome_completo, u.nome_usuario, u.nivel_acesso, u.email, u.tema_padrao,
-                     f.nome_foto,
-                     t.token AS userToken, t.data_criacao AS tokenDate, t.data_expiracao
-              FROM {$this->tableNames['usr']} u
-              LEFT JOIN {$this->tableNames['fot']} f ON u.id_usuario = f.id_usuario AND f.perfil = 1
-              LEFT JOIN {$this->tableNames['tok']} t ON u.id_usuario = t.id_usuario
-              LEFT JOIN {$this->tableNames['alb']} a ON f.album_id = a.album_id AND a.tipo_album = 1
-              WHERE u.id_usuario = :userId";
-
-        try {
-            $stmt = $this->conn->prepare($query);
-            $stmt->bindParam(':userId', $userId, PDO::PARAM_INT);
-            $stmt->execute();
-
-            if ($stmt->rowCount() > 0) {
-                $row = $stmt->fetch(PDO::FETCH_ASSOC);
-                // Formata os dados para o padrão que o JavaScript espera
-                return [
-                    'userId' => (int)$row['id_usuario'],
-                    'name' => $row['nome_completo'],
-                    'email' => $row['email'],
-                    'rank' => (int)$row['nivel_acesso'],
-                    'nickname' => $row['nome_usuario'],
-                    'theme' => (int)$row['tema_padrao'],
-                    'profileUser' => $row['nome_foto'],
-                    'userToken' => $row['userToken'],
-                    'tokenDate' => $row['tokenDate'],
-                    'tokenExpiry' => $row['data_expiracao']
-                ];
-            }
-            return null;
-
-        } catch (PDOException $e) {
-            error_log("Erro em User->getUserById: " . $e->getMessage());
-            return null;
         }
     }
 

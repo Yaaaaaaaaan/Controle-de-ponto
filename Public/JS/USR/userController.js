@@ -43,10 +43,40 @@ async function handleLogout(event) {
         localStorage.removeItem('activeUserId');
         localStorage.removeItem('userToken');
         if (navigator.onLine) {
-            await fetch('/controle-de-ponto/Public/Api/logout.php');
+            await fetch('/Public/Api/logout.php');
         }
     } finally {
-        window.location.href = '/controle-de-ponto/Public/View/Index/';
+        window.location.href = '/Public/View/Index/';
+    }
+}
+
+async function handleThemeChange(newTheme) {
+    if (navigator.onLine) {
+        // Lógica online: Tenta atualizar diretamente no servidor
+        const success = await syncThemeToServer(newTheme); // Uma nova função que fala com a API
+        if (success) {
+            // Se funcionou, atualiza o IndexedDB localmente
+            const activeUserId = localStorage.getItem('activeUserId');
+            const user = await getUserById(parseInt(activeUserId, 10));
+            user.theme = newTheme;
+            await upsertUser(user);
+        }
+    } else {
+        // Lógica OFFLINE: Adiciona a ação à fila
+        console.log("Offline. Ação de mudança de tema adicionada à fila de sincronização.");
+        const action = {
+            type: 'updateTheme', // Um novo tipo de ação
+            payload: { theme: newTheme },
+            timestamp: new Date()
+        };
+        await addActionToSyncQueue(action);
+
+        // Atualiza a UI imediatamente para o utilizador ver a mudança
+        const activeUserId = localStorage.getItem('activeUserId');
+        const user = await getUserById(parseInt(activeUserId, 10));
+        user.theme = newTheme;
+        await upsertUser(user);
+        alert("Você está offline. A sua preferência de tema foi guardada e será sincronizada.");
     }
 }
 

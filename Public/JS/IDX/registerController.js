@@ -3,7 +3,7 @@ async function handleRegisterSubmit(event) {
 
     const form = event.currentTarget;
     const submitButton = form.querySelector('button[type="submit"]');
-    const responseElement = document.getElementById('response');
+    const responseElement = document.getElementById('responseAction');
 
     // Coleta os dados do formulário
     const formData = new FormData(form);
@@ -14,7 +14,7 @@ async function handleRegisterSubmit(event) {
     responseElement.className = 'text-muted';
 
     try {
-        const response = await fetch('/controle-de-ponto/Public/Api/regist.php', {
+        const response = await fetch('/Public/Api/regist.php', {
             method: 'POST',
             body: new URLSearchParams(data)
         });

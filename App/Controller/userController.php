@@ -159,11 +159,6 @@ class UserController {
         }
     }*/
 
-    public function showUserHistory($registro) {
-        $this->user->registro = $registro;
-        $userHistory = $this->user->getUserHistory(userId: $_SESSION['id'], registro: $registro);
-        return $userHistory;
-    }
 
     public function getUserIdByToken(string $userToken): ?int
     {
@@ -183,6 +178,16 @@ class UserController {
             $userData = json_decode($_SESSION['userData'], true);
             if (is_array($userData) && !empty($userData)) {
                 return $userData;
+            }
+        }
+        return null;
+    }
+
+    public function getUserToken(): ?array{
+        if (isset($_SESSION['userToken']) && $_SESSION['userToken'] != null) {
+            $userToken = json_decode($_SESSION['userToken'], true);
+            if (is_array($userToken) && !empty($userToken)) {
+                return $userToken;
             }
         }
         return null;

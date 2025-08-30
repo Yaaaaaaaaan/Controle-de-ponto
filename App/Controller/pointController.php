@@ -17,15 +17,18 @@ class PointController{
         $this->pointControl = new PointControl($this->db);
     }
 
-    public function insertPointControl($id, $status): bool
+    public function insertPointControl($id, $status): array
     {
-        // Validação simples dos dados recebidos
         if (empty($id) || !isset($status)) {
-            return false;
+            return ['success' => false, 'message' => 'Dados inválidos.'];
         }
 
-        // Chama o método corrigido no Model de Ponto
-        return $this->pointControl->insertPointControl($id, $status);
+        if ($this->pointControl->insertPointControl($id, $status)) {
+            return ['success' => true, 'message' => 'Presença confirmada com sucesso.'];
+        } else {
+            // Se o Model retornou false, a causa mais provável é o registro duplicado.
+            return ['success' => false, 'message' => 'O ponto para hoje já foi registrado.'];
+        }
     }
 
     public function getPointControl($id): array {

@@ -1,51 +1,51 @@
 const CACHE_NAME = 'v3'; // Nome do cache (pode ser versionado)
 const urlsToCache = [
     //CSS Bootstrap
-    '/controle-de-ponto/Public/CSS/bootstrap.min.css',
-    '/controle-de-ponto/Public/JS/bootstrap.bundle.js',
+    '/Public/CSS/bootstrap.min.css',
+    '/Public/JS/bootstrap.bundle.js',
 
     //Chart JS
-    "/controle-de-ponto/Public/JS/chartjs/dist/chart.umd.js",
+    "/Public/JS/chartjs/dist/chart.umd.js",
 
     //IndexedDB;
-    '/controle-de-ponto/Public/JS/indexedDB/Config.js',
-    '/controle-de-ponto/Public/JS/indexedDB/Model.js',
+    '/Public/JS/indexedDB/Config.js',
+    '/Public/JS/indexedDB/Model.js',
 
     //Index/index;
-    '/controle-de-ponto/Public/View/Index/index.php',
-    '/controle-de-ponto/Public/View/Index/register.php',
-    '/controle-de-ponto/Public/CSS/IDX/style.css',
-    '/controle-de-ponto/Public/JS/IDX/authController.js',
-    '/controle-de-ponto/Public/JS/IDX/registerController.js',
+    '/Public/View/Index/index.php',
+    '/Public/View/Index/register.php',
+    '/Public/CSS/IDX/style.css',
+    '/Public/JS/IDX/authController.js',
+    '/Public/JS/IDX/registerController.js',
 
     //Layout; (não necessário, pois ambos inicializam o cache)
-    //'/controle-de-ponto/Public/View/Layout/menu.php',
-    //'/controle-de-ponto/Public/View/Layout/menu_housekeep.php',
+    //'/Public/View/Layout/menu.php',
+    //'/Public/View/Layout/menu_housekeep.php',
 
     //User/index;
-    //'/controle-de-ponto/Public/View/User/index.php',
-    '/controle-de-ponto/Public/CSS/USR/dashboard.css',
-    '/controle-de-ponto/Public/JS/USR/indexDashboard.js',
+    //'/Public/View/User/index.php',
+    '/Public/CSS/USR/dashboard.css',
+    '/Public/JS/USR/indexDashboard.js',
 
     //User/settings;
-    //'/controle-de-ponto/Public/View/User/settings.php',
-    '/controle-de-ponto/Public/CSS/USR/handworking.css',
-    '/controle-de-ponto/Public/JS/USR/userController.js',
+    //'/Public/View/User/settings.php',
+    '/Public/CSS/USR/handworking.css',
+    '/Public/JS/USR/userController.js',
 
     //User/community;
-    //'/controle-de-ponto/Public/View/User/community.php',
+    //'/Public/View/User/community.php',
 
     //Housekeeping/index;
-    //'/controle-de-ponto/Public/View/Housekeeping/index.php',
-    '/controle-de-ponto/Public/JS/HKG/indexDashboard.js',
+    //'/Public/View/Housekeeping/index.php',
+    '/Public/JS/HKG/indexDashboard.js',
 
     //Housekeeping/users;
-    //'/controle-de-ponto/Public/View/Housekeeping/users.php',
+    //'/Public/View/Housekeeping/users.php',
 
     //Demais arquivos;
-    '/controle-de-ponto/Public/JS/script.js',
-    '/controle-de-ponto/Public/Api/SystemPics/offlineLogo.png',
-    '/controle-de-ponto/Public/Api/SystemPics/logo.png'
+    '/Public/JS/script.js',
+    '/Public/Api/SystemPics/offlineLogo.png',
+    '/Public/Api/SystemPics/logo.png'
 
 ];
 self.addEventListener('install', function(event) {

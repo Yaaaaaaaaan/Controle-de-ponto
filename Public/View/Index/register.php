@@ -30,7 +30,7 @@
             <label for="password">Senha</label>
         </div>
 
-        <p id="response" class="text-center mt-2"></p>
+        <p id="responseAction" class="text-center mt-2"></p>
 
         <div class="d-grid">
             <button type="submit">Registrar</button>

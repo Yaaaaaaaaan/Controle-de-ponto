@@ -310,30 +310,34 @@ async function setUserToken(tokenData) { // Agora recebe o objeto completo
 //busca dados do usuário usando token.
 async function fetchUserDataByToken(token) {
     if (!token) return null;
-
     try {
-        const response = await fetch('/controle-de-ponto/Public/Api/userToken.php', {
+        const response = await fetch('/Public/Api/userToken.php', {
             method: 'GET',
-            headers: {
-                // Envia o token no cabeçalho, como é o padrão de mercado
-                'Authorization': `Bearer ${token}`
-            }
+            headers: { 'Authorization': `Bearer ${token}` }
         });
-
-        if (response.status === 401) {
-            console.warn(`[${obterHoraFormatada()}] Sessão no servidor expirada ou inválida.`);
-            // Aqui você pode acionar uma lógica de logout forçado
-            return null;
-        }
+        if (!response.ok) return null;
 
         const result = await response.json();
-        return result.success ? result.userData : null;
 
+        // A resposta agora vem como { success: true, data: { userData: ..., tokenData: ... } }
+        if (result.success && result.data) {
+            // Desestrutura os dados recebidos
+            const { userData, tokenData } = result.data;
+
+            // Antes de retornar, já salvamos os dados nos locais corretos no IndexedDB
+            // Passamos null para o hash, pois a função upsertUser inteligente irá preservar o que já existe.
+            await storeAuthData(userData, tokenData, null);
+
+            // Retorna apenas os dados do perfil para a UI, como esperado.
+            return userData;
+        }
+        return null;
     } catch (error) {
         console.error(`[${obterHoraFormatada()}] Erro de rede ao buscar dados por token:`, error);
         return null;
     }
 }
+
 
 //Verifica token para autenticação
 async function getUserTokenByUserId(userId) {
@@ -546,36 +550,26 @@ async function syncServerToIndexedDB() {
  * @param {object} userDataFromApi - O objeto de dados do usuário que veio da API.
  * @param {string} offlinePasswordHash - O hash gerado no cliente para validação offline.
  */
-async function storeAuthData(dataFromServer, offlinePasswordHash) {
+async function storeAuthData(userData, tokenData, offlinePasswordHash) {
     try {
-        // 1. DESESTRUTURAÇÃO: Separa o objeto grande em variáveis distintas.
-        const {
-            batata, name, email, rank, nickname, theme, profileUser, // <- Para userData
-            userToken, tokenDate, tokenExpiry // <- Para userToken
-        } = dataFromServer;
+        if (!userData || !tokenData || !userData.nickname || !tokenData.userToken) {
+            throw new Error("Dados de utilizador ou token inválidos para storeAuthData.");
+        }
 
-        if (!nickname || !userToken) { throw new Error("Dados do servidor inválidos."); }
-
-        // 2. MONTA E SALVA o objeto userData (limpo, sem dados de token)
-        const userDataToStore = {
-            userId: userId,
-            name: name,
-            email: email,
-            rank: rank,
-            nickname: nickname,
-            theme: theme,
-            profileUser: profileUser,
-            offlinePasswordHash: offlinePasswordHash
-        };
+        // 1. MONTA E SALVA o objeto userData limpo
+        // Se offlinePasswordHash não for nulo, ele é adicionado/atualizado.
+        // Se for nulo, o upsertUser inteligente irá preservar o que já existe.
+        const userDataToStore = { ...userData, offlinePasswordHash };
         await upsertUser(userDataToStore);
         console.log(`[${obterHoraFormatada()}] | storeAuthData: Objeto 'userData' salvo:`, userDataToStore);
 
-        // 3. MONTA E SALVA o objeto userToken
+        // 2. MONTA E SALVA o objeto userToken
         const tokenDataToStore = {
-            token: userToken,
-            userId: userId,
-            tokenDate: tokenDate,
-            tokenExpiry: tokenExpiry
+            token: tokenData.userToken,
+            userId: userData.userId,
+            tokenDate: tokenData.tokenDate,
+            tokenExpiry: tokenData.tokenExpiry,
+            lastUpdated: new Date().toISOString()
         };
         await setUserToken(tokenDataToStore);
 

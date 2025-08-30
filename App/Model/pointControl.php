@@ -35,16 +35,17 @@
             $stmt->bindParam(':status', $status, PDO::PARAM_STR);
 
             try {
-                if ($stmt->execute()) {
-                    return true;
-                }
-                return false;
+            if ($stmt->execute()) {
+                return true;
+            }
+            return false;
             } catch (PDOException $e) {
-                // Trata erro de chave duplicada (usuário já bateu ponto no dia)
+                // Se o erro for de chave duplicada (UNIQUE KEY constraint violation)
                 if ($e->getCode() == 23000) {
                     error_log("Tentativa de inserção de ponto duplicado para o usuário: " . $id);
-                    return false;
+                    return false; // Retorna false indicando a falha
                 } else {
+                    // Para outros erros, registra e propaga.
                     error_log("Erro PDO em insertPointControl: " . $e->getMessage());
                     throw $e;
                 }

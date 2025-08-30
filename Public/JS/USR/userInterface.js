@@ -14,7 +14,7 @@ const userDataPromise = new Promise(resolve => {
 
 function updateUIPicture(profileUser) {
     if (!profileUser) return;
-    const imageBasePath = '/controle-de-ponto/App/Persistence/userProfileImages/';
+    const imageBasePath = '/App/Persistence/userProfileImages/';
     const srcImage = imageBasePath + String(profileUser).replace(/"/g, '');
     ['pPicture', 'pPictureModal'].forEach(id => {
         const element = document.getElementById(id);
@@ -81,7 +81,7 @@ async function initializeUserData() {
     if (!activeUserId || !localToken) {
         console.log(`[${obterHoraFormatada()}] Nenhum utilizador ativo encontrado no localStorage. Redirecionando para o login.`);
         if (!window.location.pathname.includes('/Index/')) {
-            window.location.href = '/controle-de-ponto/Public/View/Index/';
+            window.location.href = '/Public/View/Index/';
         }
         return;
     }
@@ -113,7 +113,7 @@ async function initializeUserData() {
         } else {
             console.error(`[${obterHoraFormatada()}] Token/ID local inválido e nenhum dado no IndexedDB. Forçando logout.`);
             localStorage.clear();
-            window.location.href = '/controle-de-ponto/Public/View/Index/';
+            window.location.href = '/Public/View/Index/';
         }
 
     } catch (error) {

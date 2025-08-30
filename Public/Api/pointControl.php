@@ -28,6 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if ($action === 'addRecord') {
         $pointController = new PointController();
         $result = $pointController->insertPointControl($_SESSION['id'], $data['status'] ?? null);
+        sendJson($result);
         if ($result) {
             sendJson(['success' => true, 'message' => 'Registro de ponto adicionado com sucesso']);
         } else {
