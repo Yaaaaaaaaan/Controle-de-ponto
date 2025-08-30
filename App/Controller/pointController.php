@@ -1,11 +1,16 @@
 <?php
+
+use History\History;
+
 if (!defined('APP_RAN')) {
     die('Acesso não permitido.');
 }
 
-require_once __DIR__ . '/history.php';
+require_once __DIR__ . '/../Model/history.php';
+require_once __DIR__ . '/../Config/db.php';
+require_once __DIR__ . '/../Model/pointControl.php';
 
-class PointControl
+class PointController
 {
     private $conn;
     private $tableNames = [

@@ -5,10 +5,20 @@ define('APP_RAN', true);
 date_default_timezone_set('America/Sao_Paulo');
 header('Content-Type: application/json');
 
+// INÍCIO DA CORREÇÃO
+// Adicione a inclusão do arquivo de banco de dados
+require_once __DIR__ . '/../../App/Config/db.php';
+// FIM DA CORREÇÃO
+
 require_once __DIR__ . '/../../App/Controller/UserController.php';
 require_once __DIR__ . '/../../App/Controller/PointController.php';
 
-function sendJson($data, $httpCode = 200) { /* ... */ }
+// A função sendJson permanece a mesma
+function sendJson($data, $httpCode = 200) {
+    http_response_code($httpCode);
+    echo json_encode($data);
+    exit;
+}
 
 // Validação de Token para segurança
 $userController = new UserController();
@@ -26,7 +36,15 @@ $data = json_decode(file_get_contents('php://input'), true);
 $status = $data['status'] ?? null;
 if (!$status) { sendJson(['success' => false, 'message' => 'Status ausente.'], 400); }
 
-$pointController = new PointController();
+// INÍCIO DA CORREÇÃO
+// 1. Crie a instância do banco de dados e obtenha a conexão
+$database = new Database();
+$db = $database->getConnection();
+
+// 2. Passe a conexão ($db) para o construtor do PointController
+$pointController = new PointController($db);
+// FIM DA CORREÇÃO
+
 // Chama a função SEM a data, para que a data do servidor seja usada.
 $success = $pointController->insertPointControl($userId, $status);
 

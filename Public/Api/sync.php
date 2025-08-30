@@ -6,16 +6,18 @@ date_default_timezone_set('America/Sao_Paulo');
 header('Content-Type: application/json');
 
 // Dependências
+// INÍCIO DA CORREÇÃO
+// Adicione a inclusão do arquivo de banco de dados
+require_once __DIR__ . '/../../App/Config/db.php';
+// FIM DA CORREÇÃO
 require_once __DIR__ . '/../../App/Controller/UserController.php';
 require_once __DIR__ . '/../../App/Controller/PointController.php';
 require_once __DIR__ . '/../../App/Controller/HistoryController.php';
-
 function sendJson($data, $httpCode = 200) {
     http_response_code($httpCode);
     echo json_encode($data);
     exit;
 }
-
 // 1. RECEBER E VALIDAR DADOS DO CLIENTE
 $data = json_decode(file_get_contents('php://input'), true);
 $userToken = $data['userToken'] ?? null;
@@ -33,8 +35,16 @@ if (!$userId) {
 }
 
 // 3. INSTANCIAR CONTROLLERS
-$pointController = new PointController();
-$historyController = new HistoryController();
+// INÍCIO DA CORREÇÃO
+// 1. Crie a instância do banco de dados e obtenha a conexão
+$database = new Database();
+$db = $database->getConnection();
+
+// 2. Passe a conexão ($db) para os construtores
+$pointController = new PointController($db);
+$historyController = new HistoryController\HistoryController(); // O seu HistoryController usa namespace
+// FIM DA CORREÇÃO
+
 
 // 4. PROCESSAR A FILA DE AÇÕES (A "IDA")
 if (!empty($actions)) {
@@ -79,8 +89,9 @@ if (!empty($actions)) {
 }
 
 // 5. PREPARAR OS DADOS ATUALIZADOS (A "VOLTA")
-$updatedFullData = $userController->getUserById($userId); // Este já retorna {userData, tokenData}
-$updatedPointControlData = $pointController->getPointControlByUserId($userId);
+$updatedPointControlData = $pointController->getByUserId($userId);
+// Assumindo que você tenha um método em UserController para buscar os dados completos por ID
+$updatedFullData = $userController->getUserByToken($userId);
 
 // 6. ENVIAR RESPOSTA DE SUCESSO COM DADOS FRESCOS
 sendJson([
