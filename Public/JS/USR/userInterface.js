@@ -22,6 +22,25 @@ function updateSettingsForm(userData) {
     }
 }
 
+function updateDashboardCard(userData) {
+    // Verifica se estamos na página do dashboard
+    if (document.body.id !== 'page-dashboard' || !userData) return;
+
+    const elements = {
+        'responseName': userData.name,
+        'responseNickname': userData.nickname,
+        'responseEmail': userData.email,
+    };
+    Object.entries(elements).forEach(([id, value]) => {
+        const element = document.getElementById(id);
+        if (element && value) {
+            element.textContent = value;
+        } else if (element) {
+            element.textContent = ''; // Limpa o campo se não houver valor
+        }
+    });
+}
+
 /**
  * Inicializa a interface específica para a seção de Usuário (USR).
  */
@@ -33,6 +52,6 @@ export function initializeUserInterface() {
 
         // Executa as funções de UI que SÓ existem na área do usuário
         updateSettingsForm(userData);
-        // Adicione outras funções específicas de USR aqui...
+        updateDashboardCard(userData);
     });
 }

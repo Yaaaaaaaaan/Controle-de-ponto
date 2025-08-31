@@ -8,6 +8,7 @@ import {
     pointControlStoreName,
     userTokenStoreName,
     syncQueueStoreName,
+    userPicturesStoreName,
     obterHoraFormatada
 } from './Config.js';
 
@@ -168,6 +169,76 @@ async function getAllUsers() {
     }
 }
 
+// obter imagens mais recentes
+async function replaceUserPictures(userId, pictures) {
+    try {
+        const db = await initializeDB();
+        // 1. Inicia UMA ÚNICA transação para apagar e adicionar
+        const transaction = db.transaction(userPicturesStoreName, 'readwrite');
+        const store = transaction.objectStore(userPicturesStoreName);
+
+        // 2. Limpa os registros antigos do usuário
+        const index = store.index('userId');
+        const request = index.openCursor(IDBKeyRange.only(userId));
+
+        request.onsuccess = (event) => {
+            const cursor = event.target.result;
+            if (cursor) {
+                store.delete(cursor.primaryKey);
+                cursor.continue();
+            }
+        };
+
+        // 3. Adiciona os novos registros NA MESMA TRANSAÇÃO
+        pictures.forEach(pic => {
+            // A correção de sintaxe: usa o objeto 'pic' completo
+            store.put(pic);
+        });
+
+        // 4. Retorna uma promessa que resolve quando a transação inteira terminar
+        return new Promise((resolve, reject) => {
+            transaction.oncomplete = () => {
+                console.log(`Fotos para o usuário ${userId} foram substituídas com sucesso no IndexedDB.`);
+                resolve();
+            };
+            transaction.onerror = (event) => {
+                console.error(`Erro na transação de replaceUserPictures:`, event.target.error);
+                reject(event.target.error);
+            };
+        });
+    } catch (error) {
+        console.error("Erro ao iniciar replaceUserPictures:", error);
+        throw error;
+    }
+}
+
+//Busca imagens no indexedDB.
+async function getOfflineUserPictures(userId) {
+    const db = await initializeDB();
+    const transaction = db.transaction(userPicturesStoreName, 'readonly');
+    const store = transaction.objectStore(userPicturesStoreName);
+    const index = store.index('userId');
+    const request = index.getAll(userId);
+
+    return new Promise((resolve, reject) => {
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = (event) => {
+            console.error("Erro ao buscar fotos offline:", event.target.error);
+            reject(event.target.error);
+        };
+    });
+}
+
+function cacheUserImages(urls) {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        console.log(`[Model.js] Enviando ${urls.length} URLs de imagem para o Service Worker cachear.`);
+        navigator.serviceWorker.controller.postMessage({
+            type: 'CACHE_DYNAMIC_FILES',
+            payload: urls
+        });
+    }
+}
+
 // ========================
 // Funções para pointControl
 // ========================
@@ -210,7 +281,7 @@ async function getPointControlByUserId(userId) {
         const db = await initializeDB();
         const transaction = db.transaction(pointControlStoreName, 'readonly');
         const pointControlStore = transaction.objectStore(pointControlStoreName);
-        const index = pointControlStore.index('userIdIdx');
+        const index = pointControlStore.index('userId');
         const request = index.getAll(userId);
 
         return new Promise((resolve, reject) => {
@@ -247,7 +318,7 @@ async function deletePointControlByUserId(userId) {
         const db = await initializeDB();
         const transaction = db.transaction(pointControlStoreName, 'readwrite');
         const store = transaction.objectStore(pointControlStoreName);
-        const index = store.index('userIdIdx'); // Usa o índice de ID de usuário
+        const index = store.index('userId'); // Usa o índice de ID de usuário
         const request = index.openCursor(IDBKeyRange.only(userId)); // Abre um cursor para o ID específico
 
         request.onsuccess = (event) => {
@@ -312,31 +383,38 @@ async function setUserToken(tokenData) { // Agora recebe o objeto completo
 async function fetchUserDataByToken(token) {
     if (!token) return null;
     try {
-        // MODIFICADO: Chama o novo endpoint unificado
         const response = await fetch('/Public/Api/initialData.php', {
             method: 'GET',
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (!response.ok) return null;
-
+        if (!response.ok) {
+            console.error("A resposta do initialData.php não foi OK.");
+            return null;
+        }
         const result = await response.json();
 
         if (result.success && result.data) {
-            const { userData, tokenData, pointControlData } = result.data;
-
-            // Salva os dados nos locais corretos no IndexedDB
+            const { userData, tokenData, pointControlData, userPictures } = result.data;
             await upsertUser(userData);
             await setUserToken({ ...tokenData, token: tokenData.userToken, userId: userData.userId });
             await replaceUserPointControl(userData.userId, pointControlData);
+            await replaceUserPictures(userData.userId, userPictures);
 
-            return userData; // Retorna apenas os dados do perfil para a UI
+            if (userPictures && userPictures.length > 0) {
+                const pictureUrls = userPictures.map(pic => pic.path); // Extrai apenas os caminhos
+                cacheUserImages(pictureUrls); // Manda para o Service Worker
+            }
+
+            console.log(`[${obterHoraFormatada()}] Sincronização via initialData.php concluída.`);
+            return userData;
         }
         return null;
     } catch (error) {
         console.error(`[${obterHoraFormatada()}] Erro de rede ao buscar dados iniciais:`, error);
-        return null;
+        throw error; // Relança o erro para que a chamada original saiba que falhou.
     }
 }
+
 
 
 //Verifica token para autenticação
@@ -494,7 +572,7 @@ async function replaceUserPointControl(userId, newRecords) {
     const db = await initializeDB();
     const transaction = db.transaction(pointControlStoreName, 'readwrite');
     const store = transaction.objectStore(pointControlStoreName);
-    const index = store.index('userIdIdx');
+    const index = store.index('userId');
     const request = index.openCursor(IDBKeyRange.only(userId));
 
     // 1. Deleta os registros antigos
@@ -600,6 +678,8 @@ export {
     getUserByToken,
     deleteUser,
     getAllUsers,
+    replaceUserPictures,
+    getOfflineUserPictures,
 
     // Funções de controle de ponto
     addPointControl,

@@ -1,13 +1,9 @@
 <?php
 define('APP_RAN', true);
-require "../Layout/menu.php";
+$pageId = 'page-dashboard'; // Apenas define a identidade da página
+require_once __DIR__ . "/../Layout/header.php"; // Inclui o cabeçalho e menu
 ?>
 
-<html>
-<head>
-</head>
-
-<body id="page-dashboard" data-user-type="usr">
 <div class="dashboardWrapper">
     <div class="container-fluid">
         <div class="row">
@@ -46,8 +42,7 @@ require "../Layout/menu.php";
     </div>
 </div>
 
-<script type="module" src="/Public/JS/main.js"></script>
 
-<img hidden id="pPictureModal">
-</body>
-</html>
+<?php
+require_once __DIR__ . "/../Layout/footer.php";
+?>

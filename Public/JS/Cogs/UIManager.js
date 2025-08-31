@@ -2,34 +2,26 @@
 // 📁 UIManager.js
 // ========================
 
-
 import { upsertUser, getUserById, fetchUserDataByToken, obterHoraFormatada } from '../indexedDB/Model.js';
 import { isOnline } from '../Core/connectionChecker.js';
+import { initializeThemeFromLocalData } from './ThemeManager.js';
 
 let userDataPromiseResolver;
 const userDataPromise = new Promise(resolve => {
     userDataPromiseResolver = resolve;
 });
 
-// Funções que atualizam elementos COMUNS a todas as páginas
 function updateSharedUI(userData) {
     if (!userData) return;
-
-    // Atualiza a foto de perfil (presente em todas as páginas)
     const srcImage = userData.profileUser || '/Public/assets/img/Profile.png';
     const pPicture = document.getElementById('pPicture');
     if (pPicture) pPicture.src = srcImage;
-
-    // Atualiza o nome do usuário no menu (presente em todas as páginas)
     const welcomeMessage = document.getElementById('responseNameCurto');
     if (welcomeMessage) welcomeMessage.textContent = `Olá, ${userData.name.split(' ')[0]}`;
 }
 
-/**
- * [NÚCLEO] Inicializa a UI base, carrega os dados e avisa as interfaces específicas.
- */
-async function initializeCoreUI() {
-    const activeUserId = localStorage.getItem('activeUserId');
+export async function initializeUI() {
+    const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
     const localToken = localStorage.getItem('userToken');
 
     if (!activeUserId || !localToken) {
@@ -37,43 +29,57 @@ async function initializeCoreUI() {
         return;
     }
 
+    let userData = null;
     try {
-        let userData = null;
         if (isOnline) {
             userData = await fetchUserDataByToken(localToken);
         }
         if (!userData) {
-            userData = await getUserById(parseInt(activeUserId, 10));
+            userData = await getUserById(activeUserId);
         }
-
         if (userData) {
-            console.log(`[${obterHoraFormatada()}] CoreUIManager: Dados carregados.`, userData);
+            console.log(`[${obterHoraFormatada()}] UIManager: Dados carregados.`, userData);
+            initializeThemeFromLocalData(userData);
             updateSharedUI(userData);
-
             userDataPromiseResolver(userData);
-            // Dispara o evento que as interfaces específicas (USR, HKG) vão ouvir
+            document.dispatchEvent(new CustomEvent('userDataReady', { detail: { userId: userData.userId, userData: userData } }));
+
+            const userRank = userData.rank ?? 2; // Assume rank 2 (usuário) como padrão
+            document.body.dataset.userType = userRank == 1 ? 'hkg' : 'usr';
+            // 2. Dispara o evento que avisa o main.js e outras interfaces
             document.dispatchEvent(new CustomEvent('userDataReady', { detail: { userId: userData.userId, userData: userData } }));
         } else {
             localStorage.clear();
             window.location.href = '/Public/View/Index/';
         }
     } catch (error) {
-        console.error(`[${obterHoraFormatada()}] Erro crítico ao inicializar CoreUIManager:`, error);
-        userDataPromiseResolver(null);
+        console.warn(`[${obterHoraFormatada()}] UIManager: A busca no servidor falhou, tentando fallback para IndexedDB. Erro:`, error);
+        userData = await getUserById(activeUserId);
+        if (userData) {
+            console.log(`[${obterHoraFormatada()}] UIManager: Dados carregados do IndexedDB (fallback).`, userData);
+            initializeThemeFromLocalData(userData);
+            updateSharedUI(userData);
+            userDataPromiseResolver(userData);
+            document.dispatchEvent(new CustomEvent('userDataReady', { detail: { userId: userData.userId, userData: userData } }));
+        } else {
+            console.error(`[${obterHoraFormatada()}] UIManager: Falha crítica, não foi possível carregar dados.`);
+            localStorage.clear();
+            window.location.href = '/Public/View/Index/';
+        }
     }
 }
-async function triggerUIRefresh() {
-    const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
-    if (!activeUserId) return;
 
-    console.log(`[${obterHoraFormatada()}] CoreUIManager: Disparando atualização da UI...`);
-    // Busca os dados mais recentes que já estão no IndexedDB
-    const userData = await getUserById(activeUserId);
-
+export async function triggerUIRefresh(freshUserData = null) {
+    let userData = freshUserData;
+    if (!userData) {
+        const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
+        if (!activeUserId) return;
+        userData = await getUserById(activeUserId);
+    }
     if (userData) {
-        // Re-dispara o evento que os dashboards e outras páginas estão ouvindo
+        updateSharedUI(userData);
         document.dispatchEvent(new CustomEvent('userDataReady', { detail: { userId: userData.userId, userData: userData } }));
     }
 }
 
-export { userDataPromise, initializeCoreUI, triggerUIRefresh };
+export { userDataPromise };

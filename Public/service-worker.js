@@ -1,4 +1,5 @@
-const CACHE_NAME = 'v3'; // Nome do cache (pode ser versionado)
+const CACHE_NAME = 'v3-static'; // Renomeado para clareza
+const DYNAMIC_CACHE_NAME = 'v3-dynamic'; // Novo cache para conteúdo do usuário
 const urlsToCache = [
     //CSS Bootstrap
     '/Public/CSS/bootstrap.min.css',
@@ -6,6 +7,14 @@ const urlsToCache = [
 
     //Chart JS
     "/Public/JS/chartjs/dist/chart.umd.js",
+
+    //Cogs;
+    '/Public/JS/Cogs/utils.js',
+    '/Public/JS/Cogs/UIManager.js',
+
+    //Core;
+    '/Public/JS/Core/connectionChecker.js',
+    '/Public/JS/Core/syncController.js',
 
     //IndexedDB;
     '/Public/JS/indexedDB/Config.js',
@@ -18,15 +27,19 @@ const urlsToCache = [
     '/Public/JS/IDX/authController.js',
     '/Public/JS/IDX/registerController.js',
 
+    //User
+    '/Public/JS/USR/userInterface.js',
+
     //User/index;
     '/Public/View/User/index.php',
     '/Public/CSS/USR/dashboard.css',
     '/Public/JS/USR/indexDashboard.js',
+    '/Public/JS/USR/userController.js',
 
     //User/settings;
     '/Public/View/User/settings.php',
     '/Public/CSS/USR/handworking.css',
-    '/Public/JS/USR/userController.js',
+    '/Public/JS/USR/settingsController.js',
 
     //User/community;
     '/Public/View/User/community.php',
@@ -40,8 +53,8 @@ const urlsToCache = [
 
     //Demais arquivos;
     '/Public/JS/script.js',
-    '/Public/Api/SystemPics/offlineLogo.png',
-    '/Public/Api/SystemPics/logo.png'
+    '/Public/Assets/img/offlineLogo.png',
+    '/Public/Assets/img/logo.png'
 ];
 
 self.addEventListener('install', function(event) {
@@ -55,11 +68,14 @@ self.addEventListener('install', function(event) {
 });
 
 self.addEventListener('activate', function(event) {
+    const cacheWhitelist = [CACHE_NAME, DYNAMIC_CACHE_NAME]; // Lista de caches a serem mantidos
     event.waitUntil(
         caches.keys().then(function(cacheNames) {
             return Promise.all(
                 cacheNames.map(function(cacheName) {
-                    if (cacheName !== CACHE_NAME) {
+                    // Se o nome do cache não estiver na nossa lista, ele é deletado
+                    if (cacheWhitelist.indexOf(cacheName) === -1) {
+                        console.log('SW: Deletando cache antigo:', cacheName);
                         return caches.delete(cacheName);
                     }
                 })
@@ -105,4 +121,20 @@ self.addEventListener('fetch', event => {
                 });
             })
     );
+});
+
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'CACHE_DYNAMIC_FILES') {
+        const urlsToCache = event.data.payload;
+        console.log('SW: Recebida mensagem para cachear arquivos dinâmicos:', urlsToCache);
+
+        event.waitUntil(
+            caches.open(DYNAMIC_CACHE_NAME).then((cache) => {
+                // O método addAll faz o fetch e o cache de uma vez
+                return cache.addAll(urlsToCache).catch(error => {
+                    console.error('SW: Falha ao cachear um ou mais arquivos dinâmicos:', error);
+                });
+            })
+        );
+    }
 });

@@ -6,11 +6,13 @@ import {
     getUserById,
     addActionToSyncQueue,
     fetchUserDataByToken,
-    obterHoraFormatada
+    obterHoraFormatada,
+    getOfflineUserPictures
 } from '../indexedDB/Model.js';
 import { isOnline } from '../Core/connectionChecker.js'; // Usaremos nosso verificador de conexão
-import { userDataPromise, triggerUIRefresh } from '../Cogs/UIManager';
+import { userDataPromise, triggerUIRefresh } from '../Cogs/UIManager.js';
 import { displayFeedback, withApiHandler } from '../Cogs/utils.js'; //withApiHandler é uma introdução ao AOP (programação orientada a aspectos)
+import { applyTheme, initializeThemeFromLocalData } from '../Cogs/ThemeManager.js';
 
 function getFormData() {
     const form = document.getElementById('formUserData');
@@ -115,37 +117,59 @@ async function onFormSubmit(ev) {
 async function fetchAndDisplayUserPictures() {
     const photoGallery = document.getElementById('photoGallery');
     if (!photoGallery) return;
-    photoGallery.innerHTML = '<div class="spinner-border text-primary mx-auto" role="status"><span class="visually-hidden">Carregando...</span></div>';
+    photoGallery.innerHTML = '<div class="spinner-border text-primary mx-auto" role="status"></div>';
+
     const userToken = localStorage.getItem('userToken');
+    const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
+    let pictures = [];
+
     try {
-        const response = await fetch('/Public/Api/userPictures.php', {
-            headers: { 'Authorization': `Bearer ${userToken}` }
-        });
-        const result = await response.json();
+        if (isOnline) {
+            console.log("Modo Online: Buscando fotos da API.");
+            const response = await fetch('/Public/Api/userPictures.php', {
+                headers: { 'Authorization': `Bearer ${userToken}` }
+            });
+
+            // --- A CORREÇÃO ESTÁ AQUI ---
+            // Precisamos processar a resposta e colocá-la na variável 'result'
+            const result = await response.json();
+
+            if (result.success) {
+                pictures = result.pictures;
+            } else {
+                // Se a API retornar um erro, exibimos a mensagem
+                throw new Error(result.message || 'Falha ao buscar fotos da API.');
+            }
+        } else {
+            console.log("Modo Offline: Buscando fotos do IndexedDB.");
+            pictures = await getOfflineUserPictures(activeUserId);
+        }
+
         photoGallery.innerHTML = '';
-        if (result.success && result.pictures.length > 0) {
-            result.pictures.forEach(pic => {
+        if (pictures && pictures.length > 0) {
+            // A sua lógica para exibir as fotos (forEach, etc.) está correta e continua aqui
+            pictures.forEach(pic => {
                 const col = document.createElement('div');
                 col.className = 'col-4';
                 const a = document.createElement('a');
                 a.href = '#';
-                a.title = `Definir "${pic.nome_foto}" como perfil`;
+                a.title = `Definir "${pic.name}" como perfil`;
                 a.onclick = (e) => {
                     e.preventDefault();
                     if (confirm(`Deseja definir esta imagem como sua foto de perfil?`)) {
-                        setAsProfilePicture(pic.foto_id);
+                        setAsProfilePicture(pic.picId);
                     }
                 };
                 const img = document.createElement('img');
-                img.src = pic.caminho_arquivo;
-                img.alt = pic.nome_foto;
-                img.className = `img-fluid rounded img-thumbnail ${pic.perfil == 1 ? 'border-primary border-3' : ''}`;
+                img.src = pic.path;
+                img.alt = pic.name;
+                img.className = `img-fluid rounded img-thumbnail ${pic.isProfile == 1 ? 'border-primary border-3' : ''}`;
                 a.appendChild(img);
                 col.appendChild(a);
                 photoGallery.appendChild(col);
             });
         } else {
-            photoGallery.textContent = 'Nenhuma foto encontrada. Envie uma nova na página de configurações.';
+            photoGallery.textContent = 'Nenhuma foto encontrada.';
         }
     } catch (error) {
         photoGallery.textContent = 'Erro ao carregar fotos.';
@@ -199,12 +223,23 @@ async function setAsProfilePicture(photoId) {
             body: JSON.stringify({ photoId })
         });
         const result = await response.json();
+
         if (result.success) {
             alert('Foto de perfil atualizada!');
+
+            // --- A CORREÇÃO ESTÁ AQUI ---
+
+            // 1. PRIMEIRO: Busca os dados frescos do servidor e ATUALIZA o IndexedDB.
+            // A função fetchUserDataByToken já faz essas duas coisas.
+            await fetchUserDataByToken(userToken);
+
+            // 2. SEGUNDO: AGORA, com o IndexedDB atualizado, dispara a atualização da UI.
+            // O triggerUIRefresh vai ler os dados novos que acabamos de salvar.
             await triggerUIRefresh();
 
-            // Recarrega a galeria para mostrar a nova foto marcada
+            // 3. Apenas por consistência, recarrega a galeria do modal para atualizar a borda azul.
             fetchAndDisplayUserPictures();
+
         } else {
             throw new Error(result.message || 'Falha ao definir foto de perfil.');
         }
@@ -214,6 +249,43 @@ async function setAsProfilePicture(photoId) {
     }
 }
 
+async function handleThemeChange(event) {
+    const newThemeValue = event.target.checked ? 1 : 0;
+    applyTheme(newThemeValue); // Aplica a mudança visual imediatamente
+
+    const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
+    if (!activeUserId) return;
+
+    if (isOnline) {
+        try {
+            const userToken = localStorage.getItem('userToken');
+            const response = await fetch('/Public/Api/updateTheme.php', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
+                body: JSON.stringify({ theme: newThemeValue })
+            });
+            const result = await response.json();
+            if (!result.success) throw new Error(result.message);
+
+            // Atualiza o IndexedDB com os dados frescos do servidor
+            await fetchUserDataByToken(userToken);
+            console.log("Preferência de tema salva no servidor.");
+        } catch (error) {
+            console.error("Falha ao salvar tema no servidor:", error);
+            // Opcional: Reverter a UI ou mostrar erro
+        }
+    } else {
+        console.log("Offline: Ação de mudança de tema adicionada à fila.");
+        // Atualiza o IndexedDB localmente
+        const currentUser = await getUserById(activeUserId);
+        if (currentUser) {
+            currentUser.theme = newThemeValue;
+            await upsertUser(currentUser);
+        }
+        // Adiciona a ação à fila para sincronização futura
+        await addActionToSyncQueue({ type: 'UPDATE_THEME', payload: { theme: newThemeValue }, timestamp: new Date().toISOString() });
+    }
+}
 
 // Função que inicializa o controller
 export function initSettingsController() {
@@ -236,5 +308,10 @@ export function initSettingsController() {
     const profilePhotoModal = document.getElementById('profilePhotoModal');
     if (profilePhotoModal) {
         profilePhotoModal.addEventListener('show.bs.modal', fetchAndDisplayUserPictures);
+    }
+
+    const themeSwitch = document.getElementById('themeSwitch');
+    if (themeSwitch) {
+        themeSwitch.addEventListener('change', handleThemeChange);
     }
 }

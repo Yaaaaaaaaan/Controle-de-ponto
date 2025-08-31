@@ -3,6 +3,7 @@
 // ========================
 import { getPointControlByUserId } from '../indexedDB/Model.js';
 
+
 // --- Variáveis Globais ---
 let presenceChart;
 let daysData = {};

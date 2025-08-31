@@ -39,12 +39,10 @@ class UserController {
         $this->user->rank = 1;
 
         // Tenta executar a criação no Model
-        $result = $this->user->createUser();
-        error_log("CreateUser - Resultado do Model: " . ($result ? 'true' : 'false'));
+        $success = $this->user->createUser();
 
-
-        // Tenta executar a criação no Model
-        if ($this->user->createUser()){
+        // Verifica o resultado da ÚNICA chamada
+        if ($success){
             return ['success' => true, 'message' => 'Usuário criado com sucesso!'];
         } else {
             return ['success' => false, 'message' => 'Não foi possível criar o usuário. O email ou nome de usuário já pode estar em uso.'];
@@ -154,6 +152,16 @@ class UserController {
     public function getAllUserPictures(int $userId): array
     {
         return $this->user->getAllUserPictures($userId);
+    }
+
+    public function logUserLogout(int $userId): bool
+    {
+        if (empty($userId)) {
+            return false;
+        }
+
+        // A única ação é criar o registro de histórico.
+        return $this->user->createUserHistory('Logout bem-sucedido', $userId);
     }
 
 }

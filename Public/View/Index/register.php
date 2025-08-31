@@ -12,7 +12,7 @@
 <body id="page-register">
 <div class="container-userlogin">
     <h2>Registro</h2>
-    <form id="registerForm" novalidate>
+    <form id="registerForm" novalidate method="POST">
         <div class="form-floating mb-3">
             <input type="text" class="form-control" name="name" id="name" placeholder="Nome completo" required>
             <label for="name">Nome completo</label>

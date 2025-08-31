@@ -2,12 +2,14 @@
 // 📁 Config.js
 // ==========================
 const dbName = 'PCDB';
-const dbVersion = 4 ; // Incrementado para forçar upgrade
+const dbVersion = 5 ; // Incrementado para forçar upgrade
 const userDataStoreName = 'userData';
 const pointControlStoreName = 'pointControl';
 const userTokenStoreName = 'userToken';
 
 const syncQueueStoreName = 'syncQueue';
+
+const userPicturesStoreName = 'userPictures';
 
 let db;
 
@@ -36,7 +38,7 @@ function initializeDB() {
                 const pointControlStore = db.createObjectStore(pointControlStoreName, {
                     keyPath: 'cod', autoIncrement: true
                 });
-                pointControlStore.createIndex('userIdIdx', 'userId', { unique: false });
+                pointControlStore.createIndex('userId', 'userId', { unique: false });
                 pointControlStore.createIndex('status', 'status', { unique: false });
                 pointControlStore.createIndex('date', 'dateIn', { unique: false });
             }
@@ -53,6 +55,14 @@ function initializeDB() {
             if (!db.objectStoreNames.contains(syncQueueStoreName)) {
                 const queueStore = db.createObjectStore(syncQueueStoreName, { keyPath: 'id', autoIncrement: true });
                 queueStore.createIndex('timestamp', 'timestamp', { unique: false });
+            }
+            // Criar ou atualizar userPictures store
+            if (!db.objectStoreNames.contains(userPicturesStoreName)) {
+                const picturesStore = db.createObjectStore(userPicturesStoreName, {
+                    keyPath: 'picId'
+                });
+                // Criamos um índice para buscar todas as fotos de um usuário facilmente
+                picturesStore.createIndex('userId', 'userId', { unique: false });
             }
         };
 
@@ -84,5 +94,6 @@ export {
     pointControlStoreName,
     userTokenStoreName,
     syncQueueStoreName,
+    userPicturesStoreName,
     obterHoraFormatada
 };

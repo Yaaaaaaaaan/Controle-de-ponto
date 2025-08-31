@@ -1,13 +1,9 @@
 <?php
 define('APP_RAN', true);
-require '../layout/menu.php';
+$pageId = 'page-settings'; // Apenas define a identidade da página
+require_once __DIR__ . "/../Layout/header.php"; // Inclui o cabeçalho e menu
 ?>
 
-<html>
-    <head>
-    </head>
-    <body id="page-settings" data-user-type="usr">
-        <script type="module" src="/Public/JS/main.js"></script>
         <div class="container">
             <main class="mt-5">
                 <div data-bs-spy="scroll" data-bs-target="#navbar-example2"  data-bs-smooth-scroll="true" tabindex="0">
@@ -149,5 +145,7 @@ require '../layout/menu.php';
                 </div>
             </main>
         </div>
-    </body>
-</html>
+
+<?php
+require_once __DIR__ . "/../Layout/footer.php";
+?>

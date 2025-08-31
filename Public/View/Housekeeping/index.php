@@ -1,23 +1,20 @@
 <?php
 define('APP_RAN', true);
-require '../layout/menu_housekeep.php';
-include_once __DIR__ . '/../../../App/controller/pointControlController.php';
 
-// Dados serão carregados do IndexedDB pelo JavaScript
+// 1. Define o ID único da página
+$pageId = 'page-hkg-dashboard'; // Exemplo para a página inicial do Admin
 
-if ($_POST) {
-    include_once __DIR__ . '/../../../App/controller/UserController.php';
-    $userController = new UserController();
+// 2. Inclui o cabeçalho
+require_once __DIR__ . "/../Layout/header.php";
 
-    if (isset($_POST['updatePointControl'])) {
-        $insertPointControl = $userController->updatePresenceHousekeeping($_POST['inputId'], $_POST['inputCod'], $_POST['inputDescricao']);
-    }
+// 3. VALIDAÇÃO DE RANK ADICIONAL
+if ($userRank != 1) {
+    // Se o usuário não for rank 1, redireciona para o dashboard
+    header('Location: /Public/View/User/index.php');
+    exit;
 }
 ?>
 
-<html>
-<head></head>
-<body>
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-12">
@@ -95,5 +92,7 @@ if ($_POST) {
         </div>
     </div>
 </div>
-</body>
-</html>
+
+<?php
+require_once __DIR__ . "/../Layout/footer.php";
+?>

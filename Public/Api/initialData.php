@@ -32,6 +32,7 @@ if (!$userId) {
 $pointController = new PointController();
 $fullUserData = $userController->getUserByToken($userToken);
 $pointControlData = $pointController->getPointControlByUserId($userId);
+$userPictures = $userController->getAllUserPictures($userId);
 
 // Envia a resposta combinada
 sendJson([
@@ -39,7 +40,8 @@ sendJson([
     'data' => [
         'userData' => $fullUserData['userData'] ?? null,
         'tokenData' => $fullUserData['tokenData'] ?? null,
-        'pointControlData' => $pointControlData
+        'pointControlData' => $pointControlData,
+        'userPictures' => $userPictures
     ]
 ]);
 ?>

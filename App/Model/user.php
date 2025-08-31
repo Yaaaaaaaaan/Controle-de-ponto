@@ -30,7 +30,7 @@ require_once __DIR__ . '/history.php';
     public function createUser(): bool{
         // Define valor padrão para a imagem de perfil
         $this->profilePicture = 'Profile.png';
-        $this->directory = '/controle-de-ponto/Public/Assets/img/userProfileImages/Profile.png';
+        $this->directory = '/Public/Assets/img/userProfileImages/Profile.png';
         $this->isProfile = '1';
         $this->albumName = 'Foto de perfil';
         $this->albumType = '1';
@@ -537,7 +537,14 @@ require_once __DIR__ . '/history.php';
     public function getAllUserPictures(int $userId): array
     {
         try {
-            $query = "SELECT foto_id, caminho_arquivo, nome_foto, perfil FROM {$this->tableNames['fot']} 
+            // Usa aliases (AS) para renomear as colunas para corresponder ao novo padrão do JS
+            $query = "SELECT 
+                    foto_id         AS picId, 
+                    id_usuario      AS userId, 
+                    caminho_arquivo AS path, 
+                    nome_foto       AS name, 
+                    perfil          AS isProfile 
+                  FROM {$this->tableNames['fot']} 
                   WHERE id_usuario = :userId ORDER BY data_upload DESC";
             $stmt = $this->conn->prepare($query);
             $stmt->execute([':userId' => $userId]);
