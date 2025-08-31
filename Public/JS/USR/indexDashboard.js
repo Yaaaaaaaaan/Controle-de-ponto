@@ -167,6 +167,23 @@ async function loadAndProcessData(userId) {
     }
 }
 
+export function initializeDashboard() {
+    document.addEventListener('userDataReady', async (event) => {
+        const receivedUserId = event.detail.userId;
+        console.log('indexDashboard.js: Event "userDataReady" detected. userId:', receivedUserId);
+
+        if (!receivedUserId) {
+            console.error("Dashboard could not start: User ID was not received in the event.");
+            return;
+        }
+
+        const userId = parseInt(receivedUserId, 10);
+
+        initializeChart();
+        await loadAndProcessData(userId);
+    });
+}
+
 // --- PONTO DE ENTRADA DA APLICAÇÃO (POR ÚLTIMO) ---
 
 document.addEventListener('userDataReady', async (event) => {

@@ -99,67 +99,6 @@ class UserController {
         return $this->user->getUserIdByTokenForSync($userToken); // Apenas repassa a chamada
     }
 
-    public function updateProfilePicture($pictureId): array{
-        if (isset($_SESSION['id'])) {
-            if ($this->user->updateProfilePicture($_SESSION['id'], $pictureId)) {
-                return ['success' => true, 'message' => 'Imagem alterada com sucesso.'];
-            } else {
-                return ['success' => false, 'message' => 'Imagem não alterada.'];
-            }
-        } else {
-            return ['success' => false, 'message' => 'Usuário não autenticado.'];
-        }
-    }
-
-    /*public function insertUserProfilePicture($userPicture): array
-    {
-        $targetDirectory = '/Controle-de-ponto/App/Persistence/userProfileImages/';
-        $nameOld = $targetDirectory . basename($userPicture['name']);
-        $uploadOk = 1;
-        $fileTypeImage = strtolower(pathinfo($nameOld, PATHINFO_EXTENSION));
-        // Gera um novo nome de arquivo baseado na data e hora atual
-        $newFileName = date('YmdHis') . $_SESSION['id'] . '.' . $fileTypeImage;
-        $arch = $targetDirectory . $newFileName;
-        // Caminho completo no servidor
-        $targetFile = __DIR__ . '/../Persistence/userProfileImages/' . $newFileName;
-        // Verifica se o arquivo é uma imagem
-        $check = getimagesize($userPicture['tmp_name']);
-        if ($check === false) {
-            return [''] = "O arquivo não é uma imagem.";
-            $uploadOk = 0;
-        }
-
-        // Verifica se o arquivo já existe
-        if (file_exists($arch)) {
-            return [''] = "Arquivo já existente.";
-            $uploadOk = 0;
-        }
-
-        // Verifica o tamanho do arquivo
-        if ($userPicture['size'] > 500000) { // Limite de 500KB
-            return [''] = "Arquivo muito grande.";
-            $uploadOk = 0;
-        }
-
-        // Permite apenas certos formatos de arquivo
-        if (!in_array($fileTypeImage, ['jpg', 'png', 'jpeg', 'gif'])) {
-            return [''] = "Apenas arquivos JPG, JPEG, PNG e GIF são permitidos.";
-            $uploadOk = 0;
-        }
-
-        // Se estiver tudo ok, tenta fazer o upload
-        if ($uploadOk == 1) {
-            if (move_uploaded_file($userPicture['tmp_name'], $targetFile)) {
-                if ($this->user->insertUserProfilePicture($newFileName, $arch, $uploadOk)) {
-                    return [''] = 'Imagem carregada com sucesso.';
-                }
-            } else {
-                return [''] = '<p>Erro ao alterar imagem de perfil.</p>';
-            }
-        }
-    }*/
-
-
     public function getUserIdByToken(string $userToken): ?int
     {
         error_log("UserController.php - getUserIdByToken: userToken recebido: " . $userToken);
@@ -200,6 +139,21 @@ class UserController {
         }
         // Apenas chama o método correspondente que já existe no Model (User.php)
         return $this->user->deleteTokenForUser($userId);
+    }
+
+    public function insertUserPicture(int $userId, string $filePath, string $originalFileName): ?int
+    {
+        return $this->user->insertNewUserPicture($userId, $filePath, $originalFileName);
+    }
+
+    public function setUserProfilePicture(int $userId, int $photoId): bool
+    {
+        return $this->user->setActiveProfilePicture($userId, $photoId);
+    }
+
+    public function getAllUserPictures(int $userId): array
+    {
+        return $this->user->getAllUserPictures($userId);
     }
 
 }

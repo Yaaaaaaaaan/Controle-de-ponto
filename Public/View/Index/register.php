@@ -5,11 +5,11 @@
     <meta charset="UTF-8">
     <title>Criar Conta</title>
     <link rel="stylesheet" href="../../CSS/IDX/style.css">
-    <link rel="icon" href="../../Api/SystemPics/logo.png" type="image/x-icon">
+    <link rel="icon" href="../../Assets/img/logo.png" type="image/x-icon">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
+<body id="page-register">
 <div class="container-userlogin">
     <h2>Registro</h2>
     <form id="registerForm" novalidate>
@@ -39,6 +39,6 @@
     </form>
 </div>
 
-<script type="module" src="../../JS/IDX/registerController.js"></script>
+<script type="module" src="/Public/JS/main.js"></script>
 </body>
 </html>

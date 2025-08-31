@@ -1,49 +1,46 @@
-async function handleRegisterSubmit(event) {
-    event.preventDefault(); // Impede o recarregamento da página
+// ==========================
+// 📁 registerController.js
+// ==========================
 
+import { displayFeedback } from '../Cogs/utils.js';
+
+
+async function handleRegisterSubmit(event) {
+    event.preventDefault();
     const form = event.currentTarget;
     const submitButton = form.querySelector('button[type="submit"]');
-    const responseElement = document.getElementById('responseAction');
 
-    // Coleta os dados do formulário
     const formData = new FormData(form);
     const data = Object.fromEntries(formData.entries());
 
     submitButton.disabled = true;
-    responseElement.textContent = 'Registrando...';
-    responseElement.className = 'text-muted';
+    displayFeedback('responseAction', 'Registrando...', 'info');
 
     try {
         const response = await fetch('/Public/Api/regist.php', {
             method: 'POST',
             body: new URLSearchParams(data)
         });
-
         const result = await response.json();
-
         if (result.success) {
-            responseElement.className = 'text-success';
-            responseElement.textContent = result.message + ' Redirecionando para o login...';
+            displayFeedback('responseAction', result.message + ' Redirecionando...', 'success');
             setTimeout(() => {
-                window.location.href = 'index.php'; // Redireciona para a página de login
+                window.location.href = 'index.php';
             }, 2000);
         } else {
-            responseElement.className = 'text-danger';
-            responseElement.textContent = result.message;
+            displayFeedback('responseAction', result.message, 'error');
         }
-
     } catch (error) {
         console.error('Erro ao registrar:', error);
-        responseElement.className = 'text-danger';
-        responseElement.textContent = 'Ocorreu um erro de comunicação. Tente novamente.';
+        displayFeedback('responseAction', 'Ocorreu um erro de comunicação. Tente novamente.', 'error');
     } finally {
         submitButton.disabled = false;
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+export function initializeRegisterController() {
     const registerForm = document.getElementById('registerForm');
     if (registerForm) {
         registerForm.addEventListener('submit', handleRegisterSubmit);
     }
-});
+}

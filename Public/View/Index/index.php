@@ -29,7 +29,7 @@ if ($uri === '/controle-de-ponto/index.php/system/healthcheck') {
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js" integrity="sha384-oBqDVmMz9ATKxIep9tiCxS/Z9fNfEXiDAYTujMAeBAsjFuCZSmKbSSUnQlmh/jp3" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.min.js" integrity="sha384-cuYeSxntonz0PPNlHhBs68uyIAVpIIOZZ5JqeqvYYIcEL727kskC66kF92t6Xl2V" crossorigin="anonymous"></script>
 </head>
-<body>
+<body id="page-login">
 <div class="container-userlogin">
     <form id="loginForm">
         <div class="form-floating mb-3">
@@ -48,7 +48,7 @@ if ($uri === '/controle-de-ponto/index.php/system/healthcheck') {
         }
         ?>
 
-        <span id="response"></span>
+        <span id="responseAction"></span>
 
         <div class="d-grid">
             <button type="submit">Login</button>
@@ -58,6 +58,6 @@ if ($uri === '/controle-de-ponto/index.php/system/healthcheck') {
 </div>
 
 <!-- JavaScript (IndexedDB + lógica offline) -->
-<script type="module" src="../../JS/IDX/authController.js"></script>
+<script type="module" src="/Public/JS/main.js"></script>
 </body>
 </html>

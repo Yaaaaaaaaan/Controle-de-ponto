@@ -7,7 +7,7 @@ services:
       - "8080:80"
     volumes:
       # 2. Monta o diretório inteiro do projeto, não apenas a pasta Public
-      - ./:/var/www/html
+      - ./:/var/www/html:z
     depends_on:
       - db
 

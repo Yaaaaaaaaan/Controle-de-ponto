@@ -7,7 +7,7 @@ require "../Layout/menu.php";
 <head>
 </head>
 
-<body>
+<body id="page-dashboard" data-user-type="usr">
 <div class="dashboardWrapper">
     <div class="container-fluid">
         <div class="row">
@@ -46,10 +46,7 @@ require "../Layout/menu.php";
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script type="module" src="../../JS/USR/userInterface.js"></script>
-<script type="module" src="../../JS/USR/indexDashboard.js"></script>
-<script type="module" src="../../JS/USR/userController.js"></script>
+<script type="module" src="/Public/JS/main.js"></script>
 
 <img hidden id="pPictureModal">
 </body>

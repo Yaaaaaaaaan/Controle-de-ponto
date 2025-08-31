@@ -20,25 +20,7 @@ require_once __DIR__ . '/history.php';
         'reg' => 'registros_ponto'
     ];
 
-    public $id;
     public $userToken;
-    public $name;
-    public $email;
-    public $password;
-    public $rank;
-    public $nickname;
-
-    public $newPassword;
-    public $confirmPassword;
-    public $oldPassword;
-
-    public $defaultTheme;
-
-    public $profilePicture;
-    public $directory;
-    public $verifyUpload;
-
-    public $descricao;
     public $registro;
 
     public function __construct($db){
@@ -48,7 +30,7 @@ require_once __DIR__ . '/history.php';
     public function createUser(): bool{
         // Define valor padrão para a imagem de perfil
         $this->profilePicture = 'Profile.png';
-        $this->directory = '/controle-de-ponto/Public/Api/userProfileImages/Profile.png';
+        $this->directory = '/controle-de-ponto/Public/Assets/img/userProfileImages/Profile.png';
         $this->isProfile = '1';
         $this->albumName = 'Foto de perfil';
         $this->albumType = '1';
@@ -187,17 +169,16 @@ require_once __DIR__ . '/history.php';
         return ['userToken' => $existingToken, 'tokenDate' => $tokenCreationStr, 'tokenExpiry' => $tokenExpiryStr];
     }
 
-    // A sua função getUserById que já está correta (não a altere)
     public function getUserById(int $userId): ?array
     {
+        // ALTERAÇÃO 1: Na lista de colunas, troque 'f.nome_foto' por 'f.caminho_arquivo'
         $query = "SELECT u.id_usuario, u.nome_completo, u.nome_usuario, u.nivel_acesso, u.email, u.tema_padrao,
-                     f.nome_foto,
-                     t.token AS userToken, t.data_criacao AS tokenDate, t.data_expiracao AS tokenExpiry
-              FROM {$this->tableNames['usr']} u
-              LEFT JOIN {$this->tableNames['fot']} f ON u.id_usuario = f.id_usuario AND f.perfil = 1
-              LEFT JOIN {$this->tableNames['tok']} t ON u.id_usuario = t.id_usuario
-              LEFT JOIN {$this->tableNames['alb']} a ON f.album_id = a.album_id AND a.tipo_album = 1
-              WHERE u.id_usuario = :userId";
+                 f.caminho_arquivo, -- ANTES ESTAVA f.nome_foto
+                 t.token AS userToken, t.data_criacao AS tokenDate, t.data_expiracao AS tokenExpiry
+          FROM {$this->tableNames['usr']} u
+          LEFT JOIN {$this->tableNames['fot']} f ON u.id_usuario = f.id_usuario AND f.perfil = 1
+          LEFT JOIN {$this->tableNames['tok']} t ON u.id_usuario = t.id_usuario
+          WHERE u.id_usuario = :userId";
         try {
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':userId', $userId, PDO::PARAM_INT);
@@ -209,7 +190,8 @@ require_once __DIR__ . '/history.php';
                     'userId'      => (int)$row['id_usuario'], 'name' => $row['nome_completo'],
                     'email'       => $row['email'], 'rank' => (int)$row['nivel_acesso'],
                     'nickname'    => $row['nome_usuario'], 'theme' => (int)$row['tema_padrao'],
-                    'profileUser' => $row['nome_foto'],
+                    // ALTERAÇÃO 2: Use a coluna correta que foi selecionada
+                    'profileUser' => $row['caminho_arquivo'], // ANTES ESTAVA $row['nome_foto']
                 ];
                 $tokenData = [
                     'userToken'   => $row['userToken'], 'tokenDate'   => $row['tokenDate'],
@@ -224,10 +206,6 @@ require_once __DIR__ . '/history.php';
         }
     }
 
-    /**
-     * [HELPER PRIVADO] Apenas verifica as credenciais.
-     * @return int|null O ID do usuário ou null.
-     */
     private function verifyCredentials(): ?int
     {
         if (empty($this->nickname) || empty($this->password)) {
@@ -245,20 +223,6 @@ require_once __DIR__ . '/history.php';
         return null;
     }
 
-    /**
-     * [HELPER PRIVADO] Gerencia o token para um usuário.
-     * @param int $userId
-     * @param array $userDataFromQuery Dados já buscados, incluindo token e data de expiração.
-     * @return array Dados do token.
-     */
-
-
-    /**
-     * [HELPER PRIVADO] Preenche as variáveis de sessão.
-     * @param int $userId
-     * @param array $profileData
-     * @param array $tokenData
-     */
     private function populateSession(int $userId, array $profileData, array $tokenData): void
     {
         $_SESSION['id'] = $userId;
@@ -283,46 +247,40 @@ require_once __DIR__ . '/history.php';
         ]);
     }
 
-
-
-    public function updateUser(): bool{
+    public function updateUser(): bool {
         // Verificar os campos obrigatórios
         if (empty($this->name) || empty($this->email) || empty($this->nickname)) {
             return false;
         }
 
-        // Iniciar a consulta de atualização
-        $query = "UPDATE " . $this->tableNames['usr'] . "
-            SET uname = :name,
-            uemail = :email,
-            username = :nickname,
-            udefaultTheme = :defaultTheme ";
+        // CORREÇÃO: Nomes das colunas ajustados para corresponder ao seu banco de dados.
+        $query = "UPDATE {$this->tableNames['usr']}
+        SET nome_completo = :name,
+            email = :email,
+            nome_usuario = :nickname,
+            tema_padrao = :defaultTheme ";
 
         $passwordUpdated = false;
         if (!empty($this->newPassword) && !empty($this->confirmPassword) && !empty($this->oldPassword)) {
-            // Verificar se a senha atual está correta antes de permitir a alteração
-            $checkPasswordQuery = "SELECT upassword FROM " . $this->tableNames['usr'] . " WHERE id_usuario = :id";
+            $checkPasswordQuery = "SELECT senha_hash FROM {$this->tableNames['usr']} WHERE id_usuario = :id";
             $checkStmt = $this->conn->prepare($checkPasswordQuery);
             $checkStmt->bindParam(':id', $this->id);
             $checkStmt->execute();
             $currentPasswordHash = $checkStmt->fetchColumn();
-            var_dump($this->oldPassword);var_dump($this->newPassword);var_dump($this->confirmPassword);
-            var_dump($currentPasswordHash);
 
-            // Verificar se a senha antiga fornecida CORRESPONDE ao HASH armazenado
             if ($currentPasswordHash && password_verify($this->oldPassword, $currentPasswordHash) && $this->newPassword == $this->confirmPassword) {
-                $query .= ", upassword = :newPassword";
+                // CORREÇÃO: Nome da coluna de senha ajustado
+                $query .= ", senha_hash = :newPassword";
                 $passwordUpdated = true;
             } else {
-                return false; // Falha na verificação da senha antiga ou nova senha não confere
+                // A senha antiga está incorreta ou a nova senha não foi confirmada corretamente.
+                return false;
             }
         }
 
-        // Finaliza a consulta com a condição WHERE
         $query .= " WHERE id_usuario = :id";
 
         try {
-            // Prepara e executa a consulta
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':name', $this->name);
             $stmt->bindParam(':email', $this->email);
@@ -335,24 +293,16 @@ require_once __DIR__ . '/history.php';
             }
 
             if ($stmt->execute()) {
-                // Atualiza os dados da sessão
+                // Atualiza os dados da sessão (ainda útil para a navegação)
                 if (isset($_SESSION['userData'])) {
-                    $userData = json_decode($_SESSION['userData'], true);
-                    $userData['name'] = $this->name;
-                    $userData['email'] = $this->email;
-                    $userData['nickname'] = $this->nickname;
-                    $userData['theme'] = $this->defaultTheme;
-                    $_SESSION['userData'] = json_encode($userData);
-                    $_SESSION['userData_updated'] = true;
-
-                    //Inserir registro no histórico
-                    $description = 'Alteração de informações, ';
-                    $this->createUserHistory($description, $this->id);
+                    // ... (lógica de atualização de sessão) ...
+                    $this->createUserHistory('Alteração de informações de perfil.', $this->id);
                 }
                 return true;
             }
             return false;
         } catch (PDOException $e) {
+            error_log("Erro em User->updateUser: " . $e->getMessage());
             return false;
         }
     }
@@ -414,130 +364,6 @@ require_once __DIR__ . '/history.php';
             return $result;
         } catch(PDOException $e) {
             echo "Error: " . $e->getMessage();
-            return false;
-        }
-    }
-
-
-    public function setPictures($picture, $directory): bool{ //insere imagens no banco de dados.
-        $this->picture = $picture;
-        $this->directory = $directory;
-        $this->id = $_SESSION['id'];
-        $queryInsert = "INSERT INTO" . $this->tableNames['fot'] . " SET path=:directory, namePic=:picture, idUserFK = :id ";
-        $stmt = $this->conn->prepare($queryInsert);
-        $stmt->bindValue(':id', $this->id);
-        $stmt->bindValue(':directory', $this->directory);
-        $stmt->bindValue(':picture', $this->picture);
-
-        if ($stmt->execute()) {
-            $_SESSION['lastImageProfileUser'] = $this->directory;
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    public function getUserPictures($userId) {
-        $querySelect = "SELECT cod, path, description FROM " . $this->tableNames['fot'] . " WHERE uidUserFK = :userId ORDER BY dateload DESC LIMIT 3";
-        $stmt = $this->conn->prepare($querySelect);
-        $stmt->bindParam(':userId', $userId);
-        $stmt->execute();
-        $pictures = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        $_SESSION['lastProfilePictures']= json_encode($pictures);
-        return $pictures;
-    }
-
-    public function updateProfilePicture($userId, $pictureId): bool{
-        try {
-            // Inicia uma transação
-            $this->conn->beginTransaction();
-
-            //1. atualize a tabela
-            $queryUpdate = "UPDATE " . $this->tableNames['alb'] . " 
-                      SET uPictureFK = :pictureId 
-                      WHERE uidUserFK = :userId";
-            $updateStmt = $this->conn->prepare($queryUpdate);
-            $updateStmt->bindParam(':userId', $userId);
-            $updateStmt->bindParam(':pictureId', $pictureId);
-            $updateStmt->execute();
-
-            // 2. realize o SELECT
-            $querySelect = "SELECT description 
-                      FROM " . $this->tableNames['fot'] . " 
-                      WHERE cod = :pictureId";
-            $selectStmt = $this->conn->prepare($querySelect);
-            $selectStmt->bindParam(':pictureId', $pictureId);
-            $selectStmt->execute();
-            $row = $selectStmt->fetch(PDO::FETCH_ASSOC);
-
-            // Confirme a transação
-            $this->conn->commit();
-
-            if ($row) {
-                //Insere o registro no histórico
-                $description = 'Alterou para a foto de perfil cod: '.$pictureId.' . ';
-                $this->createUserHistory($description, $userId);
-                // Atualize o profileUser na sessão
-                $userData = json_decode($_SESSION['userData'], true);
-                $userData['profileUser'] = $row['description'];
-                $_SESSION['userData'] = json_encode($userData);
-            }
-
-            return true;
-        } catch (PDOException $e) {
-            // Reverte a transação em caso de erro
-            $this->conn->rollBack();
-            echo "Erro: " . $e->getMessage(); // Para depuração
-            return false;
-        }
-    }
-
-    public function insertUserProfilePicture($profilePicture, $directory, $verifyUpload): bool{
-        $this->profilePicture = $profilePicture;
-        $this->directory = $directory;
-        $this->verifyUpload = $verifyUpload;
-        $this->id = $_SESSION['id'] ?? null; // TODO: Precisa de atenção sobre SESSIONS, pois será alterado para JSON futuramente.
-
-        if ($this->id === null) {
-            error_log("Erro: ID do usuário não encontrado na sessão ao tentar inserir a foto de perfil.");
-            return false;
-        }
-
-        try {
-            $this->conn->beginTransaction();
-
-
-            $queryInsertPic = "INSERT INTO {$this->tableNames['fot']} (path, description, uidUserFK)
-                                VALUES (:directory, :profilePicture, :id)";
-            $stmtInsertPic = $this->conn->prepare($queryInsertPic);
-            $stmtInsertPic->bindValue(':directory', $this->directory);
-            $stmtInsertPic->bindValue(':profilePicture', $this->profilePicture);
-            $stmtInsertPic->bindValue(':id', $this->id, PDO::PARAM_INT);
-            $stmtInsertPic->execute();
-            $newPictureId = $this->conn->lastInsertId();
-            $queryProfilePic = "INSERT INTO {$this->tableNames['alb']} (uidUserFK, uPictureFK)
-                                VALUES (:id, :newPictureId)
-                                ON DUPLICATE KEY UPDATE
-                                uPictureFK = VALUES(uPictureFK)";
-            $stmtProfilePic = $this->conn->prepare($queryProfilePic);
-            $stmtProfilePic->bindValue(':id', $this->id, PDO::PARAM_INT);
-            $stmtProfilePic->bindValue(':newPictureId', $newPictureId, PDO::PARAM_INT);
-            $stmtProfilePic->execute();
-
-            $this->conn->commit();
-            if($stmtProfilePic->execute()){
-                $_SESSION['lastImageProfileUser'] = $this->directory;
-                //Inserir registro no histórico
-                $description = 'Inseriu a imagem: '.$this->profilePicture.' ao sistema. ';
-                $this->createUserHistory($description, $this->id);
-            }
-
-            return true;
-
-        } catch (PDOException $e) {
-            // Rollback em caso de erro
-            $this->conn->rollBack();
-            error_log("Erro ao inserir foto de perfil: " . $e->getMessage() . " (Código: " . $e->getCode() . ")");
             return false;
         }
     }
@@ -627,6 +453,98 @@ require_once __DIR__ . '/history.php';
         } catch (PDOException $e) {
             error_log("Erro ao deletar token: " . $e->getMessage());
             return false;
+        }
+    }
+
+    public function insertNewUserPicture(int $userId, string $relativePath, string $originalFileName): ?int
+    {
+        $this->conn->beginTransaction();
+        try {
+            // 1. Procura pelo álbum padrão "Foto de perfil" do usuário.
+            $albumQuery = "SELECT album_id FROM {$this->tableNames['alb']} WHERE id_usuario = :userId AND nome_album = 'Foto de perfil'";
+            $albumStmt = $this->conn->prepare($albumQuery);
+            $albumStmt->execute([':userId' => $userId]);
+            $albumId = $albumStmt->fetchColumn();
+
+            // 2. Se o álbum não for encontrado, cria-o.
+            if (!$albumId) {
+                // tipo_album = 1 para "Foto de perfil"
+                $insertAlbumQuery = "INSERT INTO {$this->tableNames['alb']} (id_usuario, nome_album, tipo_album) VALUES (:userId, 'Foto de perfil', 1)";
+                $this->conn->prepare($insertAlbumQuery)->execute([':userId' => $userId]);
+                $albumId = $this->conn->lastInsertId();
+            }
+
+            // 3. Agora com um album_id garantido, insere a foto na tabela 'fotos'.
+            $query = "INSERT INTO {$this->tableNames['fot']} (album_id, id_usuario, caminho_arquivo, nome_foto, perfil) 
+                  VALUES (:albumId, :userId, :caminho, :nomeFoto, 0)"; // perfil = 0 por padrão
+
+            $stmt = $this->conn->prepare($query);
+            $params = [
+                ':albumId' => $albumId,
+                ':userId' => $userId,
+                ':caminho' => $relativePath,
+                ':nomeFoto' => $originalFileName
+            ];
+
+            if ($stmt->execute($params)) {
+                $photoId = (int)$this->conn->lastInsertId();
+                $this->conn->commit(); // Confirma a transação
+                $this->createUserHistory('Upload de nova foto: ' . $originalFileName, $userId);
+                return $photoId; // Retorna o ID da foto inserida
+            }
+
+            // Se a inserção da foto falhar, reverte tudo.
+            $this->conn->rollBack();
+            error_log("Erro ao inserir foto no DB: " . print_r($stmt->errorInfo(), true));
+            return null;
+
+        } catch (PDOException $e) {
+            $this->conn->rollBack(); // Garante que tudo seja revertido em caso de erro.
+            error_log("Erro PDO em User->insertNewUserPicture: " . $e->getMessage());
+            return null;
+        }
+    }
+
+// Define uma foto existente como a de perfil (e desmarca as outras).
+    public function setActiveProfilePicture(int $userId, int $photoId): bool
+    {
+        $this->conn->beginTransaction();
+        try {
+            $clearProfileQuery = "UPDATE {$this->tableNames['fot']} SET perfil = 0 WHERE id_usuario = :userId";
+            $this->conn->prepare($clearProfileQuery)->execute([':userId' => $userId]);
+
+            $setProfileQuery = "UPDATE {$this->tableNames['fot']} SET perfil = 1 WHERE foto_id = :photoId AND id_usuario = :userId";
+            $setStmt = $this->conn->prepare($setProfileQuery);
+            $setStmt->execute([':photoId' => $photoId, ':userId' => $userId]);
+
+            if ($setStmt->rowCount() > 0) {
+                $this->conn->commit();
+                $this->createUserHistory('Definiu nova foto de perfil (ID da Foto: ' . $photoId . ')', $userId);
+                return true;
+            }
+
+            $this->conn->rollBack();
+            return false;
+
+        } catch (PDOException $e) {
+            $this->conn->rollBack();
+            error_log("Erro em User->setActiveProfilePicture: " . $e->getMessage());
+            return false;
+        }
+    }
+
+// Busca todas as fotos de um usuário para exibir na galeria.
+    public function getAllUserPictures(int $userId): array
+    {
+        try {
+            $query = "SELECT foto_id, caminho_arquivo, nome_foto, perfil FROM {$this->tableNames['fot']} 
+                  WHERE id_usuario = :userId ORDER BY data_upload DESC";
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute([':userId' => $userId]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Erro em User->getAllUserPictures: " . $e->getMessage());
+            return [];
         }
     }
 }

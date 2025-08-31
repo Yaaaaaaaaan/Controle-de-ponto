@@ -1,13 +1,16 @@
-// No ficheiro: userController.js (VERSÃO REFATORADA)
+// ========================
+// 📁 userController.js
+// ========================
 
 import {
     addActionToSyncQueue,
     addPointControlRecordToServer,
     addPointControl,
-    syncServerToIndexedDB,
-    getPointControlByUserId
+    getPointControlByUserId,
+    fetchUserDataByToken
 } from '../indexedDB/Model.js';
-import { userDataPromise } from './userInterface.js'; // Importa a promessa
+import { userDataPromise, triggerUIRefresh } from '../Cogs/UIManager.js';
+import { displayFeedback, withApiHandler } from '../Cogs/utils.js'; // futuramente implementar whithApiHandler.
 import { isOnline } from '../Core/connectionChecker.js';
 
 async function handleOnlinePresence() {
@@ -15,17 +18,17 @@ async function handleOnlinePresence() {
     try {
         const success = await addPointControlRecordToServer("Verificação pendente");
         if (success) {
-            alert('Presença confirmada com sucesso online!');
-            await syncServerToIndexedDB();
-            window.location.reload();
+            alert('Presença confirmada com sucesso online!'); //A trocar
+
+            const userToken = localStorage.getItem('userToken');
+            await fetchUserDataByToken(userToken);
+
+            await triggerUIRefresh();
         } else {
-            alert('Falha ao confirmar a presença online.');
+            alert('Falha ao confirmar a presença online.'); //A trocar
         }
     } catch (error) {
-        // ESTE BLOCO É A CHAVE DA SOLUÇÃO:
-        // Se o 'fetch' falhar por falta de rede, o erro é capturado aqui.
         console.warn("A tentativa online falhou por erro de rede. Acionando modo offline.", error);
-        // Em vez de parar, ele chama a função offline para continuar o processo.
         await handleOfflinePresence();
     }
 }
@@ -44,11 +47,10 @@ async function handleOfflinePresence() {
     const hasRecordForToday = localRecords.some(record => record.dateIn === today);
 
     if (hasRecordForToday) {
-        alert('Você já registou a sua presença hoje no modo offline.');
+        alert('Você já registou a sua presença hoje no modo offline.'); //A trocar
         return;
     }
 
-    console.log("Nenhum registro local para hoje. Salvando...");
     const status = "Verificação pendente";
     const obs = "offline";
 
@@ -58,8 +60,8 @@ async function handleOfflinePresence() {
     const action = { type: 'CREATE_POINT', payload: { status, obs }, timestamp: new Date().toISOString() };
     await addActionToSyncQueue(action); // Salva na fila de sincronização
 
-    alert('Você está offline. A sua presença foi registada.');
-    window.location.reload();
+    alert('Você está offline. A sua presença foi registada.'); //A trocar
+    await triggerUIRefresh();
 }
 
 // FUNÇÃO PRINCIPAL SIMPLIFICADA
@@ -84,19 +86,24 @@ async function handleConfirmPresenceClick(event) {
 
 async function handleLogout(event) {
     event.preventDefault();
+    console.log("Executando logout (client-side)...");
+
     try {
+        // 1. Limpa APENAS a SESSÃO ATIVA do navegador (localStorage).
         localStorage.removeItem('activeUserId');
         localStorage.removeItem('userToken');
-        if (navigator.onLine) {
-            await fetch('/Public/Api/logout.php');
-        }
-    } finally {
-        window.location.href = '/Public/View/Index/';
-    }
+
+        // NÃO chamamos clearSessionData() e NÃO fazemos fetch para o logout.php
+    } catch (error){
+    console.error("Erro durante o logout local:", error);
+} finally {
+    // 2. Redireciona o usuário para a página de login, completando o "logout" visual.
+    window.location.href = '/Public/View/Index/';
+}
 }
 
 async function handleThemeChange(newTheme) {
-    if (navigator.onLine) {
+    if (isOnline) {
         // Lógica online: Tenta atualizar diretamente no servidor
         const success = await syncThemeToServer(newTheme); // Uma nova função que fala com a API
         if (success) {
@@ -154,5 +161,4 @@ async function initializeController() {
     }
 }
 
-// Inicia o controlador.
-initializeController();
+export { initializeController };

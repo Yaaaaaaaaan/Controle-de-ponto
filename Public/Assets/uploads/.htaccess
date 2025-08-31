@@ -1,0 +1,15 @@
+# Impede a execução de scripts PHP nesta pasta e subpastas.
+<Files "*.php">
+    deny from all
+</Files>
+
+# Opção mais forte: Remove a capacidade de executar qualquer script.
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php5.c>
+    php_flag engine off
+</IfModule>
+
+# Impede a listagem de diretórios.
+Options -Indexes

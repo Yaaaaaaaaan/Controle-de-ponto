@@ -25,28 +25,40 @@ Controle-de-Ponto/
 │   │   ├── Errors/
 │   │   │   └── ErroUserdata.txt
 │   │   │
-│   │   ├── UserProfileImages/
-│   │   │   ├── (Random Images)
-│   │   │   └── Profile.png
-│   │   │
 │   │   └── .htaccess                                                    # Controlador de acesso a diretório e arquivos
 │   │
 │   └── .htaccess                                                        # Controlador de acesso a diretório e arquivos
 │
 ├── Public/
 │   ├── Api/
-│   │   ├── SystemPics
+│   │   ├── auth.php
+│   │   ├── healthCheck.php
+│   │   ├── initialData.php
+│   │   ├── logout.php
+│   │   ├── pControl.php
+│   │   ├── regist.php
+│   │   ├── setProfilePicture.php
+│   │   ├── sync.php
+│   │   ├── uploadPicture.php
+│   │   ├── userData.php
+│   │   ├── userPictures.php
+│   │   ├── userSettings.php
+│   │   └── userToken.php
+│   │
+│   ├── assets/
+│   │   ├── img/                                            <-- Para imagens do sistema (logos, ícones)
+│   │   │   ├── userProfileImages/
+│   │   │   │   ├── .htaccess
+│   │   │   │   └── Profile.png
+│   │   │   │
 │   │   │   ├── logo.png
 │   │   │   ├── logoOld.png
 │   │   │   └── offlineLogo.png
 │   │   │
-│   │   ├── auth.php
-│   │   ├── logout.php
-│   │   ├── pControl.php
-│   │   ├── regist.php
-│   │   ├── sync.php
-│   │   ├── userData.php
-│   │   └── userToken.php
+│   │   └── uploads/                                        <-- Para arquivos enviados pelos usuários
+│   │       ├── .htaccess
+│   │       └── 1/                                          <-- (Ex: Pasta para o usuário de ID 1)
+│   │           └── profile_xxxxxxxx.jpg                    <-- (Ex: imagem do usuário)
 │   │
 │   ├── CSS/
 │   │   ├── HKG/
@@ -67,6 +79,7 @@ Controle-de-Ponto/
 │   │   │   └── ... (framework files)
 │   │   │
 │   │   ├── Core/
+│   │   │   ├── connectionChecker.js
 │   │   │   └── syncController.js
 │   │   │
 │   │   ├── HKG/
@@ -82,6 +95,7 @@ Controle-de-Ponto/
 │   │   │
 │   │   ├── USR/
 │   │   │   ├── indexDashboard.js                                       # Cria a parte lógica do dashboard e seus dados
+│   │   │   ├── settingsController.js
 │   │   │   ├── userController.js
 │   │   │   └── userInterface.js                               # Faz o papel de View com os dados recebidos do Model.js
 │   │   │
@@ -89,6 +103,7 @@ Controle-de-Ponto/
 │   │   │   └── ... (framework file)
 │   │   │
 │   │   ├── color-modes.js
+│   │   ├── main.js
 │   │   └── script.js
 │   │
 │   ├── System/

@@ -1,7 +1,10 @@
-// ========================
-// 📁 authController.js (Refatorado)
-// ========================
+// ==========================
+// 📁 authController.js
+// ==========================
 import { getUserByNickname, storeAuthData, isTokenValid, getUserTokenByUserId } from '../indexedDB/Model.js';
+import { displayFeedback } from '../Cogs/utils.js';
+import { isOnline } from '../Core/connectionChecker.js';
+
 
 // --- FUNÇÃO DE LOGIN ONLINE ---
 // Tenta autenticar contra o servidor. Se falhar, aciona o fallback para o modo offline.
@@ -37,7 +40,7 @@ async function handleOnlineLogin(nickname, password) {
 
             window.location.href = "../User/index.php";
         } else {
-            alert(result.message || "Falha na autenticação.");
+            displayFeedback('responseAction', result.message || "Falha na autenticação.", 'error');
         }
     } catch (error) {
         console.warn("Falha na comunicação com o servidor. Acionando fallback para modo offline.", error);
@@ -52,13 +55,13 @@ async function handleOfflineLogin(nickname, password) {
     console.log("Modo Offline: Autenticando localmente...");
 
     if (!password) {
-        alert("Por favor, digite sua senha para acesso offline.");
+        displayFeedback('responseAction', "Por favor, digite sua senha para acesso offline.", 'error');
         return;
     }
 
     const user = await getUserByNickname(nickname);
     if (!user || !user.offlinePasswordHash) {
-        alert("Usuário não encontrado ou não configurado para acesso offline. Conecte-se à internet para o primeiro login.");
+        displayFeedback('responseAction', "Usuário não encontrado ou não configurado para acesso offline.", 'error');
         return;
     }
 
@@ -93,7 +96,7 @@ async function handleOfflineLogin(nickname, password) {
         // --- FIM DA CORREÇÃO ---
 
     } else {
-        alert("Senha incorreta.");
+        displayFeedback('responseAction', "Senha incorreta.", 'error');
     }
 }
 
@@ -105,11 +108,11 @@ async function handleLoginSubmit(e) {
     const password = document.getElementById("password").value;
 
     if (!nickname) {
-        alert("Por favor, preencha o nome de usuário.");
+        displayFeedback('responseAction', "Por favor, preencha o nome de usuário.", 'error');
         return;
     }
-
-    if (navigator.onLine) {
+    displayFeedback('responseAction', "Autenticando...", 'info');
+    if (isOnline) {
         // Se o NAVEGADOR diz que tem rede, tentamos a via online (que tem fallback).
         await handleOnlineLogin(nickname, password);
     } else {
@@ -129,9 +132,9 @@ async function hashPassword(password) {
 }
 
 // --- PONTO DE ENTRADA DO SCRIPT ---
-document.addEventListener('DOMContentLoaded', () => {
+export function initializeAuthController() {
     const loginForm = document.getElementById("loginForm");
     if (loginForm) {
         loginForm.addEventListener("submit", handleLoginSubmit);
     }
-});
+}

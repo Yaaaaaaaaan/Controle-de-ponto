@@ -1,6 +1,7 @@
-// ========================
+// =========================
 // 📁 Model.js
-// ========================
+// =========================
+
 import {
     initializeDB,
     userDataStoreName,
@@ -396,153 +397,6 @@ async function isTokenValid(token) {
 // Funções de sincronização
 // ========================
 
-// Sincronizar dados do usuário do servidor para o IndexedDB
-async function processUserData() {
-    try {
-        const response = await fetch('../../Api/userData.php');
-        const fullData = await response.json();
-
-        console.log(`[${obterHoraFormatada()}] processUserData: Resposta do servidor:`, fullData);
-
-        const serverUserData = fullData.userData;
-
-        if (!serverUserData || typeof serverUserData !== 'object' || Object.keys(serverUserData).length === 0) {
-            console.error(`[${obterHoraFormatada()}] Dados do usuário inválidos ou vazios do servidor.`);
-            return null;
-        }
-
-        // Adicionar ou atualizar o usuário no IndexedDB
-        await upsertUser(serverUserData);
-
-        // Se temos um token, atualizá-lo também
-        if (serverUserData.userToken && serverUserData.id) {
-            await setUserToken(serverUserData.userToken, serverUserData.id);
-        }
-
-        return serverUserData;
-    } catch (error) {
-        console.error(`[${obterHoraFormatada()}] Erro ao processar dados do usuário:`, error);
-        return null;
-    }
-}
-
-// Sincronizar dados do IndexedDB com o servidor
-async function syncIndexedDBToServer(userToken, theme) {
-    try {
-        if (!userToken || typeof theme === 'undefined') {
-            //console.error("Erro ao sincronizar com o servidor: Tema ou token de usuário não especificados");
-            return false;
-        }
-
-        // Verificar se estamos online
-        if (!navigator.onLine) {
-            console.log(`[${obterHoraFormatada()}] Dispositivo offline, sincronização adiada`);
-            return false;
-        }
-
-        const response = await fetch('../../Api/userData.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userToken, theme })
-        });
-
-        const data = await response.json();
-        if (data.success) {
-            console.log(`[${obterHoraFormatada()}] Dados sincronizados com o servidor com sucesso!`);
-            return true;
-        } else {
-            console.error(`[${obterHoraFormatada()}] Erro ao sincronizar dados com o servidor:`, data.message);
-            return false;
-        }
-    } catch (error) {
-        console.error(`[${obterHoraFormatada()}] Erro ao comunicar com o servidor:`, error);
-        return false;
-    }
-}
-
-// Sincronizar dados do servidor com o IndexedDB
-async function syncServerToIndexedDB() {
-    try {
-        if (!navigator.onLine) {
-            console.log(`[${obterHoraFormatada()}] Dispositivo offline, sincronização adiada`);
-            return false;
-        }
-        const activeUserId = localStorage.getItem('activeUserId');
-        if (!activeUserId) {
-            console.warn(`[${obterHoraFormatada()}] syncServerToIndexedDB: Nenhum utilizador ativo encontrado no localStorage. Sincronização abortada.`);
-            return false;
-        }
-
-        // 1. Busca os dados mais recentes do servidor
-        const userResponse = await fetch('../../Api/userData.php');
-        const serverData = await userResponse.json();
-
-        if (serverData && serverData.userData) {
-            // Usa um nome claro para o objeto que veio do servidor
-            const userDataFromServer = serverData.userData;
-            if (String(userDataFromServer.userId) !== String(activeUserId)) {
-                console.error(`[${obterHoraFormatada()}] syncServerToIndexedDB: Conflito de dados! Utilizador ativo é ${activeUserId}, mas o servidor enviou dados para ${userDataFromServer.userId}. Sincronização abortada.`);
-                return false;
-            }
-            // --- INÍCIO DA CORREÇÃO ---
-
-            // 2. ANTES de salvar, primeiro busca o registro local ATUAL para ver se ele tem um hash.
-            // Usa o nickname que veio do servidor como chave para encontrar o usuário local.
-            const localUser = await getUserByNickname(userDataFromServer.nickname);
-
-            // 3. Verificamos se há um hash offline no registro local.
-            if (localUser && localUser.offlinePasswordHash) {
-                // 4. Se houver, garantimos que ele seja PRESERVADO no objeto que veio do servidor.
-                // Adiciona a propriedade de volta ao objeto antes de salvá-lo.
-                userDataFromServer.offlinePasswordHash = localUser.offlinePasswordHash;
-                console.log(`[${obterHoraFormatada()}] syncServerToIndexedDB: Hash offline preservado durante a sincronização.`);
-            }
-            // --- FIM DA CORREÇÃO ---
-
-            // 5. Agora sim, salva o objeto atualizado (e completo).
-            await upsertUser(userDataFromServer);
-
-            // A lógica para o token continua a mesma...
-            if (userDataFromServer.userToken && userDataFromServer.userId) {
-                await setUserToken(userDataFromServer.userToken, userDataFromServer.userId);
-            }
-        }
-
-        // Buscar dados de controle de ponto
-        const pointResponse = await fetch('/Public/Api/pControl.php');
-        const pointData = await pointResponse.json();
-
-        // Verificamos se temos o ID do usuário que estamos sincronizando (vindo da primeira parte da função)
-        const currentUserId = serverData?.userData?.userId;
-
-        if (pointData && pointData.pointControl && Array.isArray(pointData.pointControl) && currentUserId) {
-            // 1. CHAMA A NOVA FUNÇÃO para deletar apenas os registros do usuário atual.
-            await deletePointControlByUserId(currentUserId);
-
-            // 2. ADICIONA OS NOVOS DADOS vindos do servidor.
-            const db = await initializeDB();
-            const transaction = db.transaction(pointControlStoreName, 'readwrite');
-            const pointControlStore = transaction.objectStore(pointControlStoreName);
-
-            for (const point of pointData.pointControl) {
-                // Garantimos que o registro tenha o userId correto antes de salvar
-                point.userId = currentUserId;
-                pointControlStore.add(point);
-            }
-
-            await new Promise(resolve => transaction.oncomplete = resolve);
-            console.log(`[${obterHoraFormatada()}] Novos registros de ponto para o usuário ${currentUserId} foram adicionados.`);
-        }
-// --- FIM DA CORREÇÃO ---
-
-        console.log(`[${obterHoraFormatada()}] Sincronização com o servidor concluída com sucesso`);
-        return true;
-    } catch (error) {
-        console.error(`[${obterHoraFormatada()}] Erro ao sincronizar dados com o servidor:`, error);
-        return false;
-    }
-}
-
 // Função para armazenar dados de autenticação no IndexedDB
 /**
  * Armazena os dados semi-persistentes do usuário no IndexedDB.
@@ -760,9 +614,6 @@ export {
     isTokenValid,
 
     // Funções de sincronização
-    processUserData,
-    syncIndexedDBToServer,
-    syncServerToIndexedDB,
     storeAuthData,
     replaceUserPointControl,
 

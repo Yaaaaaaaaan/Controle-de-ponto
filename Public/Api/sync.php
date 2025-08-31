@@ -53,6 +53,32 @@ if (!empty($actions)) {
                     // A chamada para insertPointControl já cria o registro de histórico através do Model.
                     $success = $pointController->insertPointControl($userId, $status, $obs, $actionDate);
                     break;
+                case 'UPDATE_PROFILE':
+                    // Extraímos os dados do payload que o settingsController.js salvou
+                    $payload = $action['payload'] ?? [];
+                    $name = $payload['name'] ?? '';
+                    $email = $payload['email'] ?? '';
+                    $nickname = $payload['nickname'] ?? '';
+                    $defaultTheme = $payload['defaultTheme'] ?? 0;
+
+                    // A lógica de senha não é sincronizada offline por segurança,
+                    // então passamos valores vazios para os campos de senha.
+                    $oldPassword = '';
+                    $newPassword = '';
+
+                    // Reutilizamos o mesmo método que a API de tempo real usa!
+                    $result = $userController->updateUser(
+                        $name,
+                        $userId,
+                        $email,
+                        $nickname,
+                        $oldPassword,
+                        $newPassword,
+                        $newPassword,
+                        $defaultTheme
+                    );
+                    $success = $result['success'];
+                    break;
 
                 case 'updateTheme':
                     $theme = $action['payload']['theme'] ?? 0;

@@ -1,6 +1,6 @@
-// ========================
+// ==========================
 // 📁 Config.js
-// ========================
+// ==========================
 const dbName = 'PCDB';
 const dbVersion = 4 ; // Incrementado para forçar upgrade
 const userDataStoreName = 'userData';
