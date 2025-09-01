@@ -10,8 +10,64 @@ import {
     fetchUserDataByToken
 } from '../indexedDB/Model.js';
 import { userDataPromise, triggerUIRefresh } from '../Cogs/UIManager.js';
-import { displayFeedback, withApiHandler } from '../Cogs/utils.js'; // futuramente implementar whithApiHandler.
+import { showToast, withApiHandler } from '../Cogs/utils.js';
 import { isOnline } from '../Core/connectionChecker.js';
+
+// --- A LÓGICA DE NEGÓCIO PURA ---
+async function doOnlinePresence() {
+    const success = await addPointControlRecordToServer("Verificação pendente");
+    if (!success) {
+        throw new Error('Falha ao confirmar a presença online.');
+    }
+    // Após o sucesso, busca os dados frescos para atualizar o IndexedDB
+    const userToken = localStorage.getItem('userToken');
+    await fetchUserDataByToken(userToken);
+}
+
+async function doOfflinePresence() {
+    const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
+    if (!activeUserId) throw new Error('Sessão de utilizador inválida.');
+
+    const today = new Date().toISOString().split('T')[0];
+    const localRecords = await getPointControlByUserId(activeUserId);
+    if (localRecords.some(rec => rec.dateIn === today)) {
+        // Lança um erro customizado que o AOP pode capturar
+        throw new Error('Presença já registrada para hoje.');
+    }
+    const status = "Verificação pendente";
+    const obs = "offline";
+    await addPointControl({ userId: activeUserId, status, dateIn: today, obs });
+    await addActionToSyncQueue({ type: 'CREATE_POINT', payload: { status, obs }, timestamp: new Date().toISOString() });
+}
+
+// --- O MANIPULADOR DE EVENTO QUE USA AOP ---
+async function handleConfirmPresenceClick(event) {
+    const button = event.currentTarget;
+
+    if (isOnline) {
+        const handleApiPresence = withApiHandler(doOnlinePresence, { button });
+        const success = await handleApiPresence();
+        if (success) {
+            await triggerUIRefresh(); // Atualiza o dashboard sem recarregar
+        }
+    } else {
+        // Para offline, podemos usar o AOP também, mas uma chamada direta é mais clara
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = 'Processando...';
+        try {
+            await doOfflinePresence();
+            showToast('Presença registrada offline!');
+            await triggerUIRefresh();
+        } catch (error) {
+            showToast(`Aviso: ${error.message}`, 'info');
+        } finally {
+            button.disabled = false;
+            button.textContent = originalText;
+        }
+    }
+}
+
 
 async function handleOnlinePresence() {
     console.log("Online: A confirmar presença diretamente no servidor...");
@@ -61,26 +117,6 @@ async function handleOfflinePresence() {
     displayFeedback('responseAction', 'Presença registrada offline com sucesso!', 'success');
     await triggerUIRefresh();
     await triggerUIRefresh();
-}
-
-// FUNÇÃO PRINCIPAL SIMPLIFICADA
-async function handleConfirmPresenceClick(event) {
-    const button = event.currentTarget;
-    const originalText = button.textContent;
-    button.disabled = true;
-    button.textContent = 'A processar...';
-    displayFeedback('responseAction', 'Confirmando presença...', 'info');
-    try {
-        // A lógica é sempre tentar online. Se a rede falhar,
-        // a própria handleOnlinePresence se encarrega de chamar a handleOfflinePresence.
-        await handleOnlinePresence();
-    } catch (error) {
-        console.error("Erro inesperado ao confirmar presença:", error);
-        displayFeedback('responseAction', 'Ocorreu um erro inesperado.', 'error');
-    } finally {
-        button.disabled = false;
-        button.textContent = originalText;
-    }
 }
 
 

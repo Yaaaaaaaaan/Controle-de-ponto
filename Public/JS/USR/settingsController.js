@@ -242,7 +242,6 @@ async function setAsProfilePicture(photoId) {
     }
 }
 
-
 async function handleThemeChange(event) {
     const newThemeValue = event.target.checked ? 1 : 0;
     applyTheme(newThemeValue); // Aplica a mudança visual imediatamente
@@ -281,6 +280,35 @@ async function handleThemeChange(event) {
     }
 }
 
+async function fetchAndDisplayHistory(limit = 20) {
+    const historyTableBody = document.getElementById('historyTableBody');
+    if (!historyTableBody) return;
+    historyTableBody.innerHTML = '<tr><td colspan="2">Buscando histórico...</td></tr>';
+
+    try {
+        const userToken = localStorage.getItem('userToken');
+        const response = await fetch(`/Public/Api/userHistory.php?limit=${limit}`, {
+            headers: { 'Authorization': `Bearer ${userToken}` }
+        });
+        const result = await response.json();
+
+        if (result.success && result.history.length > 0) {
+            historyTableBody.innerHTML = ''; // Limpa a tabela
+            result.history.forEach(entry => {
+                const row = historyTableBody.insertRow();
+                const date = new Date(entry.data_ocorrencia);
+                row.insertCell(0).textContent = entry.descricao;
+                row.insertCell(1).textContent = date.toLocaleString('pt-BR');
+            });
+        } else {
+            historyTableBody.innerHTML = '<tr><td colspan="2">Nenhum histórico encontrado.</td></tr>';
+        }
+    } catch (error) {
+        console.error("Erro ao buscar histórico:", error);
+        historyTableBody.innerHTML = '<tr><td colspan="2">Falha ao carregar histórico.</td></tr>';
+    }
+}
+
 // Função que inicializa o controller
 export function initSettingsController() {
     const form = document.getElementById('formUserData');
@@ -300,6 +328,15 @@ export function initSettingsController() {
         });
     }
 
+    const searchHistoryBtn = document.getElementById('searchHistoryBtn');
+    if (searchHistoryBtn) {
+        searchHistoryBtn.addEventListener('click', () => {
+            const limitInput = document.querySelector('input[name="registro"]');
+            const limit = limitInput.value || 20;
+            fetchAndDisplayHistory(limit);
+        });
+    }
+
     const profilePhotoModal = document.getElementById('profilePhotoModal');
     if (profilePhotoModal) {
         profilePhotoModal.addEventListener('show.bs.modal', fetchAndDisplayUserPictures);
@@ -312,6 +349,11 @@ export function initSettingsController() {
 
     const modalEl = document.getElementById('confirmationModal');
     if(modalEl) confirmationModal = new bootstrap.Modal(modalEl);
+
+    const historyAccordion = document.getElementById('collapseThree');
+    if (historyAccordion) {
+        historyAccordion.addEventListener('show.bs.collapse', () => fetchAndDisplayHistory());
+    }
 
     const confirmBtn = document.getElementById('confirmActionBtn');
     if (confirmBtn) {

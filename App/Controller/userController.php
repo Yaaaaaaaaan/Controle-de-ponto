@@ -164,5 +164,11 @@ class UserController {
         return $this->user->createUserHistory('Logout bem-sucedido', $userId);
     }
 
+    public function getUserHistory(int $userId, int $limit = 20)
+    {
+        // Apenas repassa a chamada para o método que já corrigimos no Model.
+        return $this->user->getUserHistory($userId, $limit);
+    }
+
 }
 ?>

@@ -71,7 +71,6 @@ class History{
         }
     }
 
-
 }
 
 ?>

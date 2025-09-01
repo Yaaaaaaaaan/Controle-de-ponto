@@ -344,30 +344,6 @@ require_once __DIR__ . '/history.php';
         }
     }
 
-    public function getUserHistory($userId, $registro) {
-
-        $querySelect = "SELECT h.description, h.dateIn FROM " . $this->tableNames['usr'] .
-            " u inner join ".$this->tableNames['his'].
-            " h ON u.id_usuario = h.uidUserFK WHERE u.uid = :id ORDER BY h.cod desc LIMIT " . $registro . ";";
-
-        try {
-            $stmt = $this->conn->prepare($querySelect);
-            $stmt->bindParam(':id', $userId);
-            $stmt->bindParam('', $this->$registro);
-            $stmt->execute();
-            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            if($result){
-                //Inserir registro no histórico
-                $description = 'Consulta de histórico ';
-                $this->createUserHistory($description, $this->id);
-            }
-            return $result;
-        } catch(PDOException $e) {
-            echo "Error: " . $e->getMessage();
-            return false;
-        }
-    }
-
     //TODO: Verificar possibilidades de fazer o theme chegar ao banco de dados via menu. Mas, sem ser via AJAX. Precisa ser na padronização atual, e/ou via javascript.
     public function getIdByToken(string $userToken): ?int
     {
@@ -552,6 +528,25 @@ require_once __DIR__ . '/history.php';
         } catch (PDOException $e) {
             error_log("Erro em User->getAllUserPictures: " . $e->getMessage());
             return [];
+        }
+    }
+
+    public function getUserHistory($userId, $limit) {
+        // CORREÇÃO: Usando os nomes de colunas corretos (id_usuario, historico_id)
+        $querySelect = "SELECT h.descricao, h.data_ocorrencia 
+                    FROM {$this->tableNames['his']} h
+                    WHERE h.id_usuario = :id 
+                    ORDER BY h.historico_id DESC 
+                    LIMIT :limitValue";
+        try {
+            $stmt = $this->conn->prepare($querySelect);
+            $stmt->bindParam(':id', $userId, PDO::PARAM_INT);
+            $stmt->bindParam(':limitValue', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch(PDOException $e) {
+            error_log("Erro em User->getUserHistory: " . $e->getMessage());
+            return false;
         }
     }
 }
