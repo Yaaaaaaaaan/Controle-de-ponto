@@ -79,7 +79,7 @@ async function getUserById(id) {
         const db = await initializeDB();
         const transaction = db.transaction(userDataStoreName, 'readonly');
         const userDataStore = transaction.objectStore(userDataStoreName);
-        const index = userDataStore.index('idIdx');
+        const index = userDataStore.index('userId');
         const getRequest = index.get(id);
 
         return new Promise((resolve, reject) => {
@@ -568,32 +568,36 @@ async function addPointControlRecordToServer(status) {
 }
 
 // NOVA FUNÇÃO: Limpa os registros de um usuário e insere os novos
-async function replaceUserPointControl(userId, newRecords) {
+async function replaceUserPointControl(userId, recordsFromServer) {
+    if (!recordsFromServer) return;
+
     const db = await initializeDB();
     const transaction = db.transaction(pointControlStoreName, 'readwrite');
     const store = transaction.objectStore(pointControlStoreName);
     const index = store.index('userId');
-    const request = index.openCursor(IDBKeyRange.only(userId));
 
-    // 1. Deleta os registros antigos
-    request.onsuccess = (event) => {
-        const cursor = event.target.result;
-        if (cursor) {
-            store.delete(cursor.primaryKey);
-            cursor.continue();
+    // 1. Pega todos os registros que já existem localmente para este usuário.
+    const localRecords = await new Promise((resolve, reject) => {
+        const request = index.getAll(userId);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+
+    // 2. Cria um Set com as chaves únicas (id_usuario + data_registro) dos registros locais
+    // para uma verificação rápida. A chave do banco é 'cod', mas a chave lógica é a data.
+    const localRecordKeys = new Set(localRecords.map(rec => rec.dateIn));
+
+    // 3. Itera sobre os registros do servidor e adiciona apenas os que não existem localmente.
+    recordsFromServer.forEach(serverRec => {
+        if (!localRecordKeys.has(serverRec.dateIn)) {
+            console.log(`[Model.js] Adicionando novo registro de ponto do servidor: ${serverRec.dateIn}`);
+            store.put(serverRec);
         }
-    };
+    });
 
-    // 2. Espera a transação de delete terminar e insere os novos
     return new Promise((resolve, reject) => {
-        transaction.oncomplete = () => {
-            const addTransaction = db.transaction(pointControlStoreName, 'readwrite');
-            const addStore = addTransaction.objectStore(pointControlStoreName);
-            newRecords.forEach(record => addStore.put(record)); // 'put' é mais seguro que 'add'
-            addTransaction.oncomplete = resolve;
-            addTransaction.onerror = reject;
-        };
-        transaction.onerror = reject;
+        transaction.oncomplete = resolve;
+        transaction.onerror = (event) => reject(event.target.error);
     });
 }
 

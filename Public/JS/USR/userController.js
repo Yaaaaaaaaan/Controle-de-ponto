@@ -18,14 +18,12 @@ async function handleOnlinePresence() {
     try {
         const success = await addPointControlRecordToServer("Verificação pendente");
         if (success) {
-            alert('Presença confirmada com sucesso online!'); //A trocar
-
+            displayFeedback('responseAction', 'Presença confirmada com sucesso!', 'success');
             const userToken = localStorage.getItem('userToken');
             await fetchUserDataByToken(userToken);
-
             await triggerUIRefresh();
         } else {
-            alert('Falha ao confirmar a presença online.'); //A trocar
+            displayFeedback('responseAction', 'Falha ao confirmar a presença online.', 'error');
         }
     } catch (error) {
         console.warn("A tentativa online falhou por erro de rede. Acionando modo offline.", error);
@@ -38,7 +36,7 @@ async function handleOfflinePresence() {
     console.log("Offline: Tentando registrar ponto localmente.");
     const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
     if (!activeUserId || isNaN(activeUserId)) {
-        alert("Erro: Sessão de utilizador inválida.");
+        displayFeedback('responseAction', 'Sessão de utilizador inválida.', 'error');
         return;
     }
 
@@ -47,7 +45,7 @@ async function handleOfflinePresence() {
     const hasRecordForToday = localRecords.some(record => record.dateIn === today);
 
     if (hasRecordForToday) {
-        alert('Você já registou a sua presença hoje no modo offline.'); //A trocar
+        displayFeedback('responseAction', 'Presença já registrada para hoje.', 'info');
         return;
     }
 
@@ -60,26 +58,28 @@ async function handleOfflinePresence() {
     const action = { type: 'CREATE_POINT', payload: { status, obs }, timestamp: new Date().toISOString() };
     await addActionToSyncQueue(action); // Salva na fila de sincronização
 
-    alert('Você está offline. A sua presença foi registada.'); //A trocar
+    displayFeedback('responseAction', 'Presença registrada offline com sucesso!', 'success');
+    await triggerUIRefresh();
     await triggerUIRefresh();
 }
 
 // FUNÇÃO PRINCIPAL SIMPLIFICADA
 async function handleConfirmPresenceClick(event) {
     const button = event.currentTarget;
+    const originalText = button.textContent;
     button.disabled = true;
     button.textContent = 'A processar...';
-
+    displayFeedback('responseAction', 'Confirmando presença...', 'info');
     try {
         // A lógica é sempre tentar online. Se a rede falhar,
         // a própria handleOnlinePresence se encarrega de chamar a handleOfflinePresence.
         await handleOnlinePresence();
     } catch (error) {
         console.error("Erro inesperado ao confirmar presença:", error);
-        alert('Ocorreu um erro inesperado.');
+        displayFeedback('responseAction', 'Ocorreu um erro inesperado.', 'error');
     } finally {
         button.disabled = false;
-        button.textContent = 'Confirmar Presença';
+        button.textContent = originalText;
     }
 }
 
@@ -89,17 +89,13 @@ async function handleLogout(event) {
     console.log("Executando logout (client-side)...");
 
     try {
-        // 1. Limpa APENAS a SESSÃO ATIVA do navegador (localStorage).
         localStorage.removeItem('activeUserId');
         localStorage.removeItem('userToken');
-
-        // NÃO chamamos clearSessionData() e NÃO fazemos fetch para o logout.php
     } catch (error){
-    console.error("Erro durante o logout local:", error);
-} finally {
-    // 2. Redireciona o usuário para a página de login, completando o "logout" visual.
-    window.location.href = '/Public/View/Index/';
-}
+        console.error("Erro durante o logout local:", error);
+    } finally {
+        window.location.href = '/Public/View/Index/';
+    }
 }
 
 async function handleThemeChange(newTheme) {

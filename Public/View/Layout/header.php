@@ -15,10 +15,10 @@ $userRank = $userData['rank'] ?? 2;
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Ponto</title>
-    <link rel="icon" href="/Public/assets/img/logo.png" type="image/x-icon">
-    <link rel="stylesheet" href="/Public/CSS/bootstrap.min.css">
-    <link rel="stylesheet" href="/Public/CSS/USR/dashboard.css">
-    <link rel="stylesheet" href="/Public/CSS/USR/handworking.css">
+    <link rel="icon" href="../../Assets/img/logo.png" type="image/x-icon">
+    <link rel="stylesheet" href="../../CSS/bootstrap.min.css">
+    <link rel="stylesheet" href="../../CSS/USR/dashboard.css">
+    <link rel="stylesheet" href="../../CSS/USR/handworking.css">
 
     <script>
         (function() {
@@ -102,7 +102,7 @@ $userRank = $userData['rank'] ?? 2;
     </div>
 </nav>
 
-<main id="app-content" class="container mt-5 pt-4">
+<main id="app-content" class="container-fluid mt-5 pt-4">
 
     <div class="modal fade" id="logoutModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
         <div class="modal-dialog">

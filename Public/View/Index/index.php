@@ -2,16 +2,6 @@
 error_reporting(0);
 define('APP_RAN', true);
 session_start();
-
-$uri = $_SERVER['REQUEST_URI'];
-
-// Rota para healthcheck
-if ($uri === '/controle-de-ponto/index.php/system/healthcheck') {
-    include_once 'App/Controller/SystemController.php';
-    $controller = new SystemController();
-    $controller->healthcheck();
-    exit;
-}
 ?>
 
 <!DOCTYPE html>
@@ -33,20 +23,13 @@ if ($uri === '/controle-de-ponto/index.php/system/healthcheck') {
 <div class="container-userlogin">
     <form id="loginForm">
         <div class="form-floating mb-3">
-            <input type="text" class="form-control" name="nickname" id="nickname" placeholder=".">
+            <input type="text" class="form-control" name="nickname" id="nickname" placeholder="." autocomplete="username">
             <label for="floatingInput">Usuário</label>
         </div>
         <div class="form-floating mb-3">
-            <input type="password" name="password" class="form-control" id="password" placeholder=".">
+            <input type="password" name="password" class="form-control" id="password" placeholder="." autocomplete="current-password">>
             <label for="floatingPassword">Senha</label>
         </div>
-
-        <?php
-        if (isset($_SESSION['response'])) {
-            echo $_SESSION['response'];
-            unset($_SESSION['response']);
-        }
-        ?>
 
         <span id="responseAction"></span>
 

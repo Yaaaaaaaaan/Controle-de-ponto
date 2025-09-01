@@ -39,8 +39,8 @@ Controle-de-Ponto/
 │   │   ├── regist.php
 │   │   ├── setProfilePicture.php
 │   │   ├── sync.php
+│   │   ├── updateTheme.php
 │   │   ├── uploadPicture.php
-│   │   ├── userData.php
 │   │   ├── userPictures.php
 │   │   ├── userSettings.php
 │   │   └── userToken.php
@@ -78,6 +78,11 @@ Controle-de-Ponto/
 │   │   ├── chartjs/
 │   │   │   └── ... (framework files)
 │   │   │
+│   │   ├── Cogs/
+│   │   │   ├── themeManager.js
+│   │   │   ├── UIManager.js
+│   │   │   └── utils.js
+│   │   │
 │   │   ├── Core/
 │   │   │   ├── connectionChecker.js
 │   │   │   └── syncController.js
@@ -94,10 +99,10 @@ Controle-de-Ponto/
 │   │   │   └── Model.js                                                    # Manipula os dados das storeNames com CRUD
 │   │   │
 │   │   ├── USR/
-│   │   │   ├── indexDashboard.js                                       # Cria a parte lógica do dashboard e seus dados
+│   │   │   ├── indexDashboard.js
 │   │   │   ├── settingsController.js
 │   │   │   ├── userController.js
-│   │   │   └── userInterface.js                               # Faz o papel de View com os dados recebidos do Model.js
+│   │   │   └── userInterface.js
 │   │   │
 │   │   ├── bootstrap.bundle.js
 │   │   │   └── ... (framework file)
@@ -124,14 +129,13 @@ Controle-de-Ponto/
 │   │   │   └── register.php
 │   │   │
 │   │   ├── Layout/
-│   │   │   ├── menu.php
-│   │   │   └── menu_housekeep.php
+│   │   │   ├── footer.php
+│   │   │   └── header.php
 │   │   │
 │   │   ├── User/
 │   │   │   ├── .htaccess                                                # Controlador de acesso a diretório e arquivos
 │   │   │   ├── community.php
 │   │   │   ├── index.php
-│   │   │   ├── notes.php
 │   │   │   └── settings.php
 │   │   │
 │   │   └── index.php
@@ -153,7 +157,7 @@ PCDB/                                         # Nome do Banco de Dados no Indexe
 ├── Object Store: userData
 │   ├── Chave Primária: 'nickname'
 │   └── Índices:
-│       └── idIdx (no campo 'userId')
+│       └── userId (no campo 'userId')
 │
 ├── Object Store: userToken
 │   ├── Chave Primária: 'token'
@@ -161,18 +165,19 @@ PCDB/                                         # Nome do Banco de Dados no Indexe
 │       ├── userId (no campo 'userId')
 │       └── lastUpdated (no campo 'lastUpdated')
 │
-├── Object Store: pointControl
-│   ├── Chave Primária: 'cod' (com auto-incremento)
+├── Object Store: userPictures
+│   ├── Chave Primária: 'picId'
 │   └── Índices:
-│       ├── userIdIdx (no campo 'userId')
+│       └── userId (no campo 'userId')
+│
+├── Object Store: pointControl
+│   ├── Chave Primária: 'cod' (auto-incremento)
+│   └── Índices:
+│       ├── userId (no campo 'userId')
 │       ├── status (no campo 'status')
-│       └── date (no campo 'dateIn')
+│       └── dateInIdx (no campo 'dateIn')
 │
 └── Object Store: syncQueue
-    ├── Chave Primária: 'id' (com auto-incremento)
-    ├── Dados:
-    │   ├── type (string, ex: 'CREATE_POINT')
-    │   ├── payload (objeto, ex: { status: '...' })
-    │   └── timestamp (string/data)
+    ├── Chave Primária: 'id' (auto-incremento)
     └── Índices:
         └── timestamp (no campo 'timestamp')

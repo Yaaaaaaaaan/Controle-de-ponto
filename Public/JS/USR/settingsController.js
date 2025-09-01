@@ -96,7 +96,6 @@ async function onFormSubmit(ev) {
     if (isOnline) {
         // 3. CRIA A FUNÇÃO "DECORADA" APLICANDO O ASPECTO
         const handleApiSubmit = withApiHandler(submitSettingsOnline, {
-            feedbackId: 'settingsResponse',
             button: button
         });
 
@@ -185,6 +184,7 @@ async function uploadNewPicture(file) {
     const userToken = localStorage.getItem('userToken');
     const formData = new FormData();
     formData.append('picture', file);
+    displayFeedback('settingsResponse', 'Enviando imagem...', 'info');
 
     try {
         const response = await fetch('/Public/Api/uploadPicture.php', {
@@ -194,14 +194,14 @@ async function uploadNewPicture(file) {
         });
         const result = await response.json();
         if (result.success) {
-            alert('Upload realizado com sucesso!');
+            displayFeedback('settingsResponse', 'Upload realizado com sucesso!', 'success');
             await triggerUIRefresh();
             fetchAndDisplayUserPictures(); // Atualiza a galeria com a nova foto
         } else {
             throw new Error(result.message);
         }
     } catch (error) {
-        alert(`Erro no upload: ${error.message}`);
+        displayFeedback('settingsResponse', `Erro no upload: ${error.message}`, 'error');
         console.error("Erro no upload:", error);
     }
 }
@@ -213,9 +213,10 @@ async function uploadNewPicture(file) {
 async function setAsProfilePicture(photoId) {
     const userToken = localStorage.getItem('userToken');
     if (!userToken) {
-        alert('Sessão expirada. Faça login novamente.');
+        displayFeedback('settingsResponse', 'Sessão expirada.', 'error');
         return;
     }
+    displayFeedback('settingsResponse', 'Atualizando foto de perfil...', 'info');
     try {
         const response = await fetch('/Public/Api/setProfilePicture.php', {
             method: 'PUT',
@@ -225,7 +226,7 @@ async function setAsProfilePicture(photoId) {
         const result = await response.json();
 
         if (result.success) {
-            alert('Foto de perfil atualizada!');
+            displayFeedback('settingsResponse', 'Foto de perfil atualizada!', 'success');
 
             // --- A CORREÇÃO ESTÁ AQUI ---
 
@@ -244,7 +245,7 @@ async function setAsProfilePicture(photoId) {
             throw new Error(result.message || 'Falha ao definir foto de perfil.');
         }
     } catch (error) {
-        alert(`Erro ao definir foto de perfil: ${error.message}`);
+        displayFeedback('settingsResponse', `Erro: ${error.message}`, 'error');
         console.error("Erro ao definir foto:", error);
     }
 }

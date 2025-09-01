@@ -34,19 +34,19 @@ require_once __DIR__ . "/../Layout/header.php"; // Inclui o cabeçalho e menu
                                 <div class="row g-3">
                                     <div class="col-sm-6">
                                         <div class="form-floating mb-3">
-                                            <input type="email" class="form-control" name="email" id="floatingInputEmail" placeholder="name@example.com">
+                                            <input type="email" class="form-control" name="email" id="floatingInputEmail" placeholder="name@example.com" autocomplete="email">
                                             <label for="floatingInputEmail">Email</label>
                                         </div>
                                     </div>
                                     <div class="col-sm-6">
                                         <div class="form-floating mb-3">
-                                            <input type="text" name="nickname" class="form-control" id="floatingInputNickname" placeholder="Username">
+                                            <input type="text" name="nickname" class="form-control" id="floatingInputNickname" placeholder="Username" autocomplete="username">
                                             <label for="floatingInputNickname">Username</label>
                                         </div>
                                     </div>
                                     <div class="col-12">
                                         <div class="form-floating mb-3">
-                                            <input type="text" name="name" class="form-control" id="floatingInputName" placeholder="Name">
+                                            <input type="text" name="name" class="form-control" id="floatingInputName" placeholder="Name" autocomplete="name">
                                             <label for="floatingInputName">Nome</label>
                                         </div>
                                     </div>
@@ -60,15 +60,15 @@ require_once __DIR__ . "/../Layout/header.php"; // Inclui o cabeçalho e menu
                                             <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#accordionSettings">
                                                 <div class="accordion-body">
                                                     <div class="form-floating mb-3">
-                                                        <input type="password" name="oldPassword" class="form-control" id="floatingInputCurrentPassword" placeholder="password">
+                                                        <input type="password" name="oldPassword" class="form-control" id="floatingInputCurrentPassword" placeholder="password" autocomplete="current-password">
                                                         <label for="floatingInputCurrentPassword">Senha atual</label>
                                                     </div>
                                                     <div class="form-floating mb-3">
-                                                        <input type="password" name="newPassword" class="form-control" id="floatingInputNewPassword" placeholder="password">
+                                                        <input type="password" name="newPassword" class="form-control" id="floatingInputNewPassword" placeholder="password" autocomplete="new-password">
                                                         <label for="floatingInputNewPassword">Nova senha</label>
                                                     </div>
                                                     <div class="form-floating mb-3">
-                                                        <input type="password" name="confirmPassword" class="form-control" id="floatingInputConfirmNewPassword" placeholder="Password confirmation">
+                                                        <input type="password" name="confirmPassword" class="form-control" id="floatingInputConfirmNewPassword" placeholder="Password confirmation" autocomplete="new-password">
                                                         <label for="floatingInputConfirmNewPassword">Confirmação de nova senha</label>
                                                     </div>
                                                 </div>

@@ -30,7 +30,7 @@ function initializeDB() {
                 const userDataStore = db.createObjectStore(userDataStoreName, {
                     keyPath: 'nickname'
                 });
-                userDataStore.createIndex('idIdx', 'userId', { unique: true });
+                userDataStore.createIndex('userId', 'userId', { unique: true });
             }
 
             // Criar ou atualizar pointControl store

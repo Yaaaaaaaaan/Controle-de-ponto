@@ -14,19 +14,19 @@
     <h2>Registro</h2>
     <form id="registerForm" novalidate method="POST">
         <div class="form-floating mb-3">
-            <input type="text" class="form-control" name="name" id="name" placeholder="Nome completo" required>
+            <input type="text" class="form-control" name="name" id="name" placeholder="Nome completo" autocomplete="name" required>
             <label for="name">Nome completo</label>
         </div>
         <div class="form-floating mb-3">
-            <input type="email" class="form-control" name="email" id="email" placeholder="Email" required>
+            <input type="email" class="form-control" name="email" id="email" placeholder="Email" autocomplete="email" required>
             <label for="email">Email</label>
         </div>
         <div class="form-floating mb-3">
-            <input type="text" class="form-control" name="nickname" id="nickname" placeholder="Usuário" required>
+            <input type="text" class="form-control" name="nickname" id="nickname" placeholder="Usuário" autocomplete="nickname" required>
             <label for="nickname">Usuário</label>
         </div>
         <div class="form-floating mb-3">
-            <input type="password" name="password" id="password" class="form-control" placeholder="Senha" required>
+            <input type="password" name="password" id="password" class="form-control" placeholder="Senha" autocomplete="new-password" required>
             <label for="password">Senha</label>
         </div>
 

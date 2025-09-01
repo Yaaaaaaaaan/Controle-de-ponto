@@ -74,6 +74,7 @@ body {
     max-width: 100%;
     margin: 0 auto;
     height: 350px;
+    min-width: 245px;
 }
 
 .badge-card:hover {
