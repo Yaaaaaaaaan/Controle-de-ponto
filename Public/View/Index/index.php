@@ -27,7 +27,7 @@ session_start();
             <label for="floatingInput">Usuário</label>
         </div>
         <div class="form-floating mb-3">
-            <input type="password" name="password" class="form-control" id="password" placeholder="." autocomplete="current-password">>
+            <input type="password" name="password" class="form-control" id="password" placeholder="." autocomplete="current-password">
             <label for="floatingPassword">Senha</label>
         </div>
 

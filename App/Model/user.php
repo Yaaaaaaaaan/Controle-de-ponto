@@ -545,7 +545,7 @@ require_once __DIR__ . '/history.php';
                     nome_foto       AS name, 
                     perfil          AS isProfile 
                   FROM {$this->tableNames['fot']} 
-                  WHERE id_usuario = :userId ORDER BY data_upload DESC";
+                  WHERE id_usuario = :userId ORDER BY data_upload DESC limit 3";
             $stmt = $this->conn->prepare($query);
             $stmt->execute([':userId' => $userId]);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);

@@ -143,6 +143,23 @@ require_once __DIR__ . "/../Layout/header.php"; // Inclui o cabeçalho e menu
                         </div>
                     </div>
                 </div>
+                <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="confirmationModalLabel">Confirmar Ação</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body" id="confirmationModalBody">
+                                Deseja definir esta imagem como sua foto de perfil?
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="button" class="btn btn-primary" id="confirmActionBtn">Sim, definir</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </main>
         </div>
 

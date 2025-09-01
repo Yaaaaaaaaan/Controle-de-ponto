@@ -11,8 +11,11 @@ import {
 } from '../indexedDB/Model.js';
 import { isOnline } from '../Core/connectionChecker.js'; // Usaremos nosso verificador de conexão
 import { userDataPromise, triggerUIRefresh } from '../Cogs/UIManager.js';
-import { displayFeedback, withApiHandler } from '../Cogs/utils.js'; //withApiHandler é uma introdução ao AOP (programação orientada a aspectos)
+import { displayFeedback, withApiHandler, showToast } from '../Cogs/utils.js'; //withApiHandler é uma introdução ao AOP (programação orientada a aspectos)
 import { applyTheme, initializeThemeFromLocalData } from '../Cogs/ThemeManager.js';
+
+let confirmationModal;
+let profilePhotoModal;
 
 function getFormData() {
     const form = document.getElementById('formUserData');
@@ -155,9 +158,9 @@ async function fetchAndDisplayUserPictures() {
                 a.title = `Definir "${pic.name}" como perfil`;
                 a.onclick = (e) => {
                     e.preventDefault();
-                    if (confirm(`Deseja definir esta imagem como sua foto de perfil?`)) {
-                        setAsProfilePicture(pic.picId);
-                    }
+                    const confirmBtn = document.getElementById('confirmActionBtn');
+                    confirmBtn.dataset.photoId = pic.picId;
+                    confirmationModal.show();
                 };
                 const img = document.createElement('img');
                 img.src = pic.path;
@@ -180,29 +183,29 @@ async function fetchAndDisplayUserPictures() {
  * Envia um novo arquivo de imagem para a API de upload.
  * @param {File} file - O arquivo de imagem a ser enviado.
  */
-async function uploadNewPicture(file) {
+async function uploadNewPicture(file, button) { // Passa o botão como argumento
     const userToken = localStorage.getItem('userToken');
     const formData = new FormData();
     formData.append('picture', file);
-    displayFeedback('settingsResponse', 'Enviando imagem...', 'info');
 
-    try {
+    // A função de negócio pura
+    const doUpload = async () => {
         const response = await fetch('/Public/Api/uploadPicture.php', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${userToken}` },
-            body: formData
+            method: 'POST', headers: { 'Authorization': `Bearer ${userToken}` }, body: formData
         });
         const result = await response.json();
-        if (result.success) {
-            displayFeedback('settingsResponse', 'Upload realizado com sucesso!', 'success');
-            await triggerUIRefresh();
-            fetchAndDisplayUserPictures(); // Atualiza a galeria com a nova foto
-        } else {
-            throw new Error(result.message);
-        }
-    } catch (error) {
-        displayFeedback('settingsResponse', `Erro no upload: ${error.message}`, 'error');
-        console.error("Erro no upload:", error);
+        if (!result.success) throw new Error(result.message);
+    };
+
+    // Aplica o aspecto AOP
+    const handleUpload = withApiHandler(doUpload, { button });
+    const success = await handleUpload();
+
+    // Ações pós-sucesso
+    if (success) {
+        await triggerUIRefresh();
+        await fetchAndDisplayUserPictures();
+        if (profilePhotoModal) profilePhotoModal.hide();
     }
 }
 
@@ -212,11 +215,8 @@ async function uploadNewPicture(file) {
  */
 async function setAsProfilePicture(photoId) {
     const userToken = localStorage.getItem('userToken');
-    if (!userToken) {
-        displayFeedback('settingsResponse', 'Sessão expirada.', 'error');
-        return;
-    }
-    displayFeedback('settingsResponse', 'Atualizando foto de perfil...', 'info');
+    if (!userToken) return;
+
     try {
         const response = await fetch('/Public/Api/setProfilePicture.php', {
             method: 'PUT',
@@ -226,29 +226,22 @@ async function setAsProfilePicture(photoId) {
         const result = await response.json();
 
         if (result.success) {
-            displayFeedback('settingsResponse', 'Foto de perfil atualizada!', 'success');
-
-            // --- A CORREÇÃO ESTÁ AQUI ---
-
-            // 1. PRIMEIRO: Busca os dados frescos do servidor e ATUALIZA o IndexedDB.
-            // A função fetchUserDataByToken já faz essas duas coisas.
+            showToast('Foto de perfil atualizada!', 'success');
+            if (profilePhotoModal) profilePhotoModal.hide();
             await fetchUserDataByToken(userToken);
-
-            // 2. SEGUNDO: AGORA, com o IndexedDB atualizado, dispara a atualização da UI.
-            // O triggerUIRefresh vai ler os dados novos que acabamos de salvar.
             await triggerUIRefresh();
-
-            // 3. Apenas por consistência, recarrega a galeria do modal para atualizar a borda azul.
-            fetchAndDisplayUserPictures();
+            await fetchAndDisplayUserPictures();
+            if (profilePhotoModal) profilePhotoModal.hide();
 
         } else {
-            throw new Error(result.message || 'Falha ao definir foto de perfil.');
+            throw new Error(result.message);
         }
     } catch (error) {
-        displayFeedback('settingsResponse', `Erro: ${error.message}`, 'error');
+        showToast(`Erro: ${error.message}`, 'error');
         console.error("Erro ao definir foto:", error);
     }
 }
+
 
 async function handleThemeChange(event) {
     const newThemeValue = event.target.checked ? 1 : 0;
@@ -298,10 +291,11 @@ export function initSettingsController() {
         savePictureBtn.addEventListener('click', () => {
             const fileInput = document.getElementById('inputGroupFile04');
             if (fileInput.files.length > 0) {
-                uploadNewPicture(fileInput.files[0]);
+                // Passa o próprio botão para o AOP gerenciar
+                uploadNewPicture(fileInput.files[0], savePictureBtn);
                 fileInput.value = '';
             } else {
-                alert('Por favor, selecione um arquivo.');
+                showToast('Por favor, selecione um arquivo.', 'info');
             }
         });
     }
@@ -314,5 +308,26 @@ export function initSettingsController() {
     const themeSwitch = document.getElementById('themeSwitch');
     if (themeSwitch) {
         themeSwitch.addEventListener('change', handleThemeChange);
+    }
+
+    const modalEl = document.getElementById('confirmationModal');
+    if(modalEl) confirmationModal = new bootstrap.Modal(modalEl);
+
+    const confirmBtn = document.getElementById('confirmActionBtn');
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', () => {
+            const photoIdToSet = confirmBtn.dataset.photoId;
+            if (photoIdToSet) {
+
+                // 1. TIRA O FOCO DO BOTÃO
+                confirmBtn.blur();
+
+                // 2. FECHA O MODAL DE CONFIRMAÇÃO
+                if (confirmationModal) confirmationModal.hide();
+
+                // 3. EXECUTA A AÇÃO PRINCIPAL
+                setAsProfilePicture(photoIdToSet);
+            }
+        });
     }
 }
