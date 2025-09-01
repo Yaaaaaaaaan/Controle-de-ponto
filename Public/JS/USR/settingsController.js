@@ -372,4 +372,18 @@ export function initSettingsController() {
             }
         });
     }
+
+    const limitInput = document.querySelector('input[name="registro"]');
+    if (limitInput && searchHistoryBtn) {
+        limitInput.addEventListener('keydown', (event) => {
+            // Verifica se a tecla pressionada foi "Enter"
+            if (event.key === 'Enter') {
+                // 1. Impede o comportamento padrão (que seria submeter o formulário principal)
+                event.preventDefault();
+
+                // 2. Simula um clique no botão "Pesquisar"
+                searchHistoryBtn.click();
+            }
+        });
+    }
 }
