@@ -18,3 +18,5 @@ export function initializeThemeFromLocalData(userData) {
         applyTheme(userData.theme);
     }
 }
+
+//teste
