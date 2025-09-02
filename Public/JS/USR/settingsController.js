@@ -87,7 +87,7 @@ async function onFormSubmit(ev) {
     const { email, nickname, name, defaultTheme, oldPassword, newPassword, confirmPassword } = getFormData();
     const pwdValidation = validatePasswords(newPassword, confirmPassword, oldPassword);
     if (!pwdValidation.ok) {
-        displayFeedback('settingsResponse', pwdValidation.msg, 'error');
+        showToast(pwdValidation.msg, 'error');
         return;
     }
     const payload = { email, nickname, name, defaultTheme };
@@ -111,7 +111,8 @@ async function onFormSubmit(ev) {
         // A lógica offline não precisa do handler de API, então continua a mesma
         const localPatch = { email, nickname, name, defaultTheme: defaultTheme ? 1 : 0 };
         await submitSettingsOffline(payload, localPatch);
-        displayFeedback('settingsResponse', 'Você está offline. As alterações foram salvas e serão sincronizadas.', 'success');
+        showToast('Alterações salvas offline. Sincronizando em breve.', 'info');
+
         await triggerUIRefresh();
     }
 }

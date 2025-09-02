@@ -38,7 +38,7 @@
         <a href="index.php" class="d-block mt-3 text-center">Já tem uma conta? Voltar para o login</a>
     </form>
 </div>
-
+<div class="toast-container position-fixed bottom-0 end-0 p-3"></div>
 <script type="module" src="/Public/JS/main.js"></script>
 </body>
 </html>

@@ -247,18 +247,19 @@ require_once __DIR__ . '/history.php';
         ]);
     }
 
+// /App/Model/User.php
+
     public function updateUser(): bool {
         // Verificar os campos obrigatórios
         if (empty($this->name) || empty($this->email) || empty($this->nickname)) {
             return false;
         }
 
-        // CORREÇÃO: Nomes das colunas ajustados para corresponder ao seu banco de dados.
         $query = "UPDATE {$this->tableNames['usr']}
-        SET nome_completo = :name,
-            email = :email,
-            nome_usuario = :nickname,
-            tema_padrao = :defaultTheme ";
+    SET nome_completo = :name,
+        email = :email,
+        nome_usuario = :nickname,
+        tema_padrao = :defaultTheme ";
 
         $passwordUpdated = false;
         if (!empty($this->newPassword) && !empty($this->confirmPassword) && !empty($this->oldPassword)) {
@@ -269,11 +270,9 @@ require_once __DIR__ . '/history.php';
             $currentPasswordHash = $checkStmt->fetchColumn();
 
             if ($currentPasswordHash && password_verify($this->oldPassword, $currentPasswordHash) && $this->newPassword == $this->confirmPassword) {
-                // CORREÇÃO: Nome da coluna de senha ajustado
                 $query .= ", senha_hash = :newPassword";
                 $passwordUpdated = true;
             } else {
-                // A senha antiga está incorreta ou a nova senha não foi confirmada corretamente.
                 return false;
             }
         }
@@ -285,19 +284,19 @@ require_once __DIR__ . '/history.php';
             $stmt->bindParam(':name', $this->name);
             $stmt->bindParam(':email', $this->email);
             $stmt->bindParam(':nickname', $this->nickname);
-            $stmt->bindParam(':defaultTheme', $this->defaultTheme);
+            $stmt->bindParam(':defaultTheme', $this->defaultTheme, PDO::PARAM_INT);
             $stmt->bindParam(':id', $this->id);
 
             if ($passwordUpdated) {
-                $stmt->bindParam(':newPassword', password_hash($this->newPassword, PASSWORD_DEFAULT));
+                // --- CORREÇÃO APLICADA AQUI ---
+                // 1. Primeiro, criamos o hash e o salvamos em uma variável.
+                $newPasswordHash = password_hash($this->newPassword, PASSWORD_DEFAULT);
+                // 2. Então, passamos a variável para o bindParam.
+                $stmt->bindParam(':newPassword', $newPasswordHash);
             }
 
             if ($stmt->execute()) {
-                // Atualiza os dados da sessão (ainda útil para a navegação)
-                if (isset($_SESSION['userData'])) {
-                    // ... (lógica de atualização de sessão) ...
-                    $this->createUserHistory('Alteração de informações de perfil.', $this->id);
-                }
+                $this->createUserHistory('Alteração de informações de perfil.', $this->id);
                 return true;
             }
             return false;

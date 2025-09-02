@@ -453,11 +453,10 @@ async function isTokenValid(token) {
                     return;
                 }
 
-
-
-
-
-
+                // Verificar se o token não expirou (24 horas)
+                const lastUpdated = new Date(tokenData.lastUpdated);
+                const now = new Date();
+                const diffHours = (now - lastUpdated) / (1000 * 60 * 60);
                 resolve(diffHours < 24);
             };
             getRequest.onerror = () => {

@@ -36,7 +36,7 @@ async function handleRegisterSubmit(event) {
 
     // Validação de campos (pode ser expandida)
     if (!data.name || !data.nickname || !data.email || !data.password) {
-        displayFeedback('responseAction', 'Todos os campos são obrigatórios.', 'error');
+        showToast( 'Todos os campos são obrigatórios.', 'error');
         return;
     }
 

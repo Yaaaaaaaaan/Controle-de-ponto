@@ -80,7 +80,7 @@ if (!empty($actions)) {
                     $success = $result['success'];
                     break;
 
-                case 'updateTheme':
+                case 'UPDATE_THEME':
                     $theme = $action['payload']['theme'] ?? 0;
                     // O método updateUserTheme já cria seu próprio histórico também.
                     $success = $userController->updateUserTheme($userId, $theme);

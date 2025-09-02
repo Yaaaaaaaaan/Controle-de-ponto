@@ -9,7 +9,7 @@ session_start();
 <head>
     <link rel="stylesheet" href="../../CSS/IDX/style.css">
     <meta charset="UTF-8">
-    <!--<link rel="icon" href="../../Api/SystemPics/logo.png" type="image/x-icon">-->
+    <link rel="icon" href='../../Assets/img/logo.png' type="image/x-icon">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="../../CSS/bootstrap.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
@@ -39,7 +39,7 @@ session_start();
         <a href="../Index/register.php" class="d-block mt-2 text-center">Ainda não é cadastrado?! Clique aqui!</a>
     </form>
 </div>
-
+<div class="toast-container position-fixed bottom-0 end-0 p-3"></div>
 <!-- JavaScript (IndexedDB + lógica offline) -->
 <script type="module" src="/Public/JS/main.js"></script>
 </body>

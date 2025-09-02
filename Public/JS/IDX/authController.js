@@ -8,8 +8,11 @@ import { isOnline } from '../Core/connectionChecker.js';
 
 // --- FUNÇÃO DE LOGIN ONLINE ---
 // Tenta autenticar contra o servidor. Se falhar, aciona o fallback para o modo offline.
-async function handleOnlineLogin(nickname, password) {
-    console.log("Modo Online: Tentando autenticar via API...");
+async function doOnlineLogin(nickname, password, button) {
+    const originalButtonText = button.textContent;
+    button.disabled = true;
+    button.textContent = 'Autenticando...';
+
     try {
         const response = await fetch('/Public/Api/auth.php', {
             method: 'POST',
@@ -17,37 +20,34 @@ async function handleOnlineLogin(nickname, password) {
             body: JSON.stringify({ nickname, password })
         });
 
-        if (!response.ok) {
-            throw new Error(`Falha na resposta do servidor: ${response.status}`);
-        }
-
         const result = await response.json();
 
-        if (result.success && result.session) {
-            // --- AQUI ESTÁ A MUDANÇA ---
-            // Desestruturamos a resposta para obter os objetos já separados pelo back-end
-            const { userData, tokenData } = result.session;
-
-            // 1. Lógica de SESSÃO (localStorage)
-            localStorage.setItem('activeUserId', userData.userId);
-            localStorage.setItem('userToken', tokenData.userToken);
-
-            // 2. LÓGICA DE DADOS SEMI-PERSISTENTES (IndexedDB)
-            const offlinePasswordHash = await hashPassword(password);
-
-            // 3. Passamos os objetos já separados para o Model.
-            await storeAuthData(userData, tokenData, offlinePasswordHash);
-
-            window.location.href = "../User/index.php";
-        } else {
-            displayFeedback('responseAction', result.message || "Falha na autenticação.", 'error');
+        // Se a resposta NÃO for OK (ex: 401 - senha errada), trata como erro
+        if (!response.ok) {
+            // Usa a mensagem específica vinda da API
+            throw new Error(result.message || 'Credenciais inválidas.');
         }
+
+        // Se chegou aqui, o login foi bem-sucedido
+        const { userData, tokenData } = result.session;
+        localStorage.setItem('activeUserId', userData.userId);
+        localStorage.setItem('userToken', tokenData.userToken);
+
+        const offlinePasswordHash = await hashPassword(password);
+        await storeAuthData(userData, tokenData, offlinePasswordHash);
+
+        showToast( 'Login bem-sucedido! Redirecionando...', 'success');
+        window.location.href = "../User/index.php";
+
     } catch (error) {
-        console.warn("Falha na comunicação com o servidor. Acionando fallback para modo offline.", error);
-        await handleOfflineLogin(nickname, password);
+        // Exibe a mensagem de erro específica (ex: "Usuário ou senha inválidos.")
+        showToast( error.message, 'error');
+        console.warn("Falha na tentativa de login online:", error);
+    } finally {
+        button.disabled = false;
+        button.textContent = originalButtonText;
     }
 }
-
 
 // --- FUNÇÃO DE LOGIN OFFLINE ---
 // Valida as credenciais do usuário contra os dados salvos localmente no IndexedDB.
@@ -104,19 +104,20 @@ async function handleOfflineLogin(nickname, password) {
 // Orquestra qual função de login chamar.
 async function handleLoginSubmit(e) {
     e.preventDefault();
-    const nickname = document.getElementById("nickname").value;
-    const password = document.getElementById("password").value;
+    const form = e.currentTarget;
+    const button = form.querySelector('button[type="submit"]');
+    const nickname = form.nickname.value;
+    const password = form.password.value;
 
-    if (!nickname) {
-        displayFeedback('responseAction', "Por favor, preencha o nome de usuário.", 'error');
+    if (!nickname || !password) {
+        showToast( "Usuário e senha são obrigatórios.", 'error');
         return;
     }
-    displayFeedback('responseAction', "Autenticando...", 'info');
+
     if (isOnline) {
-        // Se o NAVEGADOR diz que tem rede, tentamos a via online (que tem fallback).
-        await handleOnlineLogin(nickname, password);
+        // Chamamos a função de login diretamente, pois ela agora tem seu próprio handler de UI
+        await doOnlineLogin(nickname, password, button);
     } else {
-        // Se o NAVEGADOR já sabe que não tem rede, vamos direto para o offline.
         await handleOfflineLogin(nickname, password);
     }
 }
