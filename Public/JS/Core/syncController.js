@@ -1,4 +1,7 @@
-// No ficheiro: /controle-de-ponto/Public/JS/Core/syncController.js (VERSÃO ATUALIZADA)
+// ==========================
+// 📁 syncController.js
+// ==========================
+import {withApiHandler ,showToast} from '../Cogs/utils.js';
 
 import { getSyncQueue, clearSyncQueue, obterHoraFormatada } from '../indexedDB/Model.js';
 // Não precisamos mais do syncServerToIndexedDB daqui, pois a sincronização de "volta"
@@ -38,7 +41,7 @@ async function processSyncQueue() {
             // ou simplesmente chamar uma função de sincronização geral.
             // Para simplicidade, vamos apenas recarregar a página, que já dispara uma nova sincronização.
 
-            alert("Suas ações offline foram sincronizadas com sucesso!");
+            showToast("Suas ações offline foram sincronizadas com sucesso!", 'info');
             window.location.reload();
         } else {
             console.error(`[${obterHoraFormatada()}] A sincronização falhou:`, result.message);
