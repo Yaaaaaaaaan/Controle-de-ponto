@@ -7,7 +7,10 @@ import {
     addActionToSyncQueue,
     fetchUserDataByToken,
     obterHoraFormatada,
-    getOfflineUserPictures
+    getOfflineUserPictures,
+    addHistoryEntry,
+    getLocalHistory,
+    replaceUserHistory
 } from '../indexedDB/Model.js';
 import { isOnline } from '../Core/connectionChecker.js'; // Usaremos nosso verificador de conexão
 import { userDataPromise, triggerUIRefresh } from '../Cogs/UIManager.js';
@@ -83,36 +86,79 @@ async function onFormSubmit(ev) {
     ev.preventDefault();
     const button = ev.submitter;
 
-    // 1. Coleta e valida os dados (lógica de negócio)
+    // --- INÍCIO DA NOVA LÓGICA DE VALIDAÇÃO ---
+
+    // 1. Coleta os dados do formulário
     const { email, nickname, name, defaultTheme, oldPassword, newPassword, confirmPassword } = getFormData();
-    const pwdValidation = validatePasswords(newPassword, confirmPassword, oldPassword);
-    if (!pwdValidation.ok) {
-        showToast(pwdValidation.msg, 'error');
+
+    // 2. Busca os dados atuais do usuário no IndexedDB para comparação
+    const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
+    if (!activeUserId) {
+        showToast('Sessão de usuário inválida.', 'error');
         return;
     }
-    const payload = { email, nickname, name, defaultTheme };
-    if (newPassword && oldPassword) {
-        payload.passwordChange = { oldPassword, newPassword };
+    const currentUser = await getUserById(activeUserId);
+
+    // 3. Verifica se houve alguma alteração nos dados do perfil
+    const profileDataChanged = currentUser.name !== name ||
+        currentUser.email !== email ||
+        currentUser.nickname !== nickname ||
+        currentUser.theme != defaultTheme; // Usar != para comparar tipos diferentes (ex: 1 e '1')
+
+    // 4. Verifica se o usuário está tentando alterar a senha
+    const isPasswordChangeAttempt = oldPassword || newPassword || confirmPassword;
+
+    // 5. Se NADA mudou, interrompe a execução
+    if (!profileDataChanged && !isPasswordChangeAttempt) {
+        showToast('Nenhuma alteração detectada.', 'info');
+        // Reabilita o botão, pois o AOP não será chamado
+        button.disabled = false;
+        button.textContent = 'Salvar alterações';
+        return;
     }
 
-    // 2. Decide entre o caminho online e offline
-    if (isOnline) {
-        // 3. CRIA A FUNÇÃO "DECORADA" APLICANDO O ASPECTO
-        const handleApiSubmit = withApiHandler(submitSettingsOnline, {
-            button: button
-        });
+    // --- FIM DA NOVA LÓGICA DE VALIDAÇÃO ---
 
-        // 4. EXECUTA A FUNÇÃO DECORADA
-        const success = await handleApiSubmit(payload);
+    // 6. A validação de senha existente continua, mas agora só roda se houver uma tentativa de mudança
+    if (isPasswordChangeAttempt) {
+        const pwdValidation = validatePasswords(newPassword, confirmPassword, oldPassword);
+        if (!pwdValidation.ok) {
+            showToast(pwdValidation.msg, 'error');
+            return;
+        }
+    }
+
+    // 7. Monta o payload SOMENTE com os dados que serão enviados
+    const payload = { email, nickname, name, defaultTheme, timestamp: new Date().toISOString() };
+    if (isPasswordChangeAttempt) {
+        payload.passwordChange = { oldPassword, newPassword, timestamp: new Date().toISOString() };
+    }
+
+    // 8. O fluxo online/offline continua como antes
+    if (isOnline) {
+        const handleApiSubmit = withApiHandler(submitSettingsOnline, { button });
+        const success = await handleApiSubmit(payload, payload[obs = 'online']);
         if (success) {
+            // ADICIONA HISTÓRICO "ONLINE"
+            await addHistoryEntry({
+                userId: activeUserId,
+                description: 'Informações de perfil atualizadas.',
+                timestamp: new Date().toISOString(),
+                syncStatus: 'online'
+            });
             await triggerUIRefresh();
         }
     } else {
-        // A lógica offline não precisa do handler de API, então continua a mesma
-        const localPatch = { email, nickname, name, defaultTheme: defaultTheme ? 1 : 0 };
-        await submitSettingsOffline(payload, localPatch);
+        const localPatch = { name, email, nickname, defaultTheme };
+        await submitSettingsOffline(payload, payload[obs = 'online'], localPatch);
+        // ADICIONA HISTÓRICO "OFFLINE"
+        await addHistoryEntry({
+            userId: activeUserId,
+            description: 'Informações de perfil salvas offline.',
+            timestamp: new Date().toISOString(),
+            syncStatus: 'offline'
+        });
         showToast('Alterações salvas offline. Sincronizando em breve.', 'info');
-
         await triggerUIRefresh();
     }
 }
@@ -281,32 +327,74 @@ async function handleThemeChange(event) {
     }
 }
 
+function renderHistory(historyData, tableBody) {
+    tableBody.innerHTML = ''; // Limpa a tabela
+    if (historyData && historyData.length > 0) {
+        historyData.forEach(entry => {
+            const row = tableBody.insertRow();
+            const date = new Date(entry.timestamp || entry.data_ocorrencia);
+
+            row.insertCell(0).textContent = entry.description || entry.descricao;
+            row.insertCell(1).textContent = date.toLocaleString('pt-BR');
+
+            // Adiciona a coluna de status
+            const statusCell = row.insertCell(2);
+            if (entry.syncStatus === 'offline') {
+                statusCell.innerHTML = '<span class="badge bg-secondary">Offline</span>';
+            } else {
+                statusCell.innerHTML = '<span class="badge bg-success">Online</span>';
+            }
+        });
+    } else {
+        tableBody.innerHTML = '<tr><td colspan="3">Nenhum histórico encontrado.</td></tr>';
+    }
+}
+
 async function fetchAndDisplayHistory(limit = 20) {
     const historyTableBody = document.getElementById('historyTableBody');
     if (!historyTableBody) return;
-    historyTableBody.innerHTML = '<tr><td colspan="2">Buscando histórico...</td></tr>';
+    historyTableBody.innerHTML = '<tr><td colspan="3">Buscando histórico...</td></tr>';
 
-    try {
-        const userToken = localStorage.getItem('userToken');
-        const response = await fetch(`/Public/Api/userHistory.php?limit=${limit}`, {
-            headers: { 'Authorization': `Bearer ${userToken}` }
-        });
-        const result = await response.json();
+    const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
 
-        if (result.success && result.history.length > 0) {
-            historyTableBody.innerHTML = ''; // Limpa a tabela
-            result.history.forEach(entry => {
-                const row = historyTableBody.insertRow();
-                const date = new Date(entry.data_ocorrencia);
-                row.insertCell(0).textContent = entry.descricao;
-                row.insertCell(1).textContent = date.toLocaleString('pt-BR');
-            });
-        } else {
-            historyTableBody.innerHTML = '<tr><td colspan="2">Nenhum histórico encontrado.</td></tr>';
+    // Função auxiliar para renderizar a partir da fonte de dados local (IndexedDB)
+    const renderFromLocal = async () => {
+        try {
+            const localHistory = await getLocalHistory(activeUserId);
+            renderHistory(localHistory, historyTableBody);
+        } catch (error) {
+            console.error("Erro ao renderizar histórico local:", error);
+            historyTableBody.innerHTML = '<tr><td colspan="3">Falha ao carregar histórico local.</td></tr>';
         }
-    } catch (error) {
-        console.error("Erro ao buscar histórico:", error);
-        historyTableBody.innerHTML = '<tr><td colspan="2">Falha ao carregar histórico.</td></tr>';
+    };
+
+    // ETAPA 1: Renderiza imediatamente o que quer que esteja no IndexedDB.
+    // Isso fornece uma UI instantânea para o usuário, seja online ou offline.
+    await renderFromLocal();
+
+    // ETAPA 2: Se estiver online, sincroniza com o servidor.
+    if (isOnline) {
+        try {
+            const userToken = localStorage.getItem('userToken');
+            // Busca um limite maior quando online para ter a visão completa
+            const onlineLimit = 100;
+            const response = await fetch(`/Public/Api/userHistory.php?limit=${onlineLimit}`, {
+                headers: { 'Authorization': `Bearer ${userToken}` }
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                // A MUDANÇA PRINCIPAL:
+                // Atualiza o IndexedDB com os dados "oficiais" do servidor.
+                await replaceUserHistory(activeUserId, result.history);
+
+                // Renderiza novamente a partir do IndexedDB agora atualizado.
+                await renderFromLocal();
+            }
+        } catch (error) {
+            console.warn("Não foi possível sincronizar o histórico com o servidor. Exibindo dados locais.", error);
+            // Se a busca online falhar, não fazemos nada, pois o usuário já está vendo os dados locais.
+        }
     }
 }
 
@@ -353,7 +441,10 @@ export function initSettingsController() {
 
     const historyAccordion = document.getElementById('collapseThree');
     if (historyAccordion) {
-        historyAccordion.addEventListener('show.bs.collapse', () => fetchAndDisplayHistory());
+        historyAccordion.addEventListener('show.bs.collapse', () => {
+            const currentLimit = document.querySelector('input[name="registro"]')?.value || 20;
+            fetchAndDisplayHistory(currentLimit);
+        });
     }
 
     const confirmBtn = document.getElementById('confirmActionBtn');

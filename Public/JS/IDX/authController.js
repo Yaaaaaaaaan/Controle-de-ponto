@@ -1,107 +1,80 @@
 // ==========================
 // 📁 authController.js
 // ==========================
-import { getUserByNickname, storeAuthData, isTokenValid, getUserTokenByUserId } from '../indexedDB/Model.js';
-import { displayFeedback, showToast, withApiHandler } from '../Cogs/utils.js';
+import { getUserByNickname, storeAuthData, getUserTokenByUserId, isTokenValid } from '../indexedDB/Model.js';
+import { showToast, withApiHandler } from '../Cogs/utils.js';
 import { isOnline } from '../Core/connectionChecker.js';
 
+// --- LÓGICA DE NEGÓCIO SEPARADA ---
 
-// --- FUNÇÃO DE LOGIN ONLINE ---
-// Tenta autenticar contra o servidor. Se falhar, aciona o fallback para o modo offline.
-async function doOnlineLogin(nickname, password, button) {
-    const originalButtonText = button.textContent;
-    button.disabled = true;
-    button.textContent = 'Autenticando...';
+// 1. Apenas a chamada à API: faz o fetch e retorna os dados ou lança um erro.
+async function doLoginApi(nickname, password) {
+    const response = await fetch('/Public/Api/auth.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nickname, password })
+    });
 
-    try {
-        const response = await fetch('/Public/Api/auth.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nickname, password })
-        });
-
-        const result = await response.json();
-
-        // Se a resposta NÃO for OK (ex: 401 - senha errada), trata como erro
-        if (!response.ok) {
-            // Usa a mensagem específica vinda da API
-            throw new Error(result.message || 'Credenciais inválidas.');
-        }
-
-        // Se chegou aqui, o login foi bem-sucedido
-        const { userData, tokenData } = result.session;
-        localStorage.setItem('activeUserId', userData.userId);
-        localStorage.setItem('userToken', tokenData.userToken);
-
-        const offlinePasswordHash = await hashPassword(password);
-        await storeAuthData(userData, tokenData, offlinePasswordHash);
-
-        showToast( 'Login bem-sucedido! Redirecionando...', 'success');
-        window.location.href = "../User/index.php";
-
-    } catch (error) {
-        // Exibe a mensagem de erro específica (ex: "Usuário ou senha inválidos.")
-        showToast( error.message, 'error');
-        console.warn("Falha na tentativa de login online:", error);
-    } finally {
-        button.disabled = false;
-        button.textContent = originalButtonText;
+    const result = await response.json();
+    if (!response.ok) {
+        throw new Error(result.message || 'Credenciais inválidas.');
     }
+    return result.session; // Retorna os dados da sessão em caso de sucesso
 }
 
-// --- FUNÇÃO DE LOGIN OFFLINE ---
-// Valida as credenciais do usuário contra os dados salvos localmente no IndexedDB.
+// 2. O que fazer após o sucesso do login online.
+async function handleLoginSuccess(session, password) {
+    const { userData, tokenData } = session;
+    localStorage.setItem('activeUserId', userData.userId);
+    localStorage.setItem('userToken', tokenData.userToken);
+
+    const offlinePasswordHash = await hashPassword(password);
+    await storeAuthData(userData, tokenData, offlinePasswordHash);
+
+    showToast('Login bem-sucedido! Redirecionando...', 'success');
+    setTimeout(() => {
+        window.location.href = "../User/index.php";
+    }, 1500);
+}
+
+// 3. Lógica de login offline (mantida como estava, usando showToast).
 async function handleOfflineLogin(nickname, password) {
     console.log("Modo Offline: Autenticando localmente...");
 
     if (!password) {
-        displayFeedback('responseAction', "Por favor, digite sua senha para acesso offline.", 'error');
+        showToast("Por favor, digite sua senha para acesso offline.", 'info');
         return;
     }
 
     const user = await getUserByNickname(nickname);
     if (!user || !user.offlinePasswordHash) {
-        displayFeedback('responseAction', "Usuário não encontrado ou não configurado para acesso offline.", 'error');
+        showToast("Usuário não encontrado ou não configurado para acesso offline.", 'error');
         return;
     }
 
     const enteredPasswordHash = await hashPassword(password);
-
     if (enteredPasswordHash === user.offlinePasswordHash) {
         console.log("Autenticação offline bem-sucedida.");
-
-        // --- INÍCIO DA CORREÇÃO ---
-        // Buscamos o token que está no IndexedDB.
-        const tokenData = await getUserTokenByUserId(user.userId);
-
-        // AQUI ESTÁ A MUDANÇA CRÍTICA:
-        // Se a autenticação por senha foi bem-sucedida, nós SEMPRE definimos
-        // o token no localStorage para permitir o acesso à aplicação.
-        // O token é necessário para saber quem é o utilizador ativo, mesmo que esteja expirado.
         localStorage.setItem('activeUserId', user.userId);
+        const tokenData = await getUserTokenByUserId(user.userId);
 
         if (tokenData && tokenData.token) {
             localStorage.setItem('userToken', tokenData.token);
-            // Verificamos a validade do token apenas para AVISAR no console.
-            if (!await isTokenValid(tokenData.token)) {
-                console.warn("Token de sessão offline expirado. A sincronização com o servidor falhará até o próximo login online.");
-            }
         } else {
-            // Se por algum motivo não houver token, removemo-lo para evitar inconsistências.
             localStorage.removeItem('userToken');
         }
 
-        // Redirecionamos o utilizador para a página principal.
-        window.location.href = "../User/index.php";
-        // --- FIM DA CORREÇÃO ---
+        showToast('Login offline bem-sucedido! Redirecionando...', 'success');
+        setTimeout(() => { window.location.href = "../User/index.php"; }, 1500);
 
     } else {
-        displayFeedback('responseAction', "Senha incorreta.", 'error');
+        showToast("Senha incorreta.", 'error');
     }
 }
 
-// --- FUNÇÃO PRINCIPAL (HANDLER DO SUBMIT) ---
-// Orquestra qual função de login chamar.
+// --- ORQUESTRADOR PRINCIPAL ---
+
+// 4. A ÚNICA declaração de handleLoginSubmit.
 async function handleLoginSubmit(e) {
     e.preventDefault();
     const form = e.currentTarget;
@@ -110,26 +83,30 @@ async function handleLoginSubmit(e) {
     const password = form.password.value;
 
     if (!nickname || !password) {
-        showToast( "Usuário e senha são obrigatórios.", 'error');
+        showToast("Usuário e senha são obrigatórios.", 'error');
         return;
     }
 
     if (isOnline) {
-        // Chamamos a função de login diretamente, pois ela agora tem seu próprio handler de UI
-        await doOnlineLogin(nickname, password, button);
+        // Usa o AOP, passando a função da API e o callback de sucesso.
+        const handleApiLogin = withApiHandler(doLoginApi, {
+            button,
+            onSuccess: (session) => handleLoginSuccess(session, password)
+        });
+        await handleApiLogin(nickname, password);
     } else {
         await handleOfflineLogin(nickname, password);
     }
 }
 
-// Função de hash (continua a mesma)
+// --- FUNÇÕES AUXILIARES ---
+
 async function hashPassword(password) {
     const encoder = new TextEncoder();
     const data = encoder.encode(password);
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    return hashHex;
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 // --- PONTO DE ENTRADA DO SCRIPT ---

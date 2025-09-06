@@ -16,35 +16,42 @@ let currentDataPoints = [];
  * Processa os registros brutos do IndexedDB e retorna os dados formatados.
  */
 function processPointControlRecords(records) {
-    const monthlyDays = new Map();
-    const monthlyRecords = {};
+    const monthlyRecords = {}; // Para detalhes ao clicar
+    const monthlyDaysCount = new Map(); // Para contar os dias únicos por mês
 
+    // 1. Processa os dados recebidos e agrupa por mês
     records.forEach(record => {
         if (!record.dateIn) return;
 
-        // --- CORREÇÃO DE FUSO HORÁRIO ---
-        // Desmontamos a string 'YYYY-MM-DD' para evitar a conversão para UTC.
         const parts = record.dateIn.split('-');
         const year = parseInt(parts[0], 10);
-        const month = parseInt(parts[1], 10) - 1; // Mês em JS é 0-11
-        const day = parseInt(parts[2], 10);
-        const date = new Date(year, month, day);
-        // ------------------------------------
+        const month = parseInt(parts[1], 10) - 1;
+        const date = new Date(year, month, parseInt(parts[2], 10));
+        const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
 
-        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-
-        if (!monthlyDays.has(monthKey)) {
-            monthlyDays.set(monthKey, new Set());
+        if (!monthlyRecords[monthKey]) {
             monthlyRecords[monthKey] = [];
+            monthlyDaysCount.set(monthKey, new Set());
         }
-        monthlyDays.get(monthKey).add(date.getDate());
         monthlyRecords[monthKey].push(record);
+        monthlyDaysCount.get(monthKey).add(date.getDate());
     });
 
-    const sortedMonths = Array.from(monthlyDays.keys()).sort();
-    const recentMonths = sortedMonths.slice(-3);
-    const labels = recentMonths;
-    const dataPoints = recentMonths.map(month => monthlyDays.get(month).size);
+    // 2. Gera programaticamente os rótulos para os últimos 3 meses
+    const labels = [];
+    const today = new Date();
+    for (let i = 2; i >= 0; i--) {
+        const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        labels.push(`${year}-${month}`);
+    }
+
+    // 3. Mapeia os dados para os rótulos gerados (usando 0 se não houver dados)
+    const dataPoints = labels.map(label => {
+        const daysSet = monthlyDaysCount.get(label);
+        return daysSet ? daysSet.size : 0;
+    });
 
     return { labels, dataPoints, daysData: monthlyRecords };
 }

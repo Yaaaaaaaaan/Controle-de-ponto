@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="../../CSS/IDX/style.css">
     <link rel="icon" href="../../Assets/img/logo.png" type="image/x-icon">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/Public/JS/bootstrap.bundle.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body id="page-register">

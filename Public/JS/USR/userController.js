@@ -10,16 +10,29 @@ import {
     fetchUserDataByToken
 } from '../indexedDB/Model.js';
 import { userDataPromise, triggerUIRefresh } from '../Cogs/UIManager.js';
-import { showToast, withApiHandler } from '../Cogs/utils.js';
+import { showToast, withApiHandler, UserFacingError } from '../Cogs/utils.js';
 import { isOnline } from '../Core/connectionChecker.js';
 
 // --- A LÓGICA DE NEGÓCIO PURA ---
 async function doOnlinePresence() {
-    const success = await addPointControlRecordToServer("Verificação pendente");
-    if (!success) {
-        throw new Error('Falha ao confirmar a presença online.');
+    const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
+    if (!activeUserId) throw new Error('Sessão de utilizador inválida.');
+
+    // --- VALIDAÇÃO NO FRONT-END ---
+    const today = new Date().toISOString().split('T')[0];
+    const localRecords = await getPointControlByUserId(activeUserId);
+
+    // Verifica se já existe um registro para hoje, tanto online quanto offline
+    if (localRecords.some(rec => rec.dateIn === today)) {
+        throw new UserFacingError('Presença já registrada para hoje.');
     }
-    // Após o sucesso, busca os dados frescos para atualizar o IndexedDB
+    // --- FIM DA VALIDAÇÃO ---
+
+    const success = await addPointControlRecordToServer("Verificação pendente"); // Status inicial
+    if (!success) {
+        throw new UserFacingError('Falha ao registrar o ponto no servidor.');
+    }
+
     const userToken = localStorage.getItem('userToken');
     await fetchUserDataByToken(userToken);
 }
@@ -28,16 +41,17 @@ async function doOfflinePresence() {
     const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
     if (!activeUserId) throw new Error('Sessão de utilizador inválida.');
 
+    const coords = await getCurrentPosition();
     const today = new Date().toISOString().split('T')[0];
     const localRecords = await getPointControlByUserId(activeUserId);
     if (localRecords.some(rec => rec.dateIn === today)) {
         // Lança um erro customizado que o AOP pode capturar
-        throw new Error('Presença já registrada para hoje.');
+        throw new UserFacingError('Presença já registrada para hoje.');
     }
     const status = "Verificação pendente";
     const obs = "offline";
     await addPointControl({ userId: activeUserId, status, dateIn: today, obs });
-    await addActionToSyncQueue({ type: 'CREATE_POINT', payload: { status, obs }, timestamp: new Date().toISOString() });
+    await addActionToSyncQueue({ type: 'CREATE_POINT', payload: { status, obs, latitude: coords?.latitude, longitude: coords?.longitude }, /*timestamp: new Date().toISOString() */});
 }
 
 // --- O MANIPULADOR DE EVENTO QUE USA AOP ---
@@ -69,7 +83,7 @@ async function handleConfirmPresenceClick(event) {
 }
 
 
-async function handleOnlinePresence() {
+/*async function handleOnlinePresence() {
     console.log("Online: A confirmar presença diretamente no servidor...");
     try {
         const success = await addPointControlRecordToServer("Verificação pendente");
@@ -85,10 +99,10 @@ async function handleOnlinePresence() {
         console.warn("A tentativa online falhou por erro de rede. Acionando modo offline.", error);
         await handleOfflinePresence();
     }
-}
+}*/
 
 // FUNÇÃO OFFLINE (Com a lógica anti-duplicação)
-async function handleOfflinePresence() {
+/*async function handleOfflinePresence() {
     console.log("Offline: Tentando registrar ponto localmente.");
     const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
     if (!activeUserId || isNaN(activeUserId)) {
@@ -117,20 +131,62 @@ async function handleOfflinePresence() {
     displayFeedback('responseAction', 'Presença registrada offline com sucesso!', 'success');
     await triggerUIRefresh();
     await triggerUIRefresh();
+}*/
+
+
+// Lógica pura da API: Invalida o token no servidor.
+async function doOnlineLogoutApi() {
+    const userToken = localStorage.getItem('userToken');
+    if (!userToken) return;
+
+    const response = await fetch('/Public/Api/logout.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${userToken}`
+        }
+    });
+
+    if (!response.ok) {
+        console.warn('A invalidação do token no servidor falhou, mas o logout local prosseguirá.');
+    }
 }
 
-
-async function handleLogout(event) {
-    event.preventDefault();
-    console.log("Executando logout (client-side)...");
-
+// Lógica de limpeza do cliente: O que acontece no navegador.
+function handleClientSideLogout() {
+    // ESTA FUNÇÃO APENAS LIMPA O LOCALSTORAGE.
+    // O INDEXEDDB PERMANECE INTACTO PARA PERMITIR O LOGIN OFFLINE FUTURO.
     try {
         localStorage.removeItem('activeUserId');
         localStorage.removeItem('userToken');
-    } catch (error){
-        console.error("Erro durante o logout local:", error);
+    } catch (error) {
+        console.error("Erro durante a limpeza do logout local:", error);
     } finally {
-        window.location.href = '/Public/View/Index/';
+        window.location.href = '/Public/View/Index/index.php';
+    }
+}
+
+// O orquestrador principal que substitui sua função de logout existente.
+async function handleLogout(event) {
+    event.preventDefault();
+    const button = event.currentTarget;
+    if (button) button.style.pointerEvents = 'none'; // Evita cliques duplos
+
+    if (isOnline) {
+        // CAMINHO ONLINE: Tenta invalidar a sessão no servidor primeiro.
+        const handleApiLogout = withApiHandler(doOnlineLogoutApi, {
+            button,
+            onSuccess: () => {
+                showToast('Sessão encerrada com sucesso!', 'info');
+                setTimeout(handleClientSideLogout, 1000);
+            }
+        });
+        await handleApiLogout();
+    } else {
+        // CAMINHO OFFLINE: Nenhuma chamada de rede é feita.
+        // Apenas executa a limpeza local diretamente.
+        showToast('Sessão local encerrada.', 'info');
+        handleClientSideLogout();
     }
 }
 

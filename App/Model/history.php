@@ -13,41 +13,31 @@ class History{
         $this->conn = $db;
     }
 
-    // Cria
-    public function create(int $userId, string $description): bool
-    {
-        // A descrição completa é montada como antes
-        $ip = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'];
-        $fullDescription = $description . " | Endereço IP: " . $ip;
-        $fullDescription = strip_tags($fullDescription); // Limpa a string
+    /**
+     * Cria um novo registro de histórico com mais detalhes.
+     * @param int $userId O ID do usuário.
+     * @param string $description A descrição base da ação.
+     * @param string $occurrenceDate A data/hora em que a ação realmente ocorreu (formato 'Y-m-d H:i:s').
+     * @param string $obs Observação sobre o ambiente (ex: 'online', 'offline').
+     * @return bool
+     */
+    public function create(int $userId, string $description, string $occurrenceDate, string $obs): bool {
+        // Adiciona a observação à descrição
+        $fullDescription = $description . " | Origem: " . $obs;
+        // Adiciona o IP do usuário que está fazendo a requisição ao servidor
+        $ipAddress = $_SERVER['REMOTE_ADDR'] ?? 'IP não detectado';
+        $fullDescription .= " | Endereço IP: " . $ipAddress;
 
-        $query = "INSERT INTO {$this->tableName} (id_usuario, descricao) VALUES (:userId, :description)";
+        $query = "INSERT INTO {$this->tableName} (id_usuario, descricao, data_ocorrencia) VALUES (:userId, :description, :occurrenceDate)";
 
         try {
-            // --- A LÓGICA DE TRANSAÇÃO ESTÁ AQUI ---
-            $this->conn->beginTransaction(); // 1. Inicia a transação
-
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':userId', $userId);
             $stmt->bindParam(':description', $fullDescription);
-
-            $success = $stmt->execute();
-
-            if ($success) {
-                $this->conn->commit(); // 2. Se a execução foi bem-sucedida, commita (salva permanentemente)
-                return true;
-            } else {
-                $this->conn->rollBack(); // 3. Se falhou, reverte
-                return false;
-            }
-            // --- FIM DA LÓGICA DE TRANSAÇÃO ---
-
+            $stmt->bindParam(':occurrenceDate', $occurrenceDate);
+            return $stmt->execute();
         } catch (PDOException $e) {
-            // 4. Se ocorrer um erro de SQL, garante que a transação seja revertida
-            if ($this->conn->inTransaction()) {
-                $this->conn->rollBack();
-            }
-            error_log("Erro em History->create(): " . $e->getMessage());
+            error_log("Erro em History->create: " . $e->getMessage());
             return false;
         }
     }

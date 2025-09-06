@@ -33,24 +33,22 @@ if (!$userId) { sendJson(['success' => false, 'message' => 'Token inválido.'], 
 
 // Obter dados da requisição
 $data = json_decode(file_get_contents('php://input'), true);
-$status = $data['status'] ?? null;
-if (!$status) { sendJson(['success' => false, 'message' => 'Status ausente.'], 400); }
+$status = $data['status'] ?? 'Verificação pendente';
+$obs = $data['obs'] ?? 'online'; // Assume 'online' se não especificado
+$occurrenceDate = isset($data['timestamp']) ? date('Y-m-d', strtotime($data['timestamp'])) : date('Y-m-d');
 
-// INÍCIO DA CORREÇÃO
-// 1. Crie a instância do banco de dados e obtenha a conexão
-$database = new Database();
-$db = $database->getConnection();
+$pointController = new PointController();
 
-// 2. Passe a conexão ($db) para o construtor do PointController
-$pointController = new PointController($db);
-// FIM DA CORREÇÃO
+try {
+    // A chamada ao controller já retorna tudo que precisamos
+    $result = $pointController->insertPointControl($userId, $status, $obs, $occurrenceDate);
 
-// Chama a função SEM a data, para que a data do servidor seja usada.
-$success = $pointController->insertPointControl($userId, $status);
+    // Usa a função sendJson com a mensagem e o código HTTP vindos do controller
+    sendJson(['success' => $result['success'], 'message' => $result['message']], $result['http_code']);
 
-if ($success) {
-    sendJson(['success' => true, 'message' => 'Ponto registado com sucesso.']);
-} else {
-    sendJson(['success' => false, 'message' => 'Falha ao registar o ponto.'], 500);
+} catch (Exception $e) {
+    // Um catch genérico para erros inesperados na lógica
+    error_log("Erro fatal na API pControl.php: " . $e->getMessage());
+    sendJson(['success' => false, 'message' => 'Erro interno no servidor.'], 500);
 }
 ?>

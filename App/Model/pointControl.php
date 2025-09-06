@@ -28,51 +28,61 @@ class PointControl
      * @param int $userId O ID do usuário que realizou a ação.
      * @return bool
      */
-    public function createUserHistory(string $description, int $userId): bool {
+    public function createUserHistory(string $description, int $userId, string $occurrenceDate, string $obs): bool {
         try {
-            // Delega a responsabilidade para o Model de Histórico
             $historyModel = new History($this->conn);
-            return $historyModel->create($userId, $description);
+            // Repassa todos os 4 parâmetros para a criação real do histórico
+            return $historyModel->create($userId, $description, $occurrenceDate, $obs);
         } catch (Exception $e) {
-            // Adiciona contexto ao erro para facilitar a depuração
-            error_log("Erro ao delegar criação de histórico a partir do PointControl->createUserHistory: " . $e->getMessage());
+            error_log("Erro ao delegar criação de histórico a partir do PointControl: " . $e->getMessage());
             return false;
         }
     }
 
-    /**
-     * Cria um novo registo de ponto.
-     * @param int $userId O ID do utilizador.
-     * @param string $status O status do registo.
-     * @param string|null $date A data do registo (formato Y-m-d). Se for nulo, usa a data atual.
-     * @return bool Retorna true em caso de sucesso, false caso contrário.
-     */
-    public function insertPointControl(int $userId, string $status, ?string $obs = null, ?string $date = null): bool
+    private function recordExists(int $userId, string $date): bool
     {
-        $data_registro = $date ?? date('Y-m-d');
+        $query = "SELECT 1 FROM {$this->tableName} WHERE id_usuario = :id_usuario AND data_registro = :data_registro LIMIT 1";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id_usuario', $userId);
+        $stmt->bindParam(':data_registro', $date);
+        $stmt->execute();
+        return $stmt->fetchColumn() !== false;
+    }
 
+    /**
+     * Cria um novo registro de ponto, após verificar se ele já existe.
+     * @return array Retorna um array indicando o sucesso ou o tipo de erro.
+     */
+    public function insertPointControl(int $userId, string $status, ?string $obs = null, $occurrenceDate): array
+    {
+
+        // 1. VERIFICAÇÃO ANTES DE INSERIR
+        if ($this->recordExists($userId, $occurrenceDate)) {
+            return ['success' => false, 'error' => 'duplicate_entry'];
+        }
+
+        // 2. QUERY DE INSERÇÃO SIMPLES
         $query = "INSERT INTO {$this->tableName} (id_usuario, data_registro, status, observacao) 
-                  VALUES (:id_usuario, :data_registro, :status, :obs)
-                  ON DUPLICATE KEY UPDATE status = VALUES(status)";
+                  VALUES (:id_usuario, :data_registro, :status, :obs)";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id_usuario', $userId);
-        $stmt->bindParam(':data_registro', $data_registro);
+        $stmt->bindParam(':data_registro', $occurrenceDate);
         $stmt->bindParam(':status', $status);
         $stmt->bindParam(':obs', $obs);
 
         try {
             if ($stmt->execute()) {
-                // Se o ponto foi inserido, cria o registo de histórico usando a nova função.
-                $historyDescription = "Registo de ponto {$obs} bem-sucedido: {$status} | Data: {$data_registro}";
-                $this->createUserHistory($historyDescription, $userId);
-                return true;
+                $historyDescription = "Registo de ponto {$obs} bem-sucedido: {$status} | Latitude: | Longitude: ";
+                $this->createUserHistory($historyDescription, $userId, $occurrenceDate, $obs);
+                return ['success' => true];
             }
         } catch (PDOException $e) {
             error_log("Erro em PointControl->insertPointControl(): " . $e->getMessage());
+            return ['success' => false, 'error' => 'db_error'];
         }
 
-        return false;
+        return ['success' => false, 'error' => 'unknown_failure'];
     }
 
     public function getByUserId(int $userId): array {
@@ -106,9 +116,9 @@ class PointControl
                 ) as detalhes
                 FROM {$this->tableNames['reg']} p
                 INNER JOIN {$this->tableNames['usr']} u ON p.id_usuario = u.id_usuario
-                WHERE p.data_registro >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
-                GROUP BY p.status
-                ORDER BY count DESC";
+                WHERE p.data_registro >= DATE_FORMAT(CURDATE() - INTERVAL 2 MONTH, '%Y-%m-01')
+            GROUP BY p.status
+            ORDER BY count DESC";
 
             $stmt = $this->conn->prepare($query);
             $stmt->execute();

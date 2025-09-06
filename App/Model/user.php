@@ -88,7 +88,7 @@ require_once __DIR__ . '/history.php';
             // --- FIM DA LÓGICA DO TOKEN ---
 
             $this->conn->commit(); // Confirma todas as operações (usuário, album, foto e token)
-            $this->createUserHistory('Criação de conta: ', $newUserId);
+            $this->createUserHistory('Criação de conta: ', $newUserId, date('Y-m-d H:i:s'));
             return true;
 
         } catch (Exception $e) {
@@ -125,7 +125,7 @@ require_once __DIR__ . '/history.php';
 
             // 4. Popula a sessão com os dados corretos e separados.
             $this->populateSession($userId, $profileData, $finalTokenData);
-            $this->createUserHistory('Login bem-sucedido', $userId);
+            $this->createUserHistory('Login bem-sucedido', $userId,  date('Y-m-d H:i:s'), 'online');
 
             // 5. Retorna a estrutura aninhada final para o front-end.
             return [
@@ -296,7 +296,7 @@ require_once __DIR__ . '/history.php';
             }
 
             if ($stmt->execute()) {
-                $this->createUserHistory('Alteração de informações de perfil.', $this->id);
+                $this->createUserHistory('Alteração de informações de perfil.', $this->id, date('Y-m-d H:i:s')); // Adiciona a data atual para ações online
                 return true;
             }
             return false;
@@ -332,13 +332,13 @@ require_once __DIR__ . '/history.php';
         return false;
     }
 
-    public function createUserHistory($description, $userId): bool {
+    public function createUserHistory($description, $userId, $occurrenceDate, $obs): bool {
         try {
-            // Delega a responsabilidade para o Model de Histórico
             $historyModel = new History($this->conn);
-            return $historyModel->create($userId, $description);
+            // Repassa os novos parâmetros
+            return $historyModel->create($userId, $description, $occurrenceDate, $obs);
         } catch (Exception $e) {
-            error_log("Erro ao delegar criação de histórico a partir do User->createUserHistory: " . $e->getMessage());
+            error_log("Erro ao delegar criação de histórico: " . $e->getMessage());
             return false;
         }
     }
@@ -494,7 +494,12 @@ require_once __DIR__ . '/history.php';
 
             if ($setStmt->rowCount() > 0) {
                 $this->conn->commit();
-                $this->createUserHistory('Definiu nova foto de perfil (ID da Foto: ' . $photoId . ')', $userId);
+                $this->createUserHistory(
+                    'Definiu nova foto de perfil (ID da Foto: ' . $photoId . ')',
+                    $userId,
+                    date('Y-m-d H:i:s'), // Data atual
+                    'online'              // Origem da ação
+                );
                 return true;
             }
 

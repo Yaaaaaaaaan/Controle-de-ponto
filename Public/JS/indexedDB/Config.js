@@ -11,6 +11,8 @@ const syncQueueStoreName = 'syncQueue';
 
 const userPicturesStoreName = 'userPictures';
 
+const userHistoryStoreName = 'userHistory';
+
 let db;
 
 function initializeDB() {
@@ -25,12 +27,30 @@ function initializeDB() {
         request.onupgradeneeded = (event) => {
             const db = event.target.result;
 
+            // Criar ou atualizar userToken store
+            if (!db.objectStoreNames.contains(userTokenStoreName)) {
+                const userTokenStore = db.createObjectStore(userTokenStoreName, {
+                    keyPath: 'token'
+                });
+                userTokenStore.createIndex('userId', 'userId', { unique: true });
+                userTokenStore.createIndex('lastUpdated', 'lastUpdated', { unique: false });
+            }
+
             // Criar ou atualizar userData store
             if (!db.objectStoreNames.contains(userDataStoreName)) {
                 const userDataStore = db.createObjectStore(userDataStoreName, {
                     keyPath: 'nickname'
                 });
                 userDataStore.createIndex('userId', 'userId', { unique: true });
+            }
+
+            // Criar ou atualizar userPictures store
+            if (!db.objectStoreNames.contains(userPicturesStoreName)) {
+                const picturesStore = db.createObjectStore(userPicturesStoreName, {
+                    keyPath: 'picId'
+                });
+                // Criamos um índice para buscar todas as fotos de um usuário facilmente
+                picturesStore.createIndex('userId', 'userId', { unique: false });
             }
 
             // Criar ou atualizar pointControl store
@@ -43,26 +63,20 @@ function initializeDB() {
                 pointControlStore.createIndex('date', 'dateIn', { unique: false });
             }
 
-            // Criar ou atualizar userToken store
-            if (!db.objectStoreNames.contains(userTokenStoreName)) {
-                const userTokenStore = db.createObjectStore(userTokenStoreName, {
-                    keyPath: 'token'
+            // Criar ou atualizar userHistory store
+            if (!db.objectStoreNames.contains(userHistoryStoreName)) {
+                const historyStore = db.createObjectStore(userHistoryStoreName, {
+                    keyPath: 'id',
+                    autoIncrement: true
                 });
-                userTokenStore.createIndex('userId', 'userId', { unique: true });
-                userTokenStore.createIndex('lastUpdated', 'lastUpdated', { unique: false });
+                // Índice para buscar o histórico por usuário e ordenar por data
+                historyStore.createIndex('userId_timestamp', ['userId', 'timestamp'], { unique: false });
             }
+
             // Criar ou atualizar syncQueue store
             if (!db.objectStoreNames.contains(syncQueueStoreName)) {
                 const queueStore = db.createObjectStore(syncQueueStoreName, { keyPath: 'id', autoIncrement: true });
                 queueStore.createIndex('timestamp', 'timestamp', { unique: false });
-            }
-            // Criar ou atualizar userPictures store
-            if (!db.objectStoreNames.contains(userPicturesStoreName)) {
-                const picturesStore = db.createObjectStore(userPicturesStoreName, {
-                    keyPath: 'picId'
-                });
-                // Criamos um índice para buscar todas as fotos de um usuário facilmente
-                picturesStore.createIndex('userId', 'userId', { unique: false });
             }
         };
 
@@ -95,5 +109,6 @@ export {
     userTokenStoreName,
     syncQueueStoreName,
     userPicturesStoreName,
+    userHistoryStoreName,
     obterHoraFormatada
 };

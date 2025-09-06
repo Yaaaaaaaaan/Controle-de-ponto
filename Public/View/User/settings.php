@@ -90,7 +90,7 @@ require_once __DIR__ . "/../Layout/header.php"; // Inclui o cabeçalho e menu
                                                 <p class="lead text-body-secondary">Upload de novas fotos</p>
                                                 <div class="input-group">
                                                     <input type="file" name="userPicture" class="form-control" id="inputGroupFile04" accept="image/*">
-                                                    <button id="savePictureBtn" class="btn btn-outline-secondary" type="button">Salvar</button>
+                                                    <button id="savePictureBtn" class="btn btn-outline-success" type="button">Salvar</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -108,11 +108,19 @@ require_once __DIR__ . "/../Layout/header.php"; // Inclui o cabeçalho e menu
                                                     <button id="searchHistoryBtn" class="btn btn-outline-secondary" type="button">Pesquisar</button>
                                                 </div>
                                                 <hr>
-                                                <table class="table"><thead><tr><th>Descrição</th><th>Data</th></tr></thead></table>
-                                                <div style="height:250px; overflow-y:auto;">
-                                                    <table class="table">
 
-                                                        <tbody id="historyTableBody"></tbody>
+                                                <div class="table-responsive" style="height:250px; overflow-y:auto;">
+                                                    <table class="table table-hover">
+                                                        <thead class="sticky-top" style="background-color: var(--bs-body-bg);">
+                                                        <tr>
+                                                            <th scope="col">Descrição</th>
+                                                            <th scope="col">Data</th>
+                                                            <th scope="col">Status</th>
+                                                        </tr>
+                                                        </thead>
+
+                                                        <tbody id="historyTableBody">
+                                                        </tbody>
                                                     </table>
                                                 </div>
 

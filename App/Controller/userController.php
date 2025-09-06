@@ -59,7 +59,7 @@ class UserController {
         return $this->user->authenticateUser();
     }
 
-    public function updateUser($name, $id, $email, $nickname, $oldPassword, $newPassword, $confirmPassword, $defaultTheme): array{
+    public function updateUser($name, $id, $email, $nickname, $oldPassword, $newPassword, $confirmPassword, $defaultTheme, $occurrenceDate, $obs): array{
         $this->user->name = filter_var($name, FILTER_SANITIZE_FULL_SPECIAL_CHARS);;
         $this->user->id = $id; /* preciso descobrir como recuperar diretamente o usertoken ao invés do ID */
         $this->user->email = filter_var($email, FILTER_SANITIZE_FULL_SPECIAL_CHARS);;
@@ -68,6 +68,7 @@ class UserController {
         $this->user->newPassword = $newPassword;
         $this->user->confirmPassword = $confirmPassword;
         $this->user->defaultTheme = $defaultTheme ? 1 : 0;
+        $this->user->obs = $obs;
 
         if ($this->user->updateUser()) {
             return ['success' => true, 'message' => 'Alterações efetuadas com sucesso.'];

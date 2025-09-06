@@ -9,6 +9,7 @@ import {
     userTokenStoreName,
     syncQueueStoreName,
     userPicturesStoreName,
+    userHistoryStoreName,
     obterHoraFormatada
 } from './Config.js';
 
@@ -670,6 +671,99 @@ async function clearSyncQueue() {
     return new Promise(resolve => transaction.oncomplete = resolve);
 }
 
+/**
+ * Adiciona uma nova entrada de histórico no IndexedDB, garantindo um limite de 50 registros.
+ * @param {object} entry - O objeto de histórico. Ex: { userId: 1, description: '...', timestamp: '...', syncStatus: 'offline' }
+ */
+async function addHistoryEntry(entry) {
+    const limit = 50;
+    const db = await initializeDB();
+    const transaction = db.transaction(userHistoryStoreName, 'readwrite');
+    const store = transaction.objectStore(userHistoryStoreName);
+    const index = store.index('userId_timestamp');
+
+    // Conta quantos registros o usuário já tem
+    const countRequest = index.count(IDBKeyRange.bound([entry.userId, ''], [entry.userId, new Date().toISOString()]));
+
+    countRequest.onsuccess = () => {
+        const count = countRequest.result;
+
+        // Se o limite foi atingido, remove o registro mais antigo
+        if (count >= limit) {
+            const cursorRequest = index.openCursor(null, 'next'); // 'next' para pegar o mais antigo
+            cursorRequest.onsuccess = (e) => {
+                const cursor = e.target.result;
+                if (cursor) {
+                    store.delete(cursor.primaryKey);
+                }
+            };
+        }
+    };
+
+    // Adiciona o novo registro
+    store.add(entry);
+
+    return new Promise((resolve, reject) => {
+        transaction.oncomplete = resolve;
+        transaction.onerror = (event) => reject(event.target.error);
+    });
+}
+
+/**
+ * Busca o histórico de um usuário a partir do IndexedDB.
+ * @param {number} userId - O ID do usuário.
+ * @returns {Promise<Array>}
+ */
+async function getLocalHistory(userId) {
+    const db = await initializeDB();
+    const transaction = db.transaction(userHistoryStoreName, 'readonly');
+    const store = transaction.objectStore(userHistoryStoreName);
+    const index = store.index('userId_timestamp');
+    // Busca todos os registros do usuário e o cursor se encarrega da ordenação
+    const request = index.getAll(IDBKeyRange.bound([userId, ''], [userId, new Date().toISOString()]), undefined);
+
+    return new Promise((resolve, reject) => {
+        request.onsuccess = () => {
+            // Inverte para mostrar os mais recentes primeiro
+            resolve(request.result.reverse());
+        };
+        request.onerror = (event) => reject(event.target.error);
+    });
+}
+
+async function replaceUserHistory(userId, historyFromServer) {
+    const db = await initializeDB();
+    const transaction = db.transaction(userHistoryStoreName, 'readwrite');
+    const store = transaction.objectStore(userHistoryStoreName);
+    const index = store.index('userId_timestamp');
+
+    // 1. Limpa todas as entradas de histórico existentes para este usuário
+    const clearRequest = index.openCursor(IDBKeyRange.bound([userId, ''], [userId, new Date().toISOString()]));
+    clearRequest.onsuccess = (event) => {
+        const cursor = event.target.result;
+        if (cursor) {
+            store.delete(cursor.primaryKey);
+            cursor.continue();
+        }
+    };
+
+    // 2. Adiciona as novas entradas vindas do servidor
+    historyFromServer.forEach(entry => {
+        // Mapeia os campos do servidor para o schema do IndexedDB
+        store.add({
+            userId: userId,
+            description: entry.descricao,
+            timestamp: entry.data_ocorrencia,
+            syncStatus: 'online' // Toda entrada do servidor é, por definição, 'online'
+        });
+    });
+
+    return new Promise((resolve, reject) => {
+        transaction.oncomplete = resolve;
+        transaction.onerror = (event) => reject(event.target.error);
+    });
+}
+
 export {
     //funções de serviço
     obterHoraFormatada,
@@ -704,6 +798,11 @@ export {
     clearObjectStore,
     addActionToSyncQueue,
     getSyncQueue,
-    clearSyncQueue
+    clearSyncQueue,
+
+    //Funções de histórico de uso
+    replaceUserHistory,
+    getLocalHistory,
+    addHistoryEntry
 
 };

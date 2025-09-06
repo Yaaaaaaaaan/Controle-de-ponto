@@ -43,16 +43,19 @@ if (!empty($actions)) {
 
             $success = false;
 
+            // Padroniza a data de ocorrência e a observação para todas as ações da fila
+            $occurrenceDate = isset($action['timestamp']) ? date('Y-m-d H:i:s', strtotime($action['timestamp'])) : date('Y-m-d H:i:s');
+            $obs = 'offline'; // Todas as ações da syncQueue são, por definição, offline.
+
             switch ($action['type']) {
                 case 'CREATE_POINT':
                     $status = $action['payload']['status'] ?? 'Status não definido';
-                    $obs = $obs = $action['payload']['obs'] ?? null;
-                    $timestamp = $action['timestamp'] ?? null;
-                    $actionDate = $timestamp ? date('Y-m-d', strtotime($timestamp)) : null;
 
-                    // A chamada para insertPointControl já cria o registro de histórico através do Model.
-                    $success = $pointController->insertPointControl($userId, $status, $obs, $actionDate);
+                    // Passa os novos parâmetros para o controller
+                    $result = $pointController->insertPointControl($userId, $status, $obs, $occurrenceDate);
+                    $success = $result['success'];
                     break;
+
                 case 'UPDATE_PROFILE':
                     // Extraímos os dados do payload que o settingsController.js salvou
                     $payload = $action['payload'] ?? [];
@@ -68,22 +71,19 @@ if (!empty($actions)) {
 
                     // Reutilizamos o mesmo método que a API de tempo real usa!
                     $result = $userController->updateUser(
-                        $name,
-                        $userId,
-                        $email,
-                        $nickname,
-                        $oldPassword,
-                        $newPassword,
-                        $newPassword,
-                        $defaultTheme
+                        $name, $userId, $email, $nickname,
+                        '', '', '', // Senhas vazias
+                        $defaultTheme,
+                        $occurrenceDate, // Passa a data de ocorrência
+                        $obs             // Passa a observação "offline"
                     );
                     $success = $result['success'];
                     break;
 
                 case 'UPDATE_THEME':
                     $theme = $action['payload']['theme'] ?? 0;
-                    // O método updateUserTheme já cria seu próprio histórico também.
-                    $success = $userController->updateUserTheme($userId, $theme);
+                    // Passa os novos parâmetros para o controller de tema
+                    $success = $userController->updateUserTheme($userId, $theme, $occurrenceDate, $obs);
                     break;
             }
 

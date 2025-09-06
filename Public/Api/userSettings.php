@@ -57,7 +57,9 @@ $result = $userController->updateUser(
     $oldPassword,
     $newPassword,
     $newPassword, // confirmPassword é igual a newPassword
-    $defaultTheme
+    $defaultTheme,
+    date('Y-m-d H:i:s'), // Parâmetro 9: A data de ocorrência (agora)
+    $obs             // Parâmetro 10: A observação de origem
 );
 
 // 6. Retornar o resultado
