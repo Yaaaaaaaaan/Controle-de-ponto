@@ -53,6 +53,8 @@ create table historicos_acoes(
     id_usuario bigint unsigned not null,
     descricao text null,
     data_ocorrencia datetime not null,
+    longitude decimal(10,8) null default null,
+    latitude decimal(10,8) null default null,
     data_insercao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP(),
     constraint fk_historico_usuario foreign key (id_usuario) references usuarios (id_usuario) on delete cascade
 );

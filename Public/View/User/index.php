@@ -1,4 +1,6 @@
 <?php
+session_start();
+$isUserLoggedInServerSide = (isset($_SESSION['logged']) && $_SESSION['logged'] === true);
 define('APP_RAN', true);
 $pageId = 'page-dashboard'; // Apenas define a identidade da página
 require_once __DIR__ . "/../Layout/header.php"; // Inclui o cabeçalho e menu

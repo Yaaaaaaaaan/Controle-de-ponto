@@ -21,20 +21,22 @@ class History{
      * @param string $obs Observação sobre o ambiente (ex: 'online', 'offline').
      * @return bool
      */
-    public function create(int $userId, string $description, string $occurrenceDate, string $obs): bool {
+    public function create(int $userId, string $description, string $occurrenceDate, string $obs, ?float $latitude, ?float $longitude): bool {
         // Adiciona a observação à descrição
         $fullDescription = $description . " | Origem: " . $obs;
         // Adiciona o IP do usuário que está fazendo a requisição ao servidor
         $ipAddress = $_SERVER['REMOTE_ADDR'] ?? 'IP não detectado';
         $fullDescription .= " | Endereço IP: " . $ipAddress;
 
-        $query = "INSERT INTO {$this->tableName} (id_usuario, descricao, data_ocorrencia) VALUES (:userId, :description, :occurrenceDate)";
+        $query = "INSERT INTO {$this->tableName} (id_usuario, descricao, data_ocorrencia, longitude, latitude) VALUES (:userId, :description, :occurrenceDate, :longitude, :latitude)";
 
         try {
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':userId', $userId);
             $stmt->bindParam(':description', $fullDescription);
             $stmt->bindParam(':occurrenceDate', $occurrenceDate);
+            $stmt->bindParam(':latitude', $latitude);
+            $stmt->bindParam(':longitude', $longitude);
             return $stmt->execute();
         } catch (PDOException $e) {
             error_log("Erro em History->create: " . $e->getMessage());

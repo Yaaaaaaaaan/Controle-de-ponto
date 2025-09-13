@@ -20,13 +20,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $data = json_decode(file_get_contents('php://input'), true);
 $nickname = $data['nickname'] ?? null;
 $password = $data['password'] ?? null;
+$latitude = $data['latitude'] ?? null;
+$longitude = $data['longitude'] ?? null;
 
 if (!$nickname || !$password) {
     sendJson(['success' => false, 'message' => 'Nickname e senha são obrigatórios.'], 400);
 }
 $userController = new UserController();
 // A função agora retorna os dados diretamente ou null
-$responseData = $userController->authenticateUser($nickname, $password);
+$responseData = $userController->authenticateUser($nickname, $password, $latitude, $longitude);
 
 if ($responseData) {
     // Se recebeu os dados, envia-os na resposta

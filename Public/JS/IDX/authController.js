@@ -2,8 +2,9 @@
 // 📁 authController.js
 // ==========================
 import { getUserByNickname, storeAuthData, getUserTokenByUserId, isTokenValid } from '../indexedDB/Model.js';
-import { showToast, withApiHandler } from '../Cogs/utils.js';
+import { showToast, withApiHandler, getCurrentPosition } from '../Cogs/utils.js';
 import { isOnline } from '../Core/connectionChecker.js';
+
 
 // --- LÓGICA DE NEGÓCIO SEPARADA ---
 
@@ -12,7 +13,10 @@ async function doLoginApi(nickname, password) {
     const response = await fetch('/Public/Api/auth.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nickname, password })
+        body: JSON.stringify({ nickname,
+            password,
+            latitude: coords?.latitude,
+            longitude: coords?.longitude })
     });
 
     const result = await response.json();
@@ -101,7 +105,8 @@ async function handleLoginSubmit(e) {
 
 // --- FUNÇÕES AUXILIARES ---
 
-async function hashPassword(password) {
+// Também usado em reginsterController.
+export async function hashPassword(password) {
     const encoder = new TextEncoder();
     const data = encoder.encode(password);
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);

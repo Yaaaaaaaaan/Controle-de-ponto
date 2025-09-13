@@ -27,7 +27,7 @@ require_once __DIR__ . '/history.php';
         $this->conn = $db;
     }
 
-    public function createUser(): bool{
+    public function createUser($name, $nickname, $email, $password, $rank, $latitude, $longitude): ?array{
         // Define valor padrão para a imagem de perfil
         $this->profilePicture = 'Profile.png';
         $this->directory = '/Public/Assets/img/userProfileImages/Profile.png';
@@ -36,17 +36,17 @@ require_once __DIR__ . '/history.php';
         $this->albumType = '1';
 
         $this->conn->beginTransaction();
-        $this->password = password_hash($this->password, PASSWORD_DEFAULT);
+        $hashpassword = password_hash($password, PASSWORD_DEFAULT);
 
         try {
             // 1. Inserir usuário
             $queryUser = "INSERT INTO {$this->tableNames['usr']} (nome_completo, nome_usuario, email, senha_hash, nivel_acesso) VALUES (:name, :nickname, :email, :password, :rank)";
             $stmtUser = $this->conn->prepare($queryUser);
-            $stmtUser->bindParam(':name', $this->name);
-            $stmtUser->bindParam(':nickname', $this->nickname);
-            $stmtUser->bindParam(':email', $this->email);
-            $stmtUser->bindParam(':password', $this->password);
-            $stmtUser->bindParam(':rank', $this->rank);
+            $stmtUser->bindParam(':name', $name);
+            $stmtUser->bindParam(':nickname', $nickname);
+            $stmtUser->bindParam(':email', $email);
+            $stmtUser->bindParam(':password', $hashpassword);
+            $stmtUser->bindParam(':rank', $rank);
             $stmtUser->execute();
             $newUserId = $this->conn->lastInsertId();
 
@@ -69,7 +69,7 @@ require_once __DIR__ . '/history.php';
             $stmtProfilePic->bindParam(':isProfile', $this->isProfile);
             $stmtProfilePic->execute();
 
-            // --- INÍCIO DA LÓGICA DO TOKEN (O PONTO PRINCIPAL DA CORREÇÃO) ---
+            // --- INÍCIO DA LÓGICA DO TOKEN  ---
 
             // 4. Gerar o token de autenticação
             $userToken = bin2hex(random_bytes(32)); // Gera um token seguro de 64 caracteres
@@ -88,14 +88,34 @@ require_once __DIR__ . '/history.php';
             // --- FIM DA LÓGICA DO TOKEN ---
 
             $this->conn->commit(); // Confirma todas as operações (usuário, album, foto e token)
-            $this->createUserHistory('Criação de conta: ', $newUserId, date('Y-m-d H:i:s'));
-            return true;
+            $this->createUserHistory('Criação de conta bem-sucedida.', $newUserId, date('Y-m-d H:i:s'), 'online', $latitude, $longitude);
+
+            $userData = [
+                'userId'      => $newUserId,
+                'name'        => $name,
+                'email'       => $email,
+                'rank'        => $rank,
+                'nickname'    => $nickname,
+                'theme'       => 0,
+                'profileUser' => $this->directory,
+            ];
+
+            $tokenData = [
+                'userToken'   => $userToken,
+                'tokenDate'   => date('Y-m-d H:i:s'),
+                'tokenExpiry' => $expiryDate,
+            ];
+            $sessionData = ['userData' => $userData, 'tokenData' => $tokenData];
+
+            $this->populateSession($newUserId, $userData, $tokenData);
+            return $sessionData;
+
 
         } catch (Exception $e) {
             $this->conn->rollBack();
             // Lembre-se de restaurar o código de log de erro aqui!
             error_log("Erro em User->createUser: " . $e->getMessage());
-            return false;
+            return null;
         }
     }
 
@@ -125,7 +145,7 @@ require_once __DIR__ . '/history.php';
 
             // 4. Popula a sessão com os dados corretos e separados.
             $this->populateSession($userId, $profileData, $finalTokenData);
-            $this->createUserHistory('Login bem-sucedido', $userId,  date('Y-m-d H:i:s'), 'online');
+            $this->createUserHistory('Login bem-sucedido', $userId,  date('Y-m-d H:i:s'), 'online', $this->latitude, $this->longitude );
 
             // 5. Retorna a estrutura aninhada final para o front-end.
             return [
@@ -288,7 +308,6 @@ require_once __DIR__ . '/history.php';
             $stmt->bindParam(':id', $this->id);
 
             if ($passwordUpdated) {
-                // --- CORREÇÃO APLICADA AQUI ---
                 // 1. Primeiro, criamos o hash e o salvamos em uma variável.
                 $newPasswordHash = password_hash($this->newPassword, PASSWORD_DEFAULT);
                 // 2. Então, passamos a variável para o bindParam.
@@ -332,11 +351,11 @@ require_once __DIR__ . '/history.php';
         return false;
     }
 
-    public function createUserHistory($description, $userId, $occurrenceDate, $obs): bool {
+    public function createUserHistory($description, $userId, $occurrenceDate, ?string $obs, $latitude, $longitude): bool {
         try {
             $historyModel = new History($this->conn);
             // Repassa os novos parâmetros
-            return $historyModel->create($userId, $description, $occurrenceDate, $obs);
+            return $historyModel->create($userId, $description, $occurrenceDate, $obs, $latitude, $longitude);
         } catch (Exception $e) {
             error_log("Erro ao delegar criação de histórico: " . $e->getMessage());
             return false;
@@ -401,7 +420,7 @@ require_once __DIR__ . '/history.php';
     {
         error_log("Model/User.php - updateTheme: userId recebido: " . $userId . ", theme recebido: " . $theme);
         try {
-            // CORREÇÃO: Altera 'udefaultTheme' para 'tema_padrao' e 'uid' para 'id_usuario'
+            // Altera 'udefaultTheme' para 'tema_padrao' e 'uid' para 'id_usuario'
             $query = "UPDATE {$this->tableNames['usr']} SET tema_padrao = :theme WHERE id_usuario = :id";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':theme', $theme, PDO::PARAM_INT);
@@ -536,7 +555,7 @@ require_once __DIR__ . '/history.php';
     }
 
     public function getUserHistory($userId, $limit) {
-        // CORREÇÃO: Usando os nomes de colunas corretos (id_usuario, historico_id)
+        // Usando os nomes de colunas corretos (id_usuario, historico_id)
         $querySelect = "SELECT h.descricao, h.data_ocorrencia 
                     FROM {$this->tableNames['his']} h
                     WHERE h.id_usuario = :id 

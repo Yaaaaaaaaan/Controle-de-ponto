@@ -28,11 +28,11 @@ class PointControl
      * @param int $userId O ID do usuário que realizou a ação.
      * @return bool
      */
-    public function createUserHistory(string $description, int $userId, string $occurrenceDate, string $obs): bool {
+    public function createUserHistory(string $description, int $userId, string $occurrenceDate, string $obs, $longitude, $latitude): bool {
         try {
             $historyModel = new History($this->conn);
             // Repassa todos os 4 parâmetros para a criação real do histórico
-            return $historyModel->create($userId, $description, $occurrenceDate, $obs);
+            return $historyModel->create($userId, $description, $occurrenceDate, $obs, $longitude, $latitude);
         } catch (Exception $e) {
             error_log("Erro ao delegar criação de histórico a partir do PointControl: " . $e->getMessage());
             return false;
@@ -53,7 +53,7 @@ class PointControl
      * Cria um novo registro de ponto, após verificar se ele já existe.
      * @return array Retorna um array indicando o sucesso ou o tipo de erro.
      */
-    public function insertPointControl(int $userId, string $status, ?string $obs = null, $occurrenceDate): array
+    public function insertPointControl(int $userId, string $status, ?string $obs = null, $occurrenceDate, $longitude, $latitude): array
     {
 
         // 1. VERIFICAÇÃO ANTES DE INSERIR
@@ -74,7 +74,7 @@ class PointControl
         try {
             if ($stmt->execute()) {
                 $historyDescription = "Registo de ponto {$obs} bem-sucedido: {$status} | Latitude: | Longitude: ";
-                $this->createUserHistory($historyDescription, $userId, $occurrenceDate, $obs);
+                $this->createUserHistory($historyDescription, $userId, $occurrenceDate, $obs, $longitude, $latitude);
                 return ['success' => true];
             }
         } catch (PDOException $e) {

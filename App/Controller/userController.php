@@ -18,50 +18,47 @@ class UserController {
     }
 
     //TODO: REPARAR FUNÇÃO DE CRIAÇÃO DE USUÁRIO
-    public function createUser($name, $nickname, $email, $password): array
+    public function createUser($name, $nickname, $email, $password, $latitude, $longitude): array
     {
-        // Validação de negócio centralizada
+        // Validação de negócio (continua igual)
         if (empty($name) || empty($nickname) || empty($email) || empty($password)) {
             return ['success' => false, 'message' => 'Todos os campos são obrigatórios.'];
         }
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            error_log("CreateUser - Erro: email inválido - $email");
-
             return ['success' => false, 'message' => 'O formato do email é inválido.'];
         }
-        // (Pode adicionar outras validações, como comprimento da senha, etc.)
 
-        // Prepara os dados para o Model
-        $this->user->name = $name;
-        $this->user->nickname = $nickname;
-        $this->user->email = $email;
-        $this->user->password = $password;
-        $this->user->rank = 1;
-
-        // Tenta executar a criação no Model
-        $success = $this->user->createUser();
-
-        // Verifica o resultado da ÚNICA chamada
-        if ($success){
-            return ['success' => true, 'message' => 'Usuário criado com sucesso!'];
+        $rank = 1;
+        // Chama o Model para criar o utilizador
+        $sessionData = $this->user->createUser($name, $nickname, $email, $password, $rank, $latitude, $longitude);
+        if ($sessionData){
+            // --- ESTA É A PARTE CRÍTICA ---
+            // Garante que a resposta tenha a estrutura aninhada que o front-end espera,
+            // envolvendo os dados retornados pelo Model ('userData' e 'tokenData') dentro da chave 'session'.
+            return [
+                'success' => true,
+                'session' => $sessionData
+            ];
         } else {
-            return ['success' => false, 'message' => 'Não foi possível criar o usuário. O email ou nome de usuário já pode estar em uso.'];
+            return ['success' => false, 'message' => 'Não foi possível criar o utilizador. O email e/ou nome de utilizador já podem estar em uso.'];
         }
     }
     /**
      * @throws RandomException
      */
 
-    public function authenticateUser($nickname, $password): ?array {
+    public function authenticateUser($nickname, $password, $latitude, $longitude): ?array {
         $this->user->nickname = filter_var($nickname, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $this->user->password = $password;
+        $this->user->latitude = $latitude;
+        $this->user->longitude = $longitude;
 
         return $this->user->authenticateUser();
     }
 
-    public function updateUser($name, $id, $email, $nickname, $oldPassword, $newPassword, $confirmPassword, $defaultTheme, $occurrenceDate, $obs): array{
+    public function updateUser($name, $id, $email, $nickname, $oldPassword, $newPassword, $confirmPassword, $defaultTheme, $occurrenceDate, $obs, $latitude, $longitude): array{
         $this->user->name = filter_var($name, FILTER_SANITIZE_FULL_SPECIAL_CHARS);;
-        $this->user->id = $id; /* preciso descobrir como recuperar diretamente o usertoken ao invés do ID */
+        $this->user->id = $id;
         $this->user->email = filter_var($email, FILTER_SANITIZE_FULL_SPECIAL_CHARS);;
         $this->user->nickname = filter_var($nickname, FILTER_SANITIZE_FULL_SPECIAL_CHARS);;
         $this->user->oldPassword = $oldPassword;

@@ -14,7 +14,7 @@ import {
 } from '../indexedDB/Model.js';
 import { isOnline } from '../Core/connectionChecker.js'; // Usaremos nosso verificador de conexão
 import { userDataPromise, triggerUIRefresh } from '../Cogs/UIManager.js';
-import { displayFeedback, withApiHandler, showToast } from '../Cogs/utils.js'; //withApiHandler é uma introdução ao AOP (programação orientada a aspectos)
+import {displayFeedback, withApiHandler, showToast, getCurrentPosition} from '../Cogs/utils.js'; //withApiHandler é uma introdução ao AOP (programação orientada a aspectos)
 import { applyTheme, initializeThemeFromLocalData } from '../Cogs/ThemeManager.js';
 
 let confirmationModal;
@@ -71,7 +71,8 @@ async function submitSettingsOnline(payload) {
 
 // Função para submeter offline
 async function submitSettingsOffline(actionPayload, localPatch) {
-    await addActionToSyncQueue({ type: 'UPDATE_PROFILE', payload: actionPayload, timestamp: new Date().toISOString() });
+    const coords = await getCurrentPosition();
+    await addActionToSyncQueue({ type: 'UPDATE_PROFILE', payload: actionPayload, timestamp: new Date().toISOString(), latitude: coords?.latitude, longitude: coords?.longitude });
     const activeUserId = parseInt(localStorage.getItem('activeUserId') || '0', 10);
     if (activeUserId) {
         const currentUser = await getUserById(activeUserId);
@@ -85,7 +86,7 @@ async function submitSettingsOffline(actionPayload, localPatch) {
 async function onFormSubmit(ev) {
     ev.preventDefault();
     const button = ev.submitter;
-
+    const coords = await getCurrentPosition();
     // --- INÍCIO DA NOVA LÓGICA DE VALIDAÇÃO ---
 
     // 1. Coleta os dados do formulário
@@ -129,9 +130,9 @@ async function onFormSubmit(ev) {
     }
 
     // 7. Monta o payload SOMENTE com os dados que serão enviados
-    const payload = { email, nickname, name, defaultTheme, timestamp: new Date().toISOString() };
+    const payload = { email, nickname, name, defaultTheme, timestamp: new Date().toISOString(), latitude: coords?.latitude, longitude: coords?.longitude };
     if (isPasswordChangeAttempt) {
-        payload.passwordChange = { oldPassword, newPassword, timestamp: new Date().toISOString() };
+        payload.passwordChange = { oldPassword, newPassword, timestamp: new Date().toISOString(), latitude: coords?.latitude, longitude: coords?.longitude };
     }
 
     // 8. O fluxo online/offline continua como antes

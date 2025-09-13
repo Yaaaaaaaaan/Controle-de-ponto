@@ -50,9 +50,11 @@ if (!empty($actions)) {
             switch ($action['type']) {
                 case 'CREATE_POINT':
                     $status = $action['payload']['status'] ?? 'Status não definido';
+                    $latitude = $action['payload']['latitude'] ?? null;
+                    $longitude = $action['payload']['longitude'] ?? null;
 
                     // Passa os novos parâmetros para o controller
-                    $result = $pointController->insertPointControl($userId, $status, $obs, $occurrenceDate);
+                    $result = $pointController->insertPointControl($userId, $status, $obs, $occurrenceDate, $longitude, $latitude);
                     $success = $result['success'];
                     break;
 
@@ -63,6 +65,8 @@ if (!empty($actions)) {
                     $email = $payload['email'] ?? '';
                     $nickname = $payload['nickname'] ?? '';
                     $defaultTheme = $payload['defaultTheme'] ?? 0;
+                    $latitude = $action['payload']['latitude'] ?? null;
+                    $longitude = $action['payload']['longitude'] ?? null;
 
                     // A lógica de senha não é sincronizada offline por segurança,
                     // então passamos valores vazios para os campos de senha.
@@ -75,7 +79,8 @@ if (!empty($actions)) {
                         '', '', '', // Senhas vazias
                         $defaultTheme,
                         $occurrenceDate, // Passa a data de ocorrência
-                        $obs             // Passa a observação "offline"
+                        $obs,             // Passa a observação "offline"
+                        $latitude, $longitude
                     );
                     $success = $result['success'];
                     break;

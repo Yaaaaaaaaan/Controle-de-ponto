@@ -16,12 +16,12 @@ class PointController {
         $this->pointControl = new PointControl($this->db);
     }
 
-    public function insertPointControl(int $userId, string $status, ?string $obs = null, $occurrenceDate ): array {
+    public function insertPointControl(int $userId, string $status, ?string $obs = null, $occurrenceDate, $longitude, $latitude ): array {
         if (empty($userId) || empty($status)) {
             return ['success' => false, 'message' => 'Dados insuficientes.', 'http_code' => 400];
         }
 
-        $result = $this->pointControl->insertPointControl($userId, $status, $obs, $occurrenceDate);
+        $result = $this->pointControl->insertPointControl($userId, $status, $obs, $occurrenceDate, $longitude, $latitude);
 
         if ($result['success']) {
             return ['success' => true, 'message' => 'Ponto registrado com sucesso.', 'http_code' => 200];

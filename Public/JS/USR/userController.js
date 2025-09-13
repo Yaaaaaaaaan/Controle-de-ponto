@@ -10,11 +10,12 @@ import {
     fetchUserDataByToken
 } from '../indexedDB/Model.js';
 import { userDataPromise, triggerUIRefresh } from '../Cogs/UIManager.js';
-import { showToast, withApiHandler, UserFacingError } from '../Cogs/utils.js';
+import { showToast, withApiHandler, UserFacingError, getCurrentPosition } from '../Cogs/utils.js';
 import { isOnline } from '../Core/connectionChecker.js';
 
 // --- A LÓGICA DE NEGÓCIO PURA ---
 async function doOnlinePresence() {
+    const coords = await getCurrentPosition();
     const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
     if (!activeUserId) throw new Error('Sessão de utilizador inválida.');
 
@@ -51,7 +52,7 @@ async function doOfflinePresence() {
     const status = "Verificação pendente";
     const obs = "offline";
     await addPointControl({ userId: activeUserId, status, dateIn: today, obs });
-    await addActionToSyncQueue({ type: 'CREATE_POINT', payload: { status, obs, latitude: coords?.latitude, longitude: coords?.longitude }, /*timestamp: new Date().toISOString() */});
+    await addActionToSyncQueue({ type: 'CREATE_POINT', payload: { status, obs, latitude: coords?.latitude, longitude: coords?.longitude }});
 }
 
 // --- O MANIPULADOR DE EVENTO QUE USA AOP ---
@@ -81,58 +82,6 @@ async function handleConfirmPresenceClick(event) {
         }
     }
 }
-
-
-/*async function handleOnlinePresence() {
-    console.log("Online: A confirmar presença diretamente no servidor...");
-    try {
-        const success = await addPointControlRecordToServer("Verificação pendente");
-        if (success) {
-            displayFeedback('responseAction', 'Presença confirmada com sucesso!', 'success');
-            const userToken = localStorage.getItem('userToken');
-            await fetchUserDataByToken(userToken);
-            await triggerUIRefresh();
-        } else {
-            displayFeedback('responseAction', 'Falha ao confirmar a presença online.', 'error');
-        }
-    } catch (error) {
-        console.warn("A tentativa online falhou por erro de rede. Acionando modo offline.", error);
-        await handleOfflinePresence();
-    }
-}*/
-
-// FUNÇÃO OFFLINE (Com a lógica anti-duplicação)
-/*async function handleOfflinePresence() {
-    console.log("Offline: Tentando registrar ponto localmente.");
-    const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
-    if (!activeUserId || isNaN(activeUserId)) {
-        displayFeedback('responseAction', 'Sessão de utilizador inválida.', 'error');
-        return;
-    }
-
-    const today = new Date().toISOString().split('T')[0];
-    const localRecords = await getPointControlByUserId(activeUserId);
-    const hasRecordForToday = localRecords.some(record => record.dateIn === today);
-
-    if (hasRecordForToday) {
-        displayFeedback('responseAction', 'Presença já registrada para hoje.', 'info');
-        return;
-    }
-
-    const status = "Verificação pendente";
-    const obs = "offline";
-
-    const newPointRecord = { userId: activeUserId, status, dateIn: today };
-    await addPointControl(newPointRecord); // Salva na UI
-
-    const action = { type: 'CREATE_POINT', payload: { status, obs }, timestamp: new Date().toISOString() };
-    await addActionToSyncQueue(action); // Salva na fila de sincronização
-
-    displayFeedback('responseAction', 'Presença registrada offline com sucesso!', 'success');
-    await triggerUIRefresh();
-    await triggerUIRefresh();
-}*/
-
 
 // Lógica pura da API: Invalida o token no servidor.
 async function doOnlineLogoutApi() {
