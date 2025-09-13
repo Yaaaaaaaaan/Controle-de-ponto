@@ -9,12 +9,11 @@ import { isOnline } from '../Core/connectionChecker.js';
 // --- LÓGICA DE NEGÓCIO SEPARADA ---
 
 // 1. Apenas a chamada à API: faz o fetch e retorna os dados ou lança um erro.
-async function doLoginApi(nickname, password) {
+async function doLoginApi(nickname, password, coords) {
     const response = await fetch('/Public/Api/auth.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nickname,
-            password,
+        body: JSON.stringify({ nickname, password,
             latitude: coords?.latitude,
             longitude: coords?.longitude })
     });
@@ -93,11 +92,13 @@ async function handleLoginSubmit(e) {
 
     if (isOnline) {
         // Usa o AOP, passando a função da API e o callback de sucesso.
+        const coords = await getCurrentPosition();
+
         const handleApiLogin = withApiHandler(doLoginApi, {
             button,
             onSuccess: (session) => handleLoginSuccess(session, password)
         });
-        await handleApiLogin(nickname, password);
+        await handleApiLogin(nickname, password, coords);
     } else {
         await handleOfflineLogin(nickname, password);
     }

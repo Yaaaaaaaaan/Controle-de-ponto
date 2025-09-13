@@ -29,7 +29,7 @@ async function doOnlinePresence() {
     }
     // --- FIM DA VALIDAÇÃO ---
 
-    const success = await addPointControlRecordToServer("Verificação pendente"); // Status inicial
+    const success = await addPointControlRecordToServer("Verificação pendente", coords); // Status inicial
     if (!success) {
         throw new UserFacingError('Falha ao registrar o ponto no servidor.');
     }

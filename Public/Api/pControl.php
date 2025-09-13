@@ -36,12 +36,14 @@ $data = json_decode(file_get_contents('php://input'), true);
 $status = $data['status'] ?? 'Verificação pendente';
 $obs = $data['obs'] ?? 'online'; // Assume 'online' se não especificado
 $occurrenceDate = isset($data['timestamp']) ? date('Y-m-d', strtotime($data['timestamp'])) : date('Y-m-d');
+$latitude = $data['latitude'] ?? null;
+$longitude = $data['longitude'] ?? null;
 
 $pointController = new PointController();
 
 try {
     // A chamada ao controller já retorna tudo que precisamos
-    $result = $pointController->insertPointControl($userId, $status, $obs, $occurrenceDate);
+    $result = $pointController->insertPointControl($userId, $status, $obs, $occurrenceDate, $longitude, $latitude);
 
     // Usa a função sendJson com a mensagem e o código HTTP vindos do controller
     sendJson(['success' => $result['success'], 'message' => $result['message']], $result['http_code']);

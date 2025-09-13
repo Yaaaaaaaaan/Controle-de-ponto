@@ -516,7 +516,7 @@ async function storeAuthData(userData, tokenData, offlinePasswordHash) {
  * @param {number} status - O status do ponto (ex: 1 para entrada, 0 para saída).
  * @returns {Promise<boolean>} - Retorna true se bem-sucedido, false caso contrário.
  */
-async function addPointControlRecordToServer(status) {
+async function addPointControlRecordToServer(status, coords) {
     try {
         if (typeof status === 'undefined') {
             console.error(`[${obterHoraFormatada()}] Erro ao bater o ponto: o status não foi especificado.`);
@@ -539,7 +539,10 @@ async function addPointControlRecordToServer(status) {
                 'Authorization': `Bearer ${userToken}`
             },
             body: JSON.stringify({
-                status: status
+                status: status,
+                timestamp: new Date().toISOString(),
+                latitude: coords?.latitude,
+                longitude: coords?.longitude
             })
         });
 

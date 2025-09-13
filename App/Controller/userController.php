@@ -48,12 +48,8 @@ class UserController {
      */
 
     public function authenticateUser($nickname, $password, $latitude, $longitude): ?array {
-        $this->user->nickname = filter_var($nickname, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $this->user->password = $password;
-        $this->user->latitude = $latitude;
-        $this->user->longitude = $longitude;
-
-        return $this->user->authenticateUser();
+        $nicknamefil = filter_var($nickname, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        return $this->user->authenticateUser($nicknamefil, $password, $latitude, $longitude);
     }
 
     public function updateUser($name, $id, $email, $nickname, $oldPassword, $newPassword, $confirmPassword, $defaultTheme, $occurrenceDate, $obs, $latitude, $longitude): array{

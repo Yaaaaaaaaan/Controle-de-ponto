@@ -126,10 +126,10 @@ require_once __DIR__ . '/history.php';
         }
     }
 
-    public function authenticateUser(): ?array
+    public function authenticateUser($nicknamefil, $password, $latitude, $longitude): ?array
     {
         try {
-            $userId = $this->verifyCredentials();
+            $userId = $this->verifyCredentials($nicknamefil, $password);
             if (!$userId) return null;
 
             // 1. Busca os dados já separados (userData e tokenData)
@@ -143,11 +143,11 @@ require_once __DIR__ . '/history.php';
             // 3. A função manageUserToken agora recebe apenas os dados do token, como esperado.
             $finalTokenData = $this->manageUserToken($userId, $tokenDataFromQuery);
 
-            // 4. Popula a sessão com os dados corretos e separados.
+            // 4. Popula sessão com os dados corretos e separados.
             $this->populateSession($userId, $profileData, $finalTokenData);
-            $this->createUserHistory('Login bem-sucedido', $userId,  date('Y-m-d H:i:s'), 'online', $this->latitude, $this->longitude );
+            $this->createUserHistory('Login bem-sucedido', $userId,  date('Y-m-d H:i:s'), 'online', $latitude, $longitude );
 
-            // 5. Retorna a estrutura aninhada final para o front-end.
+            // 5. Retorna estrutura aninhada final para o front-end.
             return [
                 'userData' => $profileData,
                 'tokenData' => $finalTokenData
@@ -226,18 +226,18 @@ require_once __DIR__ . '/history.php';
         }
     }
 
-    private function verifyCredentials(): ?int
+    private function verifyCredentials($nickname, $password): ?int
     {
-        if (empty($this->nickname) || empty($this->password)) {
+        if (empty($nickname) || empty($password)) {
             return null;
         }
         $query = "SELECT id_usuario, senha_hash FROM {$this->tableNames['usr']} WHERE nome_usuario = :nickname";
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':nickname', $this->nickname);
+        $stmt->bindParam(':nickname', $nickname);
         $stmt->execute();
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($row && password_verify($this->password, $row['senha_hash'])) {
+        if ($row && password_verify($password, $row['senha_hash'])) {
             return (int)$row['id_usuario'];
         }
         return null;
