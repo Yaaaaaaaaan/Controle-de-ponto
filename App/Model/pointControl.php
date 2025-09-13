@@ -73,7 +73,7 @@ class PointControl
 
         try {
             if ($stmt->execute()) {
-                $historyDescription = "Registo de ponto {$obs} bem-sucedido: {$status} | Latitude: | Longitude: ";
+                $historyDescription = "Registo de ponto {$obs} bem-sucedido: {$status}";
                 $this->createUserHistory($historyDescription, $userId, $occurrenceDate, $obs, $longitude, $latitude);
                 return ['success' => true];
             }
