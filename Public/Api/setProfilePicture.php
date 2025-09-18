@@ -31,12 +31,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
 
 $data = json_decode(file_get_contents('php://input'), true);
 $photoId = $data['photoId'] ?? null;
+$latitude = $data['latitude'] ?? null;
+$longitude = $data['longitude'] ?? null;
 
 if (!$photoId) {
     sendJson(['success' => false, 'message' => 'ID da foto ausente.'], 400);
 }
 
-if ($userController->setUserProfilePicture($userId, $photoId)) {
+if ($userController->setUserProfilePicture($userId, $photoId, $latitude, $longitude)) {
     sendJson(['success' => true, 'message' => 'Foto de perfil atualizada com sucesso!']);
 } else {
     sendJson(['success' => false, 'message' => 'Falha ao definir a foto de perfil.'], 400);

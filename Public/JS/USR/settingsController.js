@@ -13,7 +13,7 @@ import {
     replaceUserHistory
 } from '../indexedDB/Model.js';
 import { isOnline } from '../Core/connectionChecker.js'; // Usaremos nosso verificador de conexão
-import { userDataPromise, triggerUIRefresh } from '../Cogs/UIManager.js';
+import { userDataPromise, triggerSharedUIRefresh } from '../Cogs/UIManager.js';
 import {displayFeedback, withApiHandler, showToast, getCurrentPosition} from '../Cogs/utils.js'; //withApiHandler é uma introdução ao AOP (programação orientada a aspectos)
 import { applyTheme, initializeThemeFromLocalData } from '../Cogs/ThemeManager.js';
 
@@ -86,9 +86,9 @@ async function submitSettingsOffline(actionPayload, localPatch) {
 async function onFormSubmit(ev) {
     ev.preventDefault();
     const button = ev.submitter;
-    const coords = await getCurrentPosition();
     // --- INÍCIO DA NOVA LÓGICA DE VALIDAÇÃO ---
 
+    const coords = await getCurrentPosition();
     // 1. Coleta os dados do formulário
     const { email, nickname, name, defaultTheme, oldPassword, newPassword, confirmPassword } = getFormData();
 
@@ -104,7 +104,7 @@ async function onFormSubmit(ev) {
     const profileDataChanged = currentUser.name !== name ||
         currentUser.email !== email ||
         currentUser.nickname !== nickname ||
-        currentUser.theme != defaultTheme; // Usar != para comparar tipos diferentes (ex: 1 e '1')
+        currentUser.theme !== defaultTheme;
 
     // 4. Verifica se o usuário está tentando alterar a senha
     const isPasswordChangeAttempt = oldPassword || newPassword || confirmPassword;
@@ -132,35 +132,39 @@ async function onFormSubmit(ev) {
     // 7. Monta o payload SOMENTE com os dados que serão enviados
     const payload = { email, nickname, name, defaultTheme, timestamp: new Date().toISOString(), latitude: coords?.latitude, longitude: coords?.longitude };
     if (isPasswordChangeAttempt) {
-        payload.passwordChange = { oldPassword, newPassword, timestamp: new Date().toISOString(), latitude: coords?.latitude, longitude: coords?.longitude };
+        payload.passwordChange = { oldPassword, newPassword };
     }
 
     // 8. O fluxo online/offline continua como antes
     if (isOnline) {
+        payload.obs = 'online';
         const handleApiSubmit = withApiHandler(submitSettingsOnline, { button });
-        const success = await handleApiSubmit(payload, payload[obs = 'online']);
+        const success = await handleApiSubmit(payload);
         if (success) {
             // ADICIONA HISTÓRICO "ONLINE"
             await addHistoryEntry({
                 userId: activeUserId,
-                description: 'Informações de perfil atualizadas.',
-                timestamp: new Date().toISOString(),
+                description: 'Informações de perfil atualizadas. | Origem: ' + payload.obs,
+                timestamp: payload.timestamp,
                 syncStatus: 'online'
             });
-            await triggerUIRefresh();
+            document.dispatchEvent(new CustomEvent('historyShouldRefresh'));
+            await triggerSharedUIRefresh();
         }
     } else {
+        payload.obs = 'offline';
         const localPatch = { name, email, nickname, defaultTheme };
-        await submitSettingsOffline(payload, payload[obs = 'online'], localPatch);
+        await submitSettingsOffline(payload, localPatch);
         // ADICIONA HISTÓRICO "OFFLINE"
         await addHistoryEntry({
             userId: activeUserId,
             description: 'Informações de perfil salvas offline.',
-            timestamp: new Date().toISOString(),
+            timestamp: payload.timestamp,
             syncStatus: 'offline'
         });
+        document.dispatchEvent(new CustomEvent('historyShouldRefresh'));
         showToast('Alterações salvas offline. Sincronizando em breve.', 'info');
-        await triggerUIRefresh();
+        await triggerSharedUIRefresh();
     }
 }
 
@@ -175,7 +179,7 @@ async function fetchAndDisplayUserPictures() {
 
     try {
         if (isOnline) {
-            console.log("Modo Online: Buscando fotos da API.");
+            console.log(obterHoraFormatada()," Modo Online: Buscando fotos da API.");
             const response = await fetch('/Public/Api/userPictures.php', {
                 headers: { 'Authorization': `Bearer ${userToken}` }
             });
@@ -191,7 +195,7 @@ async function fetchAndDisplayUserPictures() {
                 throw new Error(result.message || 'Falha ao buscar fotos da API.');
             }
         } else {
-            console.log("Modo Offline: Buscando fotos do IndexedDB.");
+            console.log(obterHoraFormatada()," Modo Offline: Buscando fotos do IndexedDB.");
             pictures = await getOfflineUserPictures(activeUserId);
         }
 
@@ -223,7 +227,7 @@ async function fetchAndDisplayUserPictures() {
         }
     } catch (error) {
         photoGallery.textContent = 'Erro ao carregar fotos.';
-        console.error("Erro ao buscar fotos:", error);
+        console.error(obterHoraFormatada()," Erro ao buscar fotos:", error);
     }
 }
 
@@ -232,9 +236,14 @@ async function fetchAndDisplayUserPictures() {
  * @param {File} file - O arquivo de imagem a ser enviado.
  */
 async function uploadNewPicture(file, button) { // Passa o botão como argumento
+    const coords = await getCurrentPosition();
     const userToken = localStorage.getItem('userToken');
     const formData = new FormData();
     formData.append('picture', file);
+    if (coords) {
+        formData.append('latitude', coords.latitude);
+        formData.append('longitude', coords.longitude);
+    }
 
     // A função de negócio pura
     const doUpload = async () => {
@@ -251,8 +260,15 @@ async function uploadNewPicture(file, button) { // Passa o botão como argumento
 
     // Ações pós-sucesso
     if (success) {
-        await triggerUIRefresh();
+        const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
+        // Adiciona o histórico e dispara o evento
+        await addHistoryEntry({ userId: activeUserId, description: `Upload de nova foto: ${file.name}`, timestamp: new Date().toISOString(), syncStatus: 'online'});
+        document.dispatchEvent(new CustomEvent('historyShouldRefresh'));
+
+        await triggerSharedUIRefresh();
         await fetchAndDisplayUserPictures();
+        const profilePhotoModalEl = document.getElementById('profilePhotoModal');
+        const profilePhotoModal = bootstrap.Modal.getInstance(profilePhotoModalEl);
         if (profilePhotoModal) profilePhotoModal.hide();
     }
 }
@@ -263,21 +279,33 @@ async function uploadNewPicture(file, button) { // Passa o botão como argumento
  */
 async function setAsProfilePicture(photoId) {
     const userToken = localStorage.getItem('userToken');
-    if (!userToken) return;
+    const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
+    if (!userToken || !activeUserId) return;
 
     try {
+        const coords = await getCurrentPosition();
         const response = await fetch('/Public/Api/setProfilePicture.php', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
-            body: JSON.stringify({ photoId })
+            body: JSON.stringify({
+                photoId,
+                latitude: coords?.latitude,
+                longitude: coords?.longitude})
         });
         const result = await response.json();
 
         if (result.success) {
             showToast('Foto de perfil atualizada!', 'success');
-            if (profilePhotoModal) profilePhotoModal.hide();
-            await fetchUserDataByToken(userToken);
-            await triggerUIRefresh();
+
+            await addHistoryEntry({
+                userId: activeUserId,
+                description:  `Definiu nova foto de perfil (ID da Foto: ${photoId})`,
+                timestamp: new Date().toISOString(),
+                syncStatus: 'online'
+            })
+            document.dispatchEvent(new CustomEvent('historyShouldRefresh'));
+
+            await triggerSharedUIRefresh();
             await fetchAndDisplayUserPictures();
             if (profilePhotoModal) profilePhotoModal.hide();
 
@@ -286,7 +314,7 @@ async function setAsProfilePicture(photoId) {
         }
     } catch (error) {
         showToast(`Erro: ${error.message}`, 'error');
-        console.error("Erro ao definir foto:", error);
+        console.error(obterHoraFormatada()," Erro ao definir foto:", error);
     }
 }
 
@@ -310,13 +338,13 @@ async function handleThemeChange(event) {
 
             // Atualiza o IndexedDB com os dados frescos do servidor
             await fetchUserDataByToken(userToken);
-            console.log("Preferência de tema salva no servidor.");
+            console.log(obterHoraFormatada()," Preferência de tema salva no servidor.");
         } catch (error) {
-            console.error("Falha ao salvar tema no servidor:", error);
+            console.error(obterHoraFormatada()," Falha ao salvar tema no servidor:", error);
             // Opcional: Reverter a UI ou mostrar erro
         }
     } else {
-        console.log("Offline: Ação de mudança de tema adicionada à fila.");
+        console.log(obterHoraFormatada()," Offline: Ação de mudança de tema adicionada à fila.");
         // Atualiza o IndexedDB localmente
         const currentUser = await getUserById(activeUserId);
         if (currentUser) {
@@ -333,10 +361,14 @@ function renderHistory(historyData, tableBody) {
     if (historyData && historyData.length > 0) {
         historyData.forEach(entry => {
             const row = tableBody.insertRow();
-            const date = new Date(entry.timestamp || entry.data_ocorrencia);
+            const date = new Date(entry.timestamp);
 
-            row.insertCell(0).textContent = entry.description || entry.descricao;
-            row.insertCell(1).textContent = date.toLocaleString('pt-BR');
+            row.insertCell(0).textContent = entry.description;
+            row.insertCell(1).textContent = date.toLocaleString('pt-BR', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            });
+
 
             // Adiciona a coluna de status
             const statusCell = row.insertCell(2);
@@ -351,30 +383,29 @@ function renderHistory(historyData, tableBody) {
     }
 }
 
-async function fetchAndDisplayHistory(limit = 20) {
+async function fetchAndDisplayHistory(limit = 20, forceSync = false) {
     const historyTableBody = document.getElementById('historyTableBody');
     if (!historyTableBody) return;
-    historyTableBody.innerHTML = '<tr><td colspan="3">Buscando histórico...</td></tr>';
 
     const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
 
     // Função auxiliar para renderizar a partir da fonte de dados local (IndexedDB)
-    const renderFromLocal = async () => {
+    const renderFromLocal = async (fetchLimit) => {
         try {
-            const localHistory = await getLocalHistory(activeUserId);
+            const localHistory = await getLocalHistory(activeUserId, fetchLimit);
             renderHistory(localHistory, historyTableBody);
         } catch (error) {
-            console.error("Erro ao renderizar histórico local:", error);
+            console.error(obterHoraFormatada()," Erro ao renderizar histórico local:", error);
             historyTableBody.innerHTML = '<tr><td colspan="3">Falha ao carregar histórico local.</td></tr>';
         }
     };
 
     // ETAPA 1: Renderiza imediatamente o que quer que esteja no IndexedDB.
     // Isso fornece uma UI instantânea para o usuário, seja online ou offline.
-    await renderFromLocal();
+    await renderFromLocal(limit);
 
     // ETAPA 2: Se estiver online, sincroniza com o servidor.
-    if (isOnline) {
+    if (isOnline && forceSync) {
         try {
             const userToken = localStorage.getItem('userToken');
             // Busca um limite maior quando online para ter a visão completa
@@ -385,22 +416,21 @@ async function fetchAndDisplayHistory(limit = 20) {
             const result = await response.json();
 
             if (result.success) {
-                // A MUDANÇA PRINCIPAL:
                 // Atualiza o IndexedDB com os dados "oficiais" do servidor.
                 await replaceUserHistory(activeUserId, result.history);
 
                 // Renderiza novamente a partir do IndexedDB agora atualizado.
-                await renderFromLocal();
+                await renderFromLocal(limit);
             }
         } catch (error) {
-            console.warn("Não foi possível sincronizar o histórico com o servidor. Exibindo dados locais.", error);
+            console.warn(obterHoraFormatada()," Não foi possível sincronizar o histórico com o servidor. Exibindo dados locais.", error);
             // Se a busca online falhar, não fazemos nada, pois o usuário já está vendo os dados locais.
         }
     }
 }
 
 // Função que inicializa o controller
-export function initSettingsController() {
+export async function initSettingsController() {
     const form = document.getElementById('formUserData');
     if (form) form.addEventListener('submit', onFormSubmit);
 
@@ -418,15 +448,6 @@ export function initSettingsController() {
         });
     }
 
-    const searchHistoryBtn = document.getElementById('searchHistoryBtn');
-    if (searchHistoryBtn) {
-        searchHistoryBtn.addEventListener('click', () => {
-            const limitInput = document.querySelector('input[name="registro"]');
-            const limit = limitInput.value || 20;
-            fetchAndDisplayHistory(limit);
-        });
-    }
-
     const profilePhotoModal = document.getElementById('profilePhotoModal');
     if (profilePhotoModal) {
         profilePhotoModal.addEventListener('show.bs.modal', fetchAndDisplayUserPictures);
@@ -439,14 +460,6 @@ export function initSettingsController() {
 
     const modalEl = document.getElementById('confirmationModal');
     if(modalEl) confirmationModal = new bootstrap.Modal(modalEl);
-
-    const historyAccordion = document.getElementById('collapseThree');
-    if (historyAccordion) {
-        historyAccordion.addEventListener('show.bs.collapse', () => {
-            const currentLimit = document.querySelector('input[name="registro"]')?.value || 20;
-            fetchAndDisplayHistory(currentLimit);
-        });
-    }
 
     const confirmBtn = document.getElementById('confirmActionBtn');
     if (confirmBtn) {
@@ -466,7 +479,15 @@ export function initSettingsController() {
         });
     }
 
+    const searchHistoryBtn = document.getElementById('searchHistoryBtn');
     const limitInput = document.querySelector('input[name="registro"]');
+    if (searchHistoryBtn && limitInput) {
+        searchHistoryBtn.addEventListener('click', () => {
+            const limit = parseInt(limitInput.value, 10) || 20;
+            fetchAndDisplayHistory(limit, false);
+        });
+    }
+
     if (limitInput && searchHistoryBtn) {
         limitInput.addEventListener('keydown', (event) => {
             // Verifica se a tecla pressionada foi "Enter"
@@ -479,4 +500,11 @@ export function initSettingsController() {
             }
         });
     }
+
+
+    document.addEventListener('historyShouldRefresh', () => {
+        fetchAndDisplayHistory(limitInput?.value || 20, false);
+    });
+
+    await fetchAndDisplayHistory(20, true);
 }

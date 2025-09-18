@@ -2,6 +2,7 @@
 if (!defined('APP_RAN')) {
     die('Acesso não permitido.');
 }
+date_default_timezone_set('America/Sao_Paulo');
 class Database {
     // 1. O host agora é o nome do serviço do banco de dados no docker-compose.yml
     private $host = 'db';

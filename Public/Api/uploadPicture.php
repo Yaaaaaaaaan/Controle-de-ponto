@@ -42,6 +42,8 @@ $fileTmpName = $file['tmp_name']; // Caminho temporário
 $fileSize = $file['size'];
 $fileType = $file['type'];
 $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+$latitude = $_POST['latitude'] ?? null;
+$longitude = $_POST['longitude'] ?? null;
 
 // 4. Validações básicas do arquivo
 $allowed = array('jpg', 'jpeg', 'png', 'gif');
@@ -70,7 +72,7 @@ if (!move_uploaded_file($fileTmpName, $filePath)) {
 
 // 7. Salvar as informações da foto no banco de dados
 // O insertUserPicture agora retorna o ID da foto ou false
-$photoId = $userController->insertUserPicture($userId, $relativePath, $fileName);
+$photoId = $userController->insertUserPicture($userId, $relativePath, $fileName, $latitude, $longitude);
 
 if ($photoId) {
     sendJson(['success' => true, 'message' => 'Foto enviada e salva com sucesso!', 'photoPath' => $relativePath, 'photoId' => $photoId], 200);

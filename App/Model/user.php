@@ -1,10 +1,8 @@
 <?php
-
-
-
 if (!defined('APP_RAN')) {
     die('Acesso não permitido');
 }
+date_default_timezone_set('America/Sao_Paulo');
 
 require_once __DIR__ . '/history.php';
 
@@ -269,9 +267,9 @@ require_once __DIR__ . '/history.php';
 
 // /App/Model/User.php
 
-    public function updateUser(): bool {
+    public function updateUser($name, $id, $email, $nickname, $oldPassword, $newPassword, $confirmPassword, $defaultTheme, $occurrenceDate, $obs, $latitude, $longitude): bool {
         // Verificar os campos obrigatórios
-        if (empty($this->name) || empty($this->email) || empty($this->nickname)) {
+        if (empty($name) || empty($email) || empty($nickname)) {
             return false;
         }
 
@@ -285,11 +283,11 @@ require_once __DIR__ . '/history.php';
         if (!empty($this->newPassword) && !empty($this->confirmPassword) && !empty($this->oldPassword)) {
             $checkPasswordQuery = "SELECT senha_hash FROM {$this->tableNames['usr']} WHERE id_usuario = :id";
             $checkStmt = $this->conn->prepare($checkPasswordQuery);
-            $checkStmt->bindParam(':id', $this->id);
+            $checkStmt->bindParam(':id', $id);
             $checkStmt->execute();
             $currentPasswordHash = $checkStmt->fetchColumn();
 
-            if ($currentPasswordHash && password_verify($this->oldPassword, $currentPasswordHash) && $this->newPassword == $this->confirmPassword) {
+            if ($currentPasswordHash && password_verify($oldPassword, $currentPasswordHash) && $newPassword == $confirmPassword) {
                 $query .= ", senha_hash = :newPassword";
                 $passwordUpdated = true;
             } else {
@@ -301,21 +299,23 @@ require_once __DIR__ . '/history.php';
 
         try {
             $stmt = $this->conn->prepare($query);
-            $stmt->bindParam(':name', $this->name);
-            $stmt->bindParam(':email', $this->email);
-            $stmt->bindParam(':nickname', $this->nickname);
-            $stmt->bindParam(':defaultTheme', $this->defaultTheme, PDO::PARAM_INT);
-            $stmt->bindParam(':id', $this->id);
+            $stmt->bindParam(':name', $name);
+            $stmt->bindParam(':email', $email);
+            $stmt->bindParam(':nickname', $nickname);
+            $stmt->bindParam(':defaultTheme', $defaultTheme, PDO::PARAM_INT);
+            $stmt->bindParam(':id', $id);
 
             if ($passwordUpdated) {
                 // 1. Primeiro, criamos o hash e o salvamos em uma variável.
-                $newPasswordHash = password_hash($this->newPassword, PASSWORD_DEFAULT);
+                $newPasswordHash = password_hash($newPassword, PASSWORD_DEFAULT);
                 // 2. Então, passamos a variável para o bindParam.
                 $stmt->bindParam(':newPassword', $newPasswordHash);
             }
 
             if ($stmt->execute()) {
-                $this->createUserHistory('Alteração de informações de perfil.', $this->id, date('Y-m-d H:i:s')); // Adiciona a data atual para ações online
+                $this->createUserHistory('Alteração de informações de perfil.', $id, date('Y-m-d H:i:s'),  'online',
+                    $latitude,
+                    $longitude); // Adiciona a data atual para ações online
                 return true;
             }
             return false;
@@ -450,7 +450,7 @@ require_once __DIR__ . '/history.php';
         }
     }
 
-    public function insertNewUserPicture(int $userId, string $relativePath, string $originalFileName): ?int
+    public function insertNewUserPicture(int $userId, string $relativePath, string $originalFileName, ?float $latitude, ?float $longitude): ?int
     {
         $this->conn->beginTransaction();
         try {
@@ -483,7 +483,7 @@ require_once __DIR__ . '/history.php';
             if ($stmt->execute($params)) {
                 $photoId = (int)$this->conn->lastInsertId();
                 $this->conn->commit(); // Confirma a transação
-                $this->createUserHistory('Upload de nova foto: ' . $originalFileName, $userId);
+                $this->createUserHistory('Upload de nova foto: ' . $originalFileName, $userId,date('Y-m-d H:i:s'), 'online', $latitude, $longitude);
                 return $photoId; // Retorna o ID da foto inserida
             }
 
@@ -500,7 +500,7 @@ require_once __DIR__ . '/history.php';
     }
 
 // Define uma foto existente como a de perfil (e desmarca as outras).
-    public function setActiveProfilePicture(int $userId, int $photoId): bool
+    public function setActiveProfilePicture(int $userId, int $photoId, ?float $latitude, ?float $longitude): bool
     {
         $this->conn->beginTransaction();
         try {
@@ -517,7 +517,9 @@ require_once __DIR__ . '/history.php';
                     'Definiu nova foto de perfil (ID da Foto: ' . $photoId . ')',
                     $userId,
                     date('Y-m-d H:i:s'), // Data atual
-                    'online'              // Origem da ação
+                    'online',              // Origem da ação
+                    $latitude,
+                    $longitude
                 );
                 return true;
             }

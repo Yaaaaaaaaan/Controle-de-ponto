@@ -1,0 +1,764 @@
+//auth.php
+
+<?php
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+define('APP_RAN', true);
+session_start();
+header('Content-Type: application/json');
+
+require_once __DIR__ . '/../../App/Controller/UserController.php';
+
+function sendJson($data, $httpCode = 200) {
+    http_response_code($httpCode);
+    echo json_encode($data);
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    sendJson(['success' => false, 'message' => 'Método não permitido'], 405);
+}
+
+$data = json_decode(file_get_contents('php://input'), true);
+$nickname = $data['nickname'] ?? null;
+$password = $data['password'] ?? null;
+$latitude = $data['latitude'] ?? null;
+$longitude = $data['longitude'] ?? null;
+
+if (!$nickname || !$password) {
+    sendJson(['success' => false, 'message' => 'Nickname e senha são obrigatórios.'], 400);
+}
+$userController = new UserController();
+// A função agora retorna os dados diretamente ou null
+$responseData = $userController->authenticateUser($nickname, $password, $latitude, $longitude);
+
+if ($responseData) {
+    // Se recebeu os dados, envia-os na resposta
+    sendJson(['success' => true, 'session' => $responseData]);
+} else {
+    // Se recebeu null, a autenticação falhou
+    sendJson(['success' => false, 'message' => 'Usuário ou senha incorretos.'], 401);
+}
+?>
+
+healthCheck.php
+
+<?php
+    define('APP_RAN', true);
+
+    // Define o fuso horário para consistência no timestamp
+    date_default_timezone_set('America/Sao_Paulo');
+
+    require_once __DIR__ . '/../../App/Controller/SystemController.php';
+
+    $controller = new SystemController();
+    $controller->healthcheck();
+?>
+
+// initialData.php
+
+<?php
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+define('APP_RAN', true);
+header('Content-Type: application/json');
+
+require_once __DIR__ . '/../../App/Controller/UserController.php';
+require_once __DIR__ . '/../../App/Controller/pointControlController.php';
+
+function sendJson($data, $httpCode = 200) {
+    http_response_code($httpCode);
+    echo json_encode($data, JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+// Pega o token do cabeçalho de autorização
+$headers = getallheaders();
+$authHeader = $headers['Authorization'] ?? null;
+if (!$authHeader || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+    sendJson(['success' => false, 'message' => 'Token de autenticação ausente ou malformado.'], 401);
+}
+$userToken = $matches[1];
+
+// Autentica o usuário
+$userController = new UserController();
+$userId = $userController->getUserIdByToken($userToken); // Usamos o método normal aqui
+if (!$userId) {
+    sendJson(['success' => false, 'message' => 'Token inválido ou sessão expirada.'], 401);
+}
+
+// Busca todos os dados necessários
+$pointController = new PointController();
+$fullUserData = $userController->getUserByToken($userToken);
+$pointControlData = $pointController->getPointControlByUserId($userId);
+$userPictures = $userController->getAllUserPictures($userId);
+
+// Envia a resposta combinada
+sendJson([
+    'success' => true,
+    'data' => [
+        'userData' => $fullUserData['userData'] ?? null,
+        'tokenData' => $fullUserData['tokenData'] ?? null,
+        'pointControlData' => $pointControlData,
+        'userPictures' => $userPictures
+    ]
+]);
+?>
+
+// logout.php
+
+<?php
+// /Public/Api/logout.php (Versão Final e Completa)
+
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+define('APP_RAN', true);
+header('Content-Type: application/json');
+
+require_once __DIR__ . '/../../App/Controller/UserController.php';
+
+function sendJson($data, $httpCode = 200) {
+    http_response_code($httpCode);
+    echo json_encode($data, JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+// 1. Pega o token que o userController.js enviou no cabeçalho
+$headers = getallheaders();
+$authHeader = $headers['Authorization'] ?? null;
+if (!$authHeader || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+    // Se não há token, não há como registrar o histórico.
+    sendJson(['success' => true, 'message' => 'Nenhum token fornecido.'], 200);
+}
+$userToken = $matches[1];
+
+// 2. Cria uma instância do Controller
+$userController = new UserController();
+
+// 3. USA o token para DESCOBRIR o ID do usuário
+$userId = $userController->getUserIdByToken($userToken);
+
+// 4. Se encontrou um usuário válido para o token...
+if ($userId) {
+    // 5. ...chama a função que PASSA o userId para criar o histórico.
+    if ($userController->logUserLogout($userId)) {
+        sendJson(['success' => true, 'message' => 'Logout registrado no histórico.'], 200);
+    } else {
+        // Isso aconteceria se a inserção no banco de históricos falhasse.
+        sendJson(['success' => false, 'message' => 'Falha ao registrar o logout no histórico.'], 500);
+    }
+} else {
+    // Se o token já for inválido, não há usuário para associar o log.
+    sendJson(['success' => true, 'message' => 'Token já era inválido, nenhum log criado.'], 200);
+}
+?>
+
+// pControl.php
+
+<?php
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+define('APP_RAN', true);
+header('Content-Type: application/json');
+
+// INÍCIO DA CORREÇÃO
+// Adicione a inclusão do arquivo de banco de dados
+require_once __DIR__ . '/../../App/Config/db.php';
+// FIM DA CORREÇÃO
+
+require_once __DIR__ . '/../../App/Controller/UserController.php';
+require_once __DIR__ . '/../../App/Controller/pointControlController.php';
+
+// A função sendJson permanece a mesma
+function sendJson($data, $httpCode = 200) {
+    http_response_code($httpCode);
+    echo json_encode($data);
+    exit;
+}
+
+// Validação de Token para segurança
+$userController = new UserController();
+$headers = getallheaders();
+$authHeader = $headers['Authorization'] ?? null;
+if (!$authHeader || !preg_match('/Bearer\s+(\S+)/', $authHeader, $matches)) {
+    sendJson(['success' => false, 'message' => 'Token não fornecido.'], 401);
+}
+$token = $matches[1];
+$userId = $userController->getUserIdByTokenForSync($token);
+if (!$userId) { sendJson(['success' => false, 'message' => 'Token inválido.'], 401); }
+
+// Obter dados da requisição
+$data = json_decode(file_get_contents('php://input'), true);
+$status = $data['status'] ?? 'Verificação pendente';
+$obs = $data['obs'] ?? 'online'; // Assume 'online' se não especificado
+$occurrenceDate = isset($data['timestamp']) ? date('Y-m-d', strtotime($data['timestamp'])) : date('Y-m-d');
+$latitude = $data['latitude'] ?? null;
+$longitude = $data['longitude'] ?? null;
+
+$pointController = new PointController();
+
+try {
+    // A chamada ao controller já retorna tudo que precisamos
+    $result = $pointController->insertPointControl($userId, $status, $obs, $occurrenceDate, $longitude, $latitude);
+
+    // Usa a função sendJson com a mensagem e o código HTTP vindos do controller
+    sendJson(['success' => $result['success'], 'message' => $result['message']], $result['http_code']);
+
+} catch (Exception $e) {
+    // Um catch genérico para erros inesperados na lógica
+    error_log("Erro fatal na API pControl.php: " . $e->getMessage());
+    sendJson(['success' => false, 'message' => 'Erro interno no servidor.'], 500);
+}
+?>
+
+// regist.php
+
+<?php
+define('APP_RAN', true);
+header('Content-Type: application/json');
+
+require_once __DIR__ . '/../../App/Controller/UserController.php';
+
+function sendJson($data, $httpCode = 200) {
+    http_response_code($httpCode);
+    echo json_encode($data, JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    sendJson(['success' => false, 'message' => 'Método não permitido'], 405);
+}
+
+// Lê o corpo da requisição JSON
+$data = json_decode(file_get_contents('php://input'), true);
+
+$name = $data['name'] ?? null;
+$nickname = $data['nickname'] ?? null;
+$email = $data['email'] ?? null;
+$password = $data['password'] ?? null;
+$latitude = $data['latitude'] ?? null;
+$longitude = $data['longitude'] ?? null;
+
+// Usamos um try-catch para capturar qualquer erro inesperado
+try {
+    $userController = new UserController();
+    $result = $userController->createUser($name, $nickname, $email, $password, $latitude, $longitude);
+
+    if ($result['success']) {
+        sendJson($result, 201);
+    }else{
+        sendJson($result, 400);
+    }
+
+
+
+} catch (Exception $e) {
+    error_log("Erro crítico em regist.php: " . $e->getMessage());
+    sendJson(['success' => false, 'message' => 'Ocorreu um erro crítico no servidor.'], 500);
+}
+?>
+
+// setProfilePicture.php
+
+<?php
+// Define uma foto existente como a de perfil
+ini_set('display_errors', 1); error_reporting(E_ALL);
+define('APP_RAN', true);
+header('Content-Type: application/json');
+
+require_once __DIR__ . '/../../App/Controller/UserController.php';
+function sendJson($data, $httpCode = 200) {
+    http_response_code($httpCode);
+    echo json_encode($data, JSON_UNESCAPED_UNICODE);
+    exit;
+}
+// Pega o token do cabeçalho de autorização
+$headers = getallheaders();
+$authHeader = $headers['Authorization'] ?? null;
+if (!$authHeader || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+    sendJson(['success' => false, 'message' => 'Token de autenticação ausente ou malformado.'], 401);
+}
+$userToken = $matches[1];
+
+// Autentica o usuário
+$userController = new UserController();
+$userId = $userController->getUserIdByToken($userToken); // Usamos o método normal aqui
+if (!$userId) {
+    sendJson(['success' => false, 'message' => 'Token inválido ou sessão expirada.'], 401);
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
+    sendJson(['success' => false, 'message' => 'Método não permitido.'], 405);
+}
+
+$data = json_decode(file_get_contents('php://input'), true);
+$photoId = $data['photoId'] ?? null;
+$latitude = $data['latitude'] ?? null;
+$longitude = $data['longitude'] ?? null;
+
+if (!$photoId) {
+    sendJson(['success' => false, 'message' => 'ID da foto ausente.'], 400);
+}
+
+if ($userController->setUserProfilePicture($userId, $photoId, $latitude, $longitude)) {
+    sendJson(['success' => true, 'message' => 'Foto de perfil atualizada com sucesso!']);
+} else {
+    sendJson(['success' => false, 'message' => 'Falha ao definir a foto de perfil.'], 400);
+}
+?>
+
+// sync.php
+
+<?php
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+define('APP_RAN', true);
+header('Content-Type: application/json');
+
+// Dependências
+require_once __DIR__ . '/../../App/Controller/UserController.php';
+require_once __DIR__ . '/../../App/Controller/pointControlController.php';
+// A dependência do HistoryController não é mais necessária aqui
+
+function sendJson($data, $httpCode = 200) {
+    http_response_code($httpCode);
+    echo json_encode($data, JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+$data = json_decode(file_get_contents('php://input'), true);
+$userToken = $data['userToken'] ?? null;
+$actions = $data['actions'] ?? [];
+
+if (!$userToken) {
+    sendJson(['success' => false, 'message' => 'Token de autenticação ausente.'], 400);
+}
+
+// Autenticação
+$userController = new UserController();
+$userId = $userController->getUserIdByTokenForSync($userToken);
+if (!$userId) {
+    sendJson(['success' => false, 'message' => 'Token inválido ou sessão expirada.'], 401);
+}
+
+// Controllers
+$pointController = new PointController();
+
+// Processamento da Fila de Ações
+if (!empty($actions)) {
+    // Adicionado um try-catch para robustez
+    try {
+        foreach ($actions as $action) {
+            if (!isset($action['type'])) continue;
+
+            $success = false;
+
+            // Padroniza a data de ocorrência e a observação para todas as ações da fila
+            $occurrenceDate = isset($action['timestamp']) ? date('Y-m-d H:i:s', strtotime($action['timestamp'])) : date('Y-m-d H:i:s');
+            $obs = 'offline'; // Todas as ações da syncQueue são, por definição, offline.
+
+            switch ($action['type']) {
+                case 'CREATE_POINT':
+                    $status = $action['payload']['status'] ?? 'Status não definido';
+                    $latitude = $action['payload']['latitude'] ?? null;
+                    $longitude = $action['payload']['longitude'] ?? null;
+
+                    // Passa os novos parâmetros para o controller
+                    $result = $pointController->insertPointControl($userId, $status, $obs, $occurrenceDate, $longitude, $latitude);
+                    $success = $result['success'];
+                    break;
+
+                case 'UPDATE_PROFILE':
+                    // Extraímos os dados do payload que o settingsController.js salvou
+                    $payload = $action['payload'] ?? [];
+                    $name = $payload['name'] ?? '';
+                    $email = $payload['email'] ?? '';
+                    $nickname = $payload['nickname'] ?? '';
+                    $defaultTheme = $payload['defaultTheme'] ?? 0;
+                    $latitude = $action['payload']['latitude'] ?? null;
+                    $longitude = $action['payload']['longitude'] ?? null;
+
+                    // A lógica de senha não é sincronizada offline por segurança,
+                    // então passamos valores vazios para os campos de senha.
+                    $oldPassword = '';
+                    $newPassword = '';
+
+                    // Reutilizamos o mesmo método que a API de tempo real usa!
+                    $result = $userController->updateUser(
+                        $name, $userId, $email, $nickname,
+                        '', '', '', // Senhas vazias
+                        $defaultTheme,
+                        $occurrenceDate, // Passa a data de ocorrência
+                        $obs,             // Passa a observação "offline"
+                        $latitude, $longitude
+                    );
+                    $success = $result['success'];
+                    break;
+
+                case 'UPDATE_THEME':
+                    $theme = $action['payload']['theme'] ?? 0;
+                    // Passa os novos parâmetros para o controller de tema
+                    $success = $userController->updateUserTheme($userId, $theme, $occurrenceDate, $obs);
+                    break;
+            }
+
+            if (!$success) {
+                // Se uma ação falhar, interrompe o processo para evitar inconsistência de dados.
+                throw new Exception('Falha ao processar a ação: ' . $action['type']);
+            }
+        }
+    } catch (Exception $e) {
+        // Se qualquer ação dentro do loop falhar, envia uma resposta de erro.
+        sendJson(['success' => false, 'message' => $e->getMessage()], 500);
+    }
+}
+
+// Preparar dados de retorno
+$updatedPointControlData = $pointController->getPointControlByUserId($userId);
+$updatedFullData = $userController->getUserByToken($userToken);
+
+// Enviar resposta de sucesso
+sendJson([
+    'success' => true,
+    'message' => 'Sincronização concluída com sucesso.',
+    'userData' => $updatedFullData['userData'] ?? null,
+    'tokenData' => $updatedFullData['tokenData'] ?? null,
+    'pointControlData' => $updatedPointControlData
+]);
+?>
+
+// updateTheme.php
+
+<?php
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+define('APP_RAN', true);
+header('Content-Type: application/json');
+
+require_once __DIR__ . '/../../App/Controller/UserController.php';
+
+function sendJson($data, $httpCode = 200) {
+    http_response_code($httpCode);
+    echo json_encode($data, JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
+    sendJson(['success' => false, 'message' => 'Método não permitido.'], 405);
+}
+
+// Autenticação por Bearer Token
+$headers = getallheaders();
+$authHeader = $headers['Authorization'] ?? null;
+if (!$authHeader || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+    sendJson(['success' => false, 'message' => 'Token de autenticação ausente.'], 401);
+}
+$userToken = $matches[1];
+
+$userController = new UserController();
+$userId = $userController->getUserIdByToken($userToken);
+if (!$userId) {
+    sendJson(['success' => false, 'message' => 'Token inválido ou sessão expirada.'], 401);
+}
+
+// Obter os dados (0 ou 1)
+$data = json_decode(file_get_contents('php://input'), true);
+if (!isset($data['theme'])) {
+    sendJson(['success' => false, 'message' => 'Dados de tema ausentes.'], 400);
+}
+$theme = (int)$data['theme']; // Garante que é um inteiro
+
+// O seu UserController já tem o método 'updateUserTheme' que criamos
+if ($userController->updateUserTheme($userId, $theme)) {
+    sendJson(['success' => true, 'message' => 'Tema atualizado com sucesso.']);
+} else {
+    sendJson(['success' => false, 'message' => 'Falha ao atualizar o tema no banco de dados.'], 500);
+}
+?>
+
+// uploadPicture.php
+
+<?php
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+define('APP_RAN', true);
+header('Content-Type: application/json');
+
+require_once __DIR__ . '/../../App/Controller/UserController.php';
+
+function sendJson($data, $httpCode = 200) {
+    http_response_code($httpCode);
+    echo json_encode($data, JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+// 1. Validar o método da requisição
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    sendJson(['success' => false, 'message' => 'Método não permitido.'], 405);
+}
+
+// 2. Autenticar o usuário via Bearer Token
+$headers = getallheaders();
+$authHeader = $headers['Authorization'] ?? null;
+if (!$authHeader || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+    sendJson(['success' => false, 'message' => 'Token de autenticação ausente.'], 401);
+}
+$userToken = $matches[1];
+
+$userController = new UserController();
+$userId = $userController->getUserIdByToken($userToken);
+if (!$userId) {
+    sendJson(['success' => false, 'message' => 'Token inválido ou sessão expirada.'], 401);
+}
+
+// 3. Verificar o arquivo enviado
+if (!isset($_FILES['picture']) || $_FILES['picture']['error'] !== UPLOAD_ERR_OK) {
+    sendJson(['success' => false, 'message' => 'Erro no upload do arquivo.'], 400);
+}
+
+$file = $_FILES['picture'];
+$fileName = basename($file['name']); // Nome original do arquivo
+$fileTmpName = $file['tmp_name']; // Caminho temporário
+$fileSize = $file['size'];
+$fileType = $file['type'];
+$fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+$latitude = $_POST['latitude'] ?? null;
+$longitude = $_POST['longitude'] ?? null;
+
+// 4. Validações básicas do arquivo
+$allowed = array('jpg', 'jpeg', 'png', 'gif');
+if (!in_array($fileExt, $allowed)) {
+    sendJson(['success' => false, 'message' => 'Tipo de arquivo não permitido.'], 400);
+}
+if ($fileSize > 5 * 1024 * 1024) { // Limite de 5MB
+    sendJson(['success' => false, 'message' => 'Arquivo muito grande. Máximo 5MB.'], 400);
+}
+
+// 5. Gerar um nome único para o arquivo e caminho de destino
+$uploadDir = __DIR__ . '/../../Public/assets/uploads/profile_pictures/' . $userId . '/';
+if (!is_dir($uploadDir)) {
+    mkdir($uploadDir, 0777, true);
+}
+
+$newFileName = uniqid('profile_') . '.' . $fileExt;
+$filePath = $uploadDir . $newFileName;
+// CORREÇÃO: O caminho relativo salvo no banco de dados também é atualizado
+$relativePath = '/Public/assets/uploads/profile_pictures/' . $userId . '/' . $newFileName;
+
+// 6. Mover o arquivo para o diretório de destino
+if (!move_uploaded_file($fileTmpName, $filePath)) {
+    sendJson(['success' => false, 'message' => 'Falha ao mover o arquivo para o destino.'], 500);
+}
+
+// 7. Salvar as informações da foto no banco de dados
+// O insertUserPicture agora retorna o ID da foto ou false
+$photoId = $userController->insertUserPicture($userId, $relativePath, $fileName, $latitude, $longitude);
+
+if ($photoId) {
+    sendJson(['success' => true, 'message' => 'Foto enviada e salva com sucesso!', 'photoPath' => $relativePath, 'photoId' => $photoId], 200);
+} else {
+    // Se a foto foi movida mas não salva no DB, tentar remover o arquivo
+    unlink($filePath);
+    sendJson(['success' => false, 'message' => 'Erro ao registrar a foto no banco de dados.'], 500);
+}
+?>
+
+// userHistory.php
+
+<?php
+ini_set('display_errors', 1); error_reporting(E_ALL);
+define('APP_RAN', true);
+header('Content-Type: application/json');
+
+require_once __DIR__ . '/../../App/Controller/UserController.php';
+
+function sendJson($data, $httpCode = 200) {
+    http_response_code($httpCode);
+    echo json_encode($data, JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+// Autenticação por Bearer Token
+$headers = getallheaders();
+$authHeader = $headers['Authorization'] ?? null;
+if (!$authHeader || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+    sendJson(['success' => false, 'message' => 'Token de autenticação ausente.'], 401);
+}
+$userToken = $matches[1];
+
+$userController = new UserController();
+$userId = $userController->getUserIdByToken($userToken);
+if (!$userId) {
+    sendJson(['success' => false, 'message' => 'Token inválido.'], 401);
+}
+
+// Pega o limite da query string (ex: ?limit=50)
+$limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
+
+$historyEntries = $userController->getUserHistory($userId, $limit);
+
+if ($historyEntries !== false) {
+    sendJson(['success' => true, 'history' => $historyEntries]);
+} else {
+    sendJson(['success' => false, 'message' => 'Erro ao buscar histórico.'], 500);
+}
+?>
+
+// userPictures.php
+
+<?php
+// Busca a lista de todas as fotos de um usuário
+ini_set('display_errors', 1); error_reporting(E_ALL);
+define('APP_RAN', true);
+header('Content-Type: application/json');
+
+require_once __DIR__ . '/../../App/Controller/UserController.php';
+function sendJson($data, $httpCode = 200) {
+    http_response_code($httpCode);
+    echo json_encode($data, JSON_UNESCAPED_UNICODE);
+    exit;
+}
+// Pega o token do cabeçalho de autorização
+$headers = getallheaders();
+$authHeader = $headers['Authorization'] ?? null;
+if (!$authHeader || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+    sendJson(['success' => false, 'message' => 'Token de autenticação ausente ou malformado.'], 401);
+}
+$userToken = $matches[1];
+
+// Autentica o usuário
+$userController = new UserController();
+$userId = $userController->getUserIdByToken($userToken); // Usamos o método normal aqui
+if (!$userId) {
+    sendJson(['success' => false, 'message' => 'Token inválido ou sessão expirada.'], 401);
+}
+
+$pictures = $userController->getAllUserPictures($userId);
+
+sendJson(['success' => true, 'pictures' => $pictures]);
+?>
+
+//userSettings.php
+
+<?php
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+define('APP_RAN', true);
+header('Content-Type: application/json');
+
+require_once __DIR__ . '/../../App/Controller/UserController.php';
+
+function sendJson($data, $httpCode = 200) {
+    http_response_code($httpCode);
+    echo json_encode($data, JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+// 1. Validar o método da requisição
+$method = $_SERVER['REQUEST_METHOD'];
+if ($method !== 'PUT') {
+    sendJson(['success' => false, 'message' => 'Método não permitido.'], 405);
+}
+
+// 2. Autenticar o usuário via Bearer Token
+$headers = getallheaders();
+$authHeader = $headers['Authorization'] ?? null;
+if (!$authHeader || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+    sendJson(['success' => false, 'message' => 'Token de autenticação ausente.'], 401);
+}
+$userToken = $matches[1];
+
+$userController = new UserController();
+$userId = $userController->getUserIdByToken($userToken);
+if (!$userId) {
+    sendJson(['success' => false, 'message' => 'Token inválido ou sessão expirada.'], 401);
+}
+
+// 3. Obter os dados enviados pelo JavaScript
+$data = json_decode(file_get_contents('php://input'), true);
+if (json_last_error() !== JSON_ERROR_NONE) {
+    sendJson(['success' => false, 'message' => 'JSON inválido.'], 400);
+}
+
+// 4. Preparar os dados para o Controller
+$name = $data['name'] ?? '';
+$email = $data['email'] ?? '';
+$nickname = $data['nickname'] ?? '';
+$defaultTheme = $data['defaultTheme'] ?? 0;
+
+$oldPassword = $data['passwordChange']['oldPassword'] ?? '';
+$newPassword = $data['passwordChange']['newPassword'] ?? '';
+
+$obs = $data['obs'] ?? '';
+$latitude = $data['latitude'] ?? null;
+$longitude = $data['longitude'] ?? null;
+
+// 5. Chamar o método do Controller para atualizar o usuário
+// (Nota: updateUser no seu UserController já retorna um array ['success' => bool, 'message' => string])
+$result = $userController->updateUser(
+    $name,
+    $userId, // Passamos o ID validado pelo token
+    $email,
+    $nickname,
+    $oldPassword,
+    $newPassword,
+    $newPassword, // confirmPassword é igual a newPassword
+    $defaultTheme,
+    date('Y-m-d H:i:s'), // Parâmetro 9: A data de ocorrência (agora)
+    $obs,             // Parâmetro 10: A observação de origem
+    $latitude,
+    $longitude
+);
+
+// 6. Retornar o resultado
+if ($result['success']) {
+    sendJson($result);
+} else {
+    sendJson($result, 400); // Bad Request se a atualização falhar
+}
+?>
+
+// userToken.php
+
+<?php
+define('APP_RAN', true);
+header('Content-Type: application/json');
+
+require_once __DIR__ . '/../../App/Controller/UserController.php';
+
+function sendJson($data, $httpCode = 200) {
+    http_response_code($httpCode);
+    echo json_encode($data);
+    exit;
+}
+
+// O padrão para enviar tokens é através do cabeçalho "Authorization"
+$headers = getallheaders();
+$authHeader = $headers['Authorization'] ?? null;
+
+if (!$authHeader) {
+    sendJson(['success' => false, 'message' => 'Cabeçalho de autorização ausente.'], 401);
+}
+
+// O formato padrão é "Bearer seu-token-aqui"
+$token = null;
+if (preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+    $token = $matches[1];
+}
+
+if (!$token) {
+    sendJson(['success' => false, 'message' => 'Token mal formatado ou ausente.'], 401);
+}
+
+// Usa o Controller para buscar os dados do usuário
+$userController = new UserController();
+$userData = $userController->getUserByToken($token);
+
+if ($userData) {
+    // Se encontrou, retorna sucesso com os dados do usuário
+    sendJson(['success' => true, 'userData' => $userData]);
+} else {
+    // Se o token não correspondeu a nenhum usuário, retorna não autorizado
+    sendJson(['success' => false, 'message' => 'Token inválido ou expirado.'], 401);
+}
+?>

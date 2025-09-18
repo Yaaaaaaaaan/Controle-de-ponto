@@ -1,0 +1,2745 @@
+// ========================
+// 📁 themeManager.js
+// ========================
+/**
+ * Aplica o tema visual (light/dark) à página.
+ * @param {0|1} themeValue - 0 para claro, 1 para escuro.
+ */
+export function applyTheme(themeValue) {
+    const theme = themeValue == 1 ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-bs-theme', theme);
+    console.log(`Tema alterado para: ${theme}`);
+}
+
+/**
+ * Lê os dados do usuário do IndexedDB e aplica o tema salvo.
+ * @param {object} userData - O objeto de dados do usuário.
+ */
+export function initializeThemeFromLocalData(userData) {
+    if (userData && userData.theme !== undefined) {
+        applyTheme(userData.theme);
+    }
+}
+
+// ========================
+// 📁 UIManager.js
+// ========================
+
+import { upsertUser, getUserById, fetchUserDataByToken, obterHoraFormatada } from '../indexedDB/Model.js';
+import { isOnline } from '../Core/connectionChecker.js';
+import { initializeThemeFromLocalData } from './ThemeManager.js';
+
+// A promessa para outros módulos esperarem pelos dados
+let userDataPromiseResolver;
+export const userDataPromise = new Promise(resolve => {
+    userDataPromiseResolver = resolve;
+});
+
+function updateSharedUI(userData) {
+    if (!userData) return;
+    const srcImage = userData.profileUser || '/Public/assets/img/userProfileImages/Profile.png';
+    const pPicture = document.getElementById('pPicture');
+    if (pPicture) pPicture.src = srcImage;
+    const welcomeMessage = document.getElementById('responseNameCurto');
+    if (welcomeMessage) welcomeMessage.textContent = `Olá, ${userData.name.split(' ')[0]}`;
+}
+
+// --- FUNÇÃO initializeUI REATORADA E SIMPLIFICADA ---
+export async function initializeUI() {
+    const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
+    const localToken = localStorage.getItem('userToken');
+
+    // 1. Guardião de autenticação (continua igual)
+    if (!activeUserId || !localToken) {
+        if (!window.location.pathname.includes('/Index/')) {
+            window.location.href = '/Public/View/Index/';
+        }
+        return;
+    }
+
+    let userData = null;
+    try {
+        // 2. ESTRATÉGIA OFFLINE-FIRST: Tenta carregar os dados do IndexedDB primeiro.
+        // Isto fornece uma UI instantânea, melhorando a performance percebida.
+        userData = await getUserById(activeUserId);
+
+        // 3. Se estiver online, tenta buscar dados frescos do servidor para atualizar.
+        if (isOnline) {
+            const freshUserData = await fetchUserDataByToken(localToken);
+            // Se a busca no servidor for bem-sucedida, usa os dados frescos.
+            // Se falhar (retornar null), mantém os dados locais que já carregamos.
+            if (freshUserData) {
+                userData = freshUserData;
+            }
+        }
+    } catch (error) {
+        console.warn(`[${obterHoraFormatada()}] UIManager: Falha na comunicação com o servidor. A usar dados locais, se disponíveis. Erro:`, error);
+        // Não é preciso fazer nada aqui, pois a variável 'userData' já contém os dados do IndexedDB (se existirem).
+    }
+
+    // 4. BLOCO DE DECISÃO FINAL - SEM DUPLICAÇÃO
+    if (userData) {
+        // Lógica de sucesso (executada apenas UMA VEZ)
+        console.log(`[${obterHoraFormatada()}] UIManager: Dados carregados.`, userData);
+
+        initializeThemeFromLocalData(userData);
+        updateSharedUI(userData);
+
+        const userRank = userData.rank ?? 2; // Assume rank 2 (usuário) como padrão
+        document.body.dataset.userType = userRank == 1 ? 'hkg' : 'usr';
+
+        // Resolve a promessa e dispara o evento apenas UMA VEZ
+        userDataPromiseResolver(userData);
+        document.dispatchEvent(new CustomEvent('userDataReady', { detail: { userId: userData.userId, userData: userData } }));
+    } else {
+        // Lógica de falha crítica (se não encontrou dados em nenhum lugar)
+        console.error(`[${obterHoraFormatada()}] UIManager: Falha crítica, não foi possível carregar dados do servidor ou do IndexedDB.`);
+        localStorage.clear();
+        window.location.href = '/Public/View/Index/';
+    }
+}
+
+export async function triggerSharedUIRefresh(freshUserData = null) {
+    let userData = freshUserData;
+    if (!userData) {
+        const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
+        if (!activeUserId) return;
+        userData = await getUserById(activeUserId);
+    }
+    if (userData) {
+        updateSharedUI(userData);
+        document.dispatchEvent(new CustomEvent('userDataReady', { detail: { userId: userData.userId, userData: userData } }));
+    }
+}
+
+// ========================
+// 📁 utils.js
+// ========================
+
+export class UserFacingError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'UserFacingError';
+    }
+}
+
+/**
+ * Obtém a posição de geolocalização atual do usuário.
+ * Envolve a API baseada em callback do navegador em uma Promise para uso com async/await.
+ * @returns {Promise<object|null>} Uma promessa que resolve com um objeto { latitude, longitude } ou null em caso de erro/recusa.
+ */
+export function getCurrentPosition() {
+    return new Promise((resolve) => {
+        if (!navigator.geolocation) {
+            console.warn("Geolocalização não é suportada por este navegador.");
+            resolve(null);
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                resolve({
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude
+                });
+            },
+            (error) => {
+                console.warn(`Erro ao obter geolocalização: ${error.message}`);
+                resolve(null); // Resolve com null para não quebrar o fluxo da aplicação
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 } // Opções para melhor precisão
+        );
+    });
+}
+/**
+ * Exibe uma mensagem de feedback em um elemento específico da página.
+ * @param {string} elementId - O ID do elemento onde a mensagem será exibida.
+ * @param {string} message - A mensagem a ser exibida.
+ * @param {'success'|'error'|'info'} type - O tipo de mensagem para aplicar a classe CSS correta.
+ */
+export function displayFeedback(elementId, message, type = 'info') {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+
+    const typeToClass = {
+        success: 'text-success',
+        error: 'text-danger',
+        info: 'text-muted'
+    };
+
+    element.textContent = message;
+    element.className = typeToClass[type] || 'text-muted';
+}
+/**
+ * [AOP - ASPECTO] Envolve uma função de API com lógica de manipulação de UI,
+ * usando Toasts apenas para o resultado final (sucesso ou erro).
+ * @param {Function} apiFunction - A função assíncrona que executa a lógica de negócio.
+ * @param {object} options - Opções de configuração.
+ * @param {HTMLButtonElement} options.button - O botão de submit a ser gerenciado.
+ * @returns {Function} Uma nova função "decorada".
+ */
+export function withApiHandler(apiFunction, { button, onSuccess }) { // Adiciona onSuccess
+    return async function(...args) {
+        const originalButtonText = button.textContent;
+        button.disabled = true;
+        button.textContent = 'Processando...';
+
+        try {
+            // Executa a lógica e AGORA CAPTURA O RETORNO
+            const result = await apiFunction(...args);
+
+            // Se uma função de sucesso customizada foi passada, a executamos com o resultado
+            if (onSuccess) {
+                await onSuccess(result); // Passa os dados retornados para o callback
+            } else {
+                // Comportamento padrão se nenhum onSuccess for fornecido
+                showToast('Operação concluída com sucesso!', 'success');
+            }
+
+            return true;
+        } catch (error) {
+            console.error(`Erro na operação da API '${apiFunction.name}':`, error);
+            showToast(`Erro: ${error.message}`, 'error');
+            return false;
+        } finally {
+            button.disabled = false;
+            button.textContent = originalButtonText;
+        }
+    };
+}
+
+
+/**
+ * [FUNÇÃO SHOWTOAST ATUALIZADA] para retornar o elemento e controlar o autohide.
+ */
+export function showToast(message, type = 'success', options = { autohide: true, delay: 5000 }) {
+    const toastContainer = document.querySelector('.toast-container');
+    if (!toastContainer) return null;
+
+    const toastId = 'toast-' + Date.now();
+    const bgClass = { success: 'bg-success', error: 'bg-danger', info: 'bg-info' }[type];
+    const autohideAttr = options.autohide ? 'true' : 'false';
+    const delayAttr = options.delay || 5000;
+
+    const toastHTML = `
+        <div id="${toastId}" class="toast align-items-center text-white ${bgClass} border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="${autohideAttr}" data-bs-delay="${delayAttr}">
+            <div class="d-flex">
+                <div class="toast-body">
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `;
+    toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+
+    const toastElement = document.getElementById(toastId);
+    const toast = new bootstrap.Toast(toastElement);
+    toast.show();
+
+    toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());
+
+    return toastElement; // Retorna o elemento para controle externo
+}
+
+// ========================
+// 📁 connectionChecker.js
+// ========================
+import { obterHoraFormatada } from '../indexedDB/Config.js';
+
+// Estado inicial da aplicação. Assumimos online até que a primeira verificação falhe.
+let isOnline = true;
+
+/**
+ * Dispara um evento global para notificar outras partes da aplicação sobre a mudança de status.
+ * @param {string} eventName - O nome do evento ('app:online' or 'app:offline').
+ * @param {boolean} status - O novo estado da conexão.
+ */
+function dispatchStatusChangeEvent(eventName, status) {
+    console.log(`[${obterHoraFormatada()}] Status da conexão alterado para: ${status ? 'ONLINE' : 'OFFLINE'}. Disparando evento '${eventName}'.`);
+    window.dispatchEvent(new CustomEvent(eventName, { detail: { isOnline: status } }));
+}
+
+/**
+ * Tenta contatar o servidor para verificar a conectividade real.
+ * Atualiza o estado e dispara eventos apenas se o estado mudar.
+ */
+async function checkServerStatus() {
+    try {
+        // CORREÇÃO: Adicionado um parâmetro "cache buster" para evitar o cache do Service Worker.
+        const response = await fetch(`/Public/Api/healthCheck.php?t=${new Date().getTime()}`, { cache: 'no-store' });
+
+        if (response.ok) {
+            if (!isOnline) {
+                isOnline = true;
+                dispatchStatusChangeEvent('app:online', isOnline);
+            }
+        } else {
+            if (isOnline) {
+                isOnline = false;
+                dispatchStatusChangeEvent('app:offline', isOnline);
+            }
+        }
+    } catch (error) {
+        if (isOnline) {
+            isOnline = false;
+            dispatchStatusChangeEvent('app:offline', isOnline);
+        }
+    }
+}
+
+
+/**
+ * Inicializa o verificador de conexão.
+ * @param {number} interval - O intervalo em milissegundos para verificar a conexão.
+ */
+function initializeConnectionChecker(interval = 15000) { // Verifica a cada 15 segundos
+    console.log(`[${obterHoraFormatada()}] Verificador de conexão inicializado.`);
+
+    // Verifica imediatamente no carregamento da página.
+    checkServerStatus();
+
+    // Configura a verificação periódica.
+    setInterval(checkServerStatus, interval);
+}
+
+// Exporta o estado atual e a função de inicialização.
+export { isOnline, initializeConnectionChecker };
+
+// ==========================
+// 📁 syncController.js
+// ==========================
+import {withApiHandler ,showToast} from '../Cogs/utils.js';
+
+import { getSyncQueue, clearSyncQueue, obterHoraFormatada } from '../indexedDB/Model.js';
+// Não precisamos mais do syncServerToIndexedDB daqui, pois a sincronização de "volta"
+// será feita dentro do próprio processSyncQueue.
+
+async function processSyncQueue() {
+    // A lógica interna de processSyncQueue continua a mesma...
+    const userToken = localStorage.getItem('userToken');
+    const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
+    if (!userToken || !activeUserId) { return; }
+
+    const actions = await getSyncQueue();
+    if (actions.length === 0) {
+        console.log(`[${obterHoraFormatada()}] syncController: Fila de sincronização vazia.`);
+        return;
+    }
+
+    console.log(`[${obterHoraFormatada()}] syncController: A enviar ${actions.length} ações para o servidor...`);
+
+    try {
+        const response = await fetch('/Public/Api/sync.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userToken, actions })
+        });
+
+        if (!response.ok) throw new Error(`[${obterHoraFormatada()}] Erro do servidor: ${response.status}`);
+
+        const result = await response.json();
+
+        if (result.success) {
+            await clearSyncQueue();
+            console.log(`[${obterHoraFormatada()}] syncController: Fila limpa com sucesso.`);
+
+            // Opcional, mas recomendado: Sincronizar os dados de volta para garantir consistência.
+            // A sua API sync.php já retorna os dados atualizados, podemos usá-los para atualizar o IndexedDB
+            // ou simplesmente chamar uma função de sincronização geral.
+            // Para simplicidade, vamos apenas recarregar a página, que já dispara uma nova sincronização.
+
+            showToast("Suas ações offline foram sincronizadas com sucesso!", 'info');
+            window.location.reload();
+        } else {
+            console.error(`[${obterHoraFormatada()}] A sincronização falhou:`, result.message);
+        }
+
+    } catch (error) {
+        console.error(`[${obterHoraFormatada()}] syncController: Erro de rede ou JSON inválido ao tentar sincronizar fila:`, error);
+    }
+}
+
+/**
+ * Inicializa os listeners e o loop de sincronização.
+ */
+function initializeSyncController() {
+    // ATENÇÃO: A LÓGICA DE INICIALIZAÇÃO MUDOU!
+
+    // 1. Removemos o listener antigo do navegador.
+    // window.removeEventListener('online', processSyncQueue);
+
+    // 2. Adicionamos o listener para o nosso novo evento personalizado.
+    window.addEventListener('app:online', processSyncQueue);
+
+    console.log(`[${obterHoraFormatada()}] SyncController agora está ouvindo pelo evento 'app:online'.`);
+
+    // 3. A tentativa inicial de sincronização agora é responsabilidade do connectionChecker.
+    // Ele fará a primeira verificação no carregamento e, se estiver online, disparará o evento.
+}
+
+export { initializeSyncController };
+
+// ==========================
+// 📁 authController.js
+// ==========================
+import { getUserByNickname, storeAuthData, getUserTokenByUserId, isTokenValid } from '../indexedDB/Model.js';
+import { showToast, withApiHandler, getCurrentPosition } from '../Cogs/utils.js';
+import { isOnline } from '../Core/connectionChecker.js';
+
+
+// --- LÓGICA DE NEGÓCIO SEPARADA ---
+
+// 1. Apenas a chamada à API: faz o fetch e retorna os dados ou lança um erro.
+async function doLoginApi(nickname, password, coords) {
+    const response = await fetch('/Public/Api/auth.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nickname, password,
+            latitude: coords?.latitude,
+            longitude: coords?.longitude })
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+        throw new Error(result.message || 'Credenciais inválidas.');
+    }
+    return result.session; // Retorna os dados da sessão em caso de sucesso
+}
+
+// 2. O que fazer após o sucesso do login online.
+async function handleLoginSuccess(session, password) {
+    const { userData, tokenData } = session;
+    localStorage.setItem('activeUserId', userData.userId);
+    localStorage.setItem('userToken', tokenData.userToken);
+
+    const offlinePasswordHash = await hashPassword(password);
+    await storeAuthData(userData, tokenData, offlinePasswordHash);
+
+    showToast('Login bem-sucedido! Redirecionando...', 'success');
+    setTimeout(() => {
+        window.location.href = "../User/index.php";
+    }, 1500);
+}
+
+// 3. Lógica de login offline (mantida como estava, usando showToast).
+async function handleOfflineLogin(nickname, password) {
+    console.log("Modo Offline: Autenticando localmente...");
+
+    if (!password) {
+        showToast("Por favor, digite sua senha para acesso offline.", 'info');
+        return;
+    }
+
+    const user = await getUserByNickname(nickname);
+    if (!user || !user.offlinePasswordHash) {
+        showToast("Usuário não encontrado ou não configurado para acesso offline.", 'error');
+        return;
+    }
+
+    const enteredPasswordHash = await hashPassword(password);
+    if (enteredPasswordHash === user.offlinePasswordHash) {
+        console.log("Autenticação offline bem-sucedida.");
+        localStorage.setItem('activeUserId', user.userId);
+        const tokenData = await getUserTokenByUserId(user.userId);
+
+        if (tokenData && tokenData.token) {
+            localStorage.setItem('userToken', tokenData.token);
+        } else {
+            localStorage.removeItem('userToken');
+        }
+
+        showToast('Login offline bem-sucedido! Redirecionando...', 'success');
+        setTimeout(() => { window.location.href = "../User/index.php"; }, 1500);
+
+    } else {
+        showToast("Senha incorreta.", 'error');
+    }
+}
+
+// --- ORQUESTRADOR PRINCIPAL ---
+
+// 4. A ÚNICA declaração de handleLoginSubmit.
+async function handleLoginSubmit(e) {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const button = form.querySelector('button[type="submit"]');
+    const nickname = form.nickname.value;
+    const password = form.password.value;
+
+    if (!nickname || !password) {
+        showToast("Usuário e senha são obrigatórios.", 'error');
+        return;
+    }
+
+    if (isOnline) {
+        // Usa o AOP, passando a função da API e o callback de sucesso.
+        const coords = await getCurrentPosition();
+
+        const handleApiLogin = withApiHandler(doLoginApi, {
+            button,
+            onSuccess: (session) => handleLoginSuccess(session, password)
+        });
+        await handleApiLogin(nickname, password, coords);
+    } else {
+        await handleOfflineLogin(nickname, password);
+    }
+}
+
+// --- FUNÇÕES AUXILIARES ---
+
+// Também usado em reginsterController.
+export async function hashPassword(password) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// --- PONTO DE ENTRADA DO SCRIPT ---
+export function initializeAuthController() {
+    const loginForm = document.getElementById("loginForm");
+    if (loginForm) {
+        loginForm.addEventListener("submit", handleLoginSubmit);
+    }
+}
+
+// ==========================
+// 📁 registerController.js
+// ==========================
+
+import { showToast, withApiHandler, getCurrentPosition } from '../Cogs/utils.js';
+import { storeAuthData } from '../indexedDB/Model.js';
+import { hashPassword } from './authController.js';
+
+
+// 1. A lógica de negócio é separada em sua própria função
+async function registerUser(data) {
+    const response = await fetch('/Public/Api/regist.php', {
+        method: 'POST',
+        // ATENÇÃO: Enviando como application/x-www-form-urlencoded
+        // para corresponder ao seu regist.php, que usa $_POST
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+        throw new Error(result.message || 'Erro desconhecido no servidor.');
+    }
+    if (!result.success){
+        throw new Error(result.message);
+    }
+
+    return result; // Retorna o resultado para uso futuro
+}
+
+async function handleRegisterSuccess(result, password) {
+    const {session} = result;
+    const { userData, tokenData } = session;
+
+    localStorage.setItem('activeUserId', userData.userId);
+    localStorage.setItem('userToken', tokenData.userToken);
+
+    const offlinePasswordHash = await hashPassword(password);
+    await storeAuthData(userData, tokenData, offlinePasswordHash);
+
+    showToast('Registro bem-sucedido! A entrar...', 'success');
+    setTimeout(()=>
+    {
+        console.log("redirecionando para User/index.php...")
+        window.location.href = "../User/index.php";
+    }, 2000);
+}
+
+// 3. O manipulador de evento agora orquestra e usa o AOP
+async function handleRegisterSubmit(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = form.querySelector('button[type="submit"]');
+    const data = Object.fromEntries(new FormData(form).entries());
+    const password = data.password;
+
+    // Validação de campos (pode ser expandida)
+    if (!data.name || !data.nickname || !data.email || !data.password) {
+        showToast( 'Todos os campos são obrigatórios.', 'error');
+        return;
+    }
+
+    //Captura as coordenadas antes de enviar o registo.
+    const coords = await getCurrentPosition();
+    if (coords){
+        data.latitude = coords.latitude;
+        data.longitude = coords.longitude;
+    }
+
+    // Cria a função "decorada" com nosso aspecto AOP
+    const handleApiRegister = withApiHandler(registerUser, { button
+    , onSuccess: (result) => handleRegisterSuccess(result, password)});
+
+    await handleApiRegister(data);
+
+}
+
+export function initializeRegisterController() {
+    const registerForm = document.getElementById('registerForm');
+    if (registerForm) {
+        registerForm.addEventListener('submit', handleRegisterSubmit);
+    }
+}
+
+// ==========================
+// 📁 Config.js
+// ==========================
+const dbName = 'PCDB';
+const dbVersion = 5 ; // Incrementado para forçar upgrade
+const userDataStoreName = 'userData';
+const pointControlStoreName = 'pointControl';
+const userTokenStoreName = 'userToken';
+
+const syncQueueStoreName = 'syncQueue';
+
+const userPicturesStoreName = 'userPictures';
+
+const userHistoryStoreName = 'userHistory';
+
+let db;
+
+function initializeDB() {
+    return new Promise((resolve, reject) => {
+        if (db) {
+            resolve(db);
+            return;
+        }
+
+        const request = indexedDB.open(dbName, dbVersion);
+
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+
+            // Criar ou atualizar userToken store
+            if (!db.objectStoreNames.contains(userTokenStoreName)) {
+                const userTokenStore = db.createObjectStore(userTokenStoreName, {
+                    keyPath: 'token'
+                });
+                userTokenStore.createIndex('userId', 'userId', { unique: true });
+                userTokenStore.createIndex('lastUpdated', 'lastUpdated', { unique: false });
+            }
+
+            // Criar ou atualizar userData store
+            if (!db.objectStoreNames.contains(userDataStoreName)) {
+                const userDataStore = db.createObjectStore(userDataStoreName, {
+                    keyPath: 'nickname'
+                });
+                userDataStore.createIndex('userId', 'userId', { unique: true });
+            }
+
+            // Criar ou atualizar userPictures store
+            if (!db.objectStoreNames.contains(userPicturesStoreName)) {
+                const picturesStore = db.createObjectStore(userPicturesStoreName, {
+                    keyPath: 'picId'
+                });
+                // Criamos um índice para buscar todas as fotos de um usuário facilmente
+                picturesStore.createIndex('userId', 'userId', { unique: false });
+            }
+
+            // Criar ou atualizar pointControl store
+            if (!db.objectStoreNames.contains(pointControlStoreName)) {
+                const pointControlStore = db.createObjectStore(pointControlStoreName, {
+                    keyPath: 'cod', autoIncrement: true
+                });
+                pointControlStore.createIndex('userId', 'userId', { unique: false });
+                pointControlStore.createIndex('status', 'status', { unique: false });
+                pointControlStore.createIndex('date', 'dateIn', { unique: false });
+            }
+
+            // Criar ou atualizar userHistory store
+            if (!db.objectStoreNames.contains(userHistoryStoreName)) {
+                const historyStore = db.createObjectStore(userHistoryStoreName, {
+                    keyPath: 'id',
+                    autoIncrement: true
+                });
+                // Índice para buscar o histórico por usuário e ordenar por data
+                historyStore.createIndex('userId_timestamp', ['userId', 'timestamp'], { unique: false });
+            }
+
+            // Criar ou atualizar syncQueue store
+            if (!db.objectStoreNames.contains(syncQueueStoreName)) {
+                const queueStore = db.createObjectStore(syncQueueStoreName, { keyPath: 'id', autoIncrement: true });
+                queueStore.createIndex('timestamp', 'timestamp', { unique: false });
+            }
+        };
+
+        request.onsuccess = (event) => {
+            db = event.target.result;
+            resolve(db);
+        };
+
+        request.onerror = (event) => {
+            reject('Erro ao abrir o banco de dados: ' + event.target.errorCode);
+        };
+    });
+}
+
+function obterHoraFormatada() {
+    const agora = new Date();
+    const horas = String(agora.getHours()).padStart(2, '0');
+    const minutos = String(agora.getMinutes()).padStart(2, '0');
+    const segundos = String(agora.getSeconds()).padStart(2, '0');
+
+    // A função retorna a string com a hora montada
+    return `${horas}:${minutos}:${segundos}`;
+}
+
+
+export {
+    initializeDB,
+    userDataStoreName,
+    pointControlStoreName,
+    userTokenStoreName,
+    syncQueueStoreName,
+    userPicturesStoreName,
+    userHistoryStoreName,
+    obterHoraFormatada
+};
+
+// =========================
+// 📁 Model.js
+// =========================
+
+import {
+    initializeDB,
+    userDataStoreName,
+    pointControlStoreName,
+    userTokenStoreName,
+    syncQueueStoreName,
+    userPicturesStoreName,
+    userHistoryStoreName,
+    obterHoraFormatada
+} from './Config.js';
+
+// ========================
+// Funções para userData
+// ========================
+
+// Adicionar um novo usuário
+async function upsertUser(userObjectToSave) {
+    try {
+        if (!userObjectToSave || !userObjectToSave.nickname) {
+            throw new Error("Objeto de usuário ou nickname inválido para upsertUser.");
+        }
+
+        const db = await initializeDB();
+        const transaction = db.transaction(userDataStoreName, 'readwrite');
+        const userDataStore = transaction.objectStore(userDataStoreName);
+
+        // --- LÓGICA DE PRESERVAÇÃO CENTRALIZADA ---
+
+        // 1. Antes de salvar, busca o registro que já existe no banco de dados.
+        // Isso nos permite ver se já existe um hash offline que precisa ser preservado.
+        const existingUser = await new Promise((resolve, reject) => {
+            const getRequest = userDataStore.get(userObjectToSave.nickname);
+            getRequest.onsuccess = () => resolve(getRequest.result);
+            getRequest.onerror = () => {
+                // Mesmo se der erro ao buscar, continuamos, pois pode ser um usuário novo.
+                console.warn(`[${obterHoraFormatada()}] Não foi possível encontrar usuário existente para merge. Pode ser um novo usuário.`, getRequest.error);
+                resolve(undefined);
+            };
+        });
+
+        // 2. Mescla os dados de forma inteligente.
+        // O novo objeto (userObjectToSave) é a fonte da verdade,
+        // mas garantimos que o hash do objeto antigo seja mantido se ele existir.
+        const finalUserObject = {
+            ...userObjectToSave, // Começa com todos os dados novos que vieram (do login ou da sincronização)
+            offlinePasswordHash: existingUser?.offlinePasswordHash || userObjectToSave.offlinePasswordHash
+            // A linha acima significa:
+            // - Use o hash do 'existingUser', SE ELE EXISTIR.
+            // - Caso contrário (||), use o hash do 'userObjectToSave' (o que acontece no primeiro login, quando o hash é passado).
+        };
+
+        // --- FIM DA LÓGICA DE PRESERVAÇÃO ---
+
+        // 3. Salva o objeto final e mesclado, que agora garantidamente contém o hash se ele existia.
+       userDataStore.put(finalUserObject);
+
+        return new Promise((resolve, reject) => {
+            transaction.oncomplete = () => {
+                console.log(`[${obterHoraFormatada()}] upsertUser: Sucesso ao salvar/atualizar '${finalUserObject.nickname}'. Objeto final:`, finalUserObject);
+                resolve(finalUserObject);
+            };
+            transaction.onerror = () => {
+                console.error(`[${obterHoraFormatada()}] upsertUser: ERRO na transação de salvar/atualizar `, event.target.error);
+                reject(event.target.error);
+            };
+        });
+    } catch (error) {
+        console.error(`[${obterHoraFormatada()}] Erro em upsertUser:`, error);
+        throw error;
+    }
+}
+
+// Obter um usuário pelo ID
+async function getUserById(id) {
+    try {
+        const db = await initializeDB();
+        const transaction = db.transaction(userDataStoreName, 'readonly');
+        const userDataStore = transaction.objectStore(userDataStoreName);
+        const index = userDataStore.index('userId');
+        const getRequest = index.get(id);
+
+        return new Promise((resolve, reject) => {
+            getRequest.onsuccess = () => resolve(getRequest.result);
+            getRequest.onerror = () => reject('Erro ao obter usuário: ' + getRequest.error);
+        });
+    } catch (error) {
+        console.error(`[${obterHoraFormatada()}] Erro ao obter usuário por ID:`, error);
+        return null;
+    }
+}
+
+// Obter um usuário pelo nickname
+async function getUserByNickname(nickname) {
+    try {
+        const db = await initializeDB();
+        const transaction = db.transaction(userDataStoreName, 'readonly');
+        const userDataStore = transaction.objectStore(userDataStoreName);
+        const getRequest = userDataStore.get(nickname);
+
+        return new Promise((resolve, reject) => {
+            getRequest.onsuccess = () => resolve(getRequest.result);
+            getRequest.onerror = () => reject('Erro ao obter usuário: ' + getRequest.error);
+        });
+    } catch (error) {
+        console.error(`[${obterHoraFormatada()}] Erro ao obter usuário por nickname:`, error);
+        return null;
+    }
+}
+
+// Obter um usuário pelo token
+async function getUserByToken(token) {
+    try {
+        const db = await initializeDB();
+        const transaction = db.transaction(userDataStoreName, 'readonly');
+        const userDataStore = transaction.objectStore(userDataStoreName);
+        const index = userDataStore.index('userTokenIdx');
+        const getRequest = index.get(token);
+
+        return new Promise((resolve, reject) => {
+            getRequest.onsuccess = () => resolve(getRequest.result);
+            getRequest.onerror = () => reject('Erro ao obter usuário por token: ' + getRequest.error);
+        });
+    } catch (error) {
+        console.error(`[${obterHoraFormatada()}] Erro ao obter usuário por token:`, error);
+        return null;
+    }
+}
+
+
+// Deletar um usuário pelo ID
+async function deleteUser(nickname) {
+    try {
+        const db = await initializeDB();
+        const transaction = db.transaction(userDataStoreName, 'readwrite');
+        const userDataStore = transaction.objectStore(userDataStoreName);
+        const deleteRequest = userDataStore.delete(nickname);
+
+        return new Promise((resolve, reject) => {
+            deleteRequest.onsuccess = () => {
+                console.log(`[${obterHoraFormatada()}] Usuário deletado com sucesso:`, nickname);
+                resolve();
+            };
+            deleteRequest.onerror = () => reject(`[${obterHoraFormatada()}] Erro ao deletar usuário: ` + deleteRequest.error);
+        });
+    } catch (error) {
+        console.error(`[${obterHoraFormatada()}] Erro ao deletar usuário:`, error);
+        throw new Error(`[${obterHoraFormatada()}] Erro ao deletar usuário: ` + error);
+    }
+}
+
+// Obter todos os usuários
+async function getAllUsers() {
+    try {
+        const db = await initializeDB();
+        const transaction = db.transaction(userDataStoreName, 'readonly');
+        const userDataStore = transaction.objectStore(userDataStoreName);
+        const request = userDataStore.getAll();
+
+        return new Promise((resolve, reject) => {
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    } catch (error) {
+        console.error(`[${obterHoraFormatada()}] Erro ao obter todos os usuários:`, error);
+        return [];
+    }
+}
+
+// obter imagens mais recentes
+async function replaceUserPictures(userId, pictures) {
+    try {
+        const db = await initializeDB();
+        // 1. Inicia UMA ÚNICA transação para apagar e adicionar
+        const transaction = db.transaction(userPicturesStoreName, 'readwrite');
+        const store = transaction.objectStore(userPicturesStoreName);
+
+        // 2. Limpa os registros antigos do usuário
+        const index = store.index('userId');
+        const request = index.openCursor(IDBKeyRange.only(userId));
+
+        request.onsuccess = (event) => {
+            const cursor = event.target.result;
+            if (cursor) {
+                store.delete(cursor.primaryKey);
+                cursor.continue();
+            }
+        };
+
+        // 3. Adiciona os novos registros NA MESMA TRANSAÇÃO
+        pictures.forEach(pic => {
+            // A correção de sintaxe: usa o objeto 'pic' completo
+            store.put(pic);
+        });
+
+        // 4. Retorna uma promessa que resolve quando a transação inteira terminar
+        return new Promise((resolve, reject) => {
+            transaction.oncomplete = () => {
+                console.log(`Fotos para o usuário ${userId} foram substituídas com sucesso no IndexedDB.`);
+                resolve();
+            };
+            transaction.onerror = (event) => {
+                console.error(`Erro na transação de replaceUserPictures:`, event.target.error);
+                reject(event.target.error);
+            };
+        });
+    } catch (error) {
+        console.error("Erro ao iniciar replaceUserPictures:", error);
+        throw error;
+    }
+}
+
+//Busca imagens no indexedDB.
+async function getOfflineUserPictures(userId) {
+    const db = await initializeDB();
+    const transaction = db.transaction(userPicturesStoreName, 'readonly');
+    const store = transaction.objectStore(userPicturesStoreName);
+    const index = store.index('userId');
+    const request = index.getAll(userId);
+
+    return new Promise((resolve, reject) => {
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = (event) => {
+            console.error("Erro ao buscar fotos offline:", event.target.error);
+            reject(event.target.error);
+        };
+    });
+}
+
+function cacheUserImages(urls) {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        console.log(`[Model.js] Enviando ${urls.length} URLs de imagem para o Service Worker cachear.`);
+        navigator.serviceWorker.controller.postMessage({
+            type: 'CACHE_DYNAMIC_FILES',
+            payload: urls
+        });
+    }
+}
+
+// ========================
+// Funções para pointControl
+// ========================
+
+// Adicionar um novo registro de ponto
+async function addPointControl(pointData) {
+    try {
+        const db = await initializeDB();
+        const transaction = db.transaction(pointControlStoreName, 'readwrite');
+        const pointControlStore = transaction.objectStore(pointControlStoreName);
+
+        // Garantir que temos os campos necessários
+        if (!pointData.userId || !pointData.status) {
+            throw new Error('Dados de controle de ponto incompletos');
+        }
+
+        // Adicionar data atual se não fornecida
+        if (!pointData.dateIn) {
+            pointData.dateIn = new Date().toISOString();
+        }
+
+        const addRequest = pointControlStore.add(pointData);
+
+        return new Promise((resolve, reject) => {
+            addRequest.onsuccess = () => {
+                console.log(`[${obterHoraFormatada()}] Registro de ponto adicionado com sucesso`);
+                resolve(addRequest.result);
+            };
+            addRequest.onerror = () => reject(`[${obterHoraFormatada()}] Erro ao adicionar dados de controle de ponto: ` + addRequest.error);
+        });
+    } catch (error) {
+        console.error(`[${obterHoraFormatada()}] Erro ao adicionar dados de controle de ponto:`, error);
+        throw new Error(`[${obterHoraFormatada()}] Erro ao adicionar dados de controle de ponto: ` + error);
+    }
+}
+
+// Obter registros de ponto por usuário
+async function getPointControlByUserId(userId) {
+    try {
+        const db = await initializeDB();
+        const transaction = db.transaction(pointControlStoreName, 'readonly');
+        const pointControlStore = transaction.objectStore(pointControlStoreName);
+        const index = pointControlStore.index('userId');
+        const request = index.getAll(userId);
+
+        return new Promise((resolve, reject) => {
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(`[${obterHoraFormatada()}] Erro ao obter registros de ponto: ` + request.error);
+        });
+    } catch (error) {
+        console.error(`[${obterHoraFormatada()}] Erro ao obter registros de ponto por usuário:`, error);
+        return [];
+    }
+}
+
+// Obter todos os registros de ponto
+async function getAllPointControl() {
+    try {
+        const db = await initializeDB();
+        const transaction = db.transaction(pointControlStoreName, 'readonly');
+        const pointControlStore = transaction.objectStore(pointControlStoreName);
+        const request = pointControlStore.getAll();
+
+        return new Promise((resolve, reject) => {
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(`[${obterHoraFormatada()}] Erro ao obter todos os registros de ponto: ` + request.error);
+        });
+    } catch (error) {
+        console.error(`[${obterHoraFormatada()}] Erro ao obter todos os registros de ponto:`, error);
+        return [];
+    }
+}
+
+// Função para deletar os registros por id de usuário
+async function deletePointControlByUserId(userId) {
+    try {
+        const db = await initializeDB();
+        const transaction = db.transaction(pointControlStoreName, 'readwrite');
+        const store = transaction.objectStore(pointControlStoreName);
+        const index = store.index('userId'); // Usa o índice de ID de usuário
+        const request = index.openCursor(IDBKeyRange.only(userId)); // Abre um cursor para o ID específico
+
+        request.onsuccess = (event) => {
+            const cursor = event.target.result;
+            if (cursor) {
+                // Encontrou um registro para este usuário, então deleta.
+                store.delete(cursor.primaryKey);
+                cursor.continue(); // Procura pelo próximo registro do mesmo usuário
+            }
+        };
+
+        return new Promise((resolve, reject) => {
+            transaction.oncomplete = () => {
+                console.log(`[${obterHoraFormatada()}] Registros de ponto para o usuário ${userId} foram limpos com sucesso.`);
+                resolve();
+            };
+            transaction.onerror = (event) => {
+                console.error(`[${obterHoraFormatada()}] Erro ao deletar registros de ponto para o usuário ${userId}:`, event.target.error);
+                reject(event.target.error);
+            };
+        });
+    } catch (error) {
+        console.error(`[${obterHoraFormatada()}] Erro em deletePointControlByUserId:`, error);
+        throw error;
+    }
+}
+
+// ========================
+// Funções para userToken
+// ========================
+
+// Adicionar ou atualizar um token de usuário
+async function setUserToken(tokenData) { // Agora recebe o objeto completo
+    try {
+        const db = await initializeDB();
+        const transaction = db.transaction(userTokenStoreName, 'readwrite');
+        const userTokenStore = transaction.objectStore(userTokenStoreName);
+
+        if (!tokenData || !tokenData.token) {
+            throw new Error("Objeto de token inválido para setUserToken.");
+        }
+
+        userTokenStore.put(tokenData);
+
+        return new Promise((resolve, reject) => {
+            transaction.oncomplete = () => {
+                console.log(`[${obterHoraFormatada()}] | setUserToken: Token para userId ${tokenData.userId} salvo/atualizado com sucesso.`);
+                resolve();
+            };
+            transaction.onerror = (event) => {
+                console.error(`[${obterHoraFormatada()}] | setUserToken: Erro ao salvar token.`, event.target.error);
+                reject(event.target.error);
+            };
+        });
+    } catch (error) {
+        console.error(`[${obterHoraFormatada()}] | Erro ao inicializar setUserToken:`, error);
+        throw error;
+    }
+}
+
+//busca dados do usuário usando token.
+async function fetchUserDataByToken(token) {
+    if (!token) return null;
+    try {
+        const response = await fetch('/Public/Api/initialData.php', {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) {
+            console.error("A resposta do initialData.php não foi OK.");
+            return null;
+        }
+        const result = await response.json();
+
+        if (result.success && result.data) {
+            const { userData, tokenData, pointControlData, userPictures } = result.data;
+            await upsertUser(userData);
+            await setUserToken({ ...tokenData, token: tokenData.userToken, userId: userData.userId });
+            await replaceUserPointControl(userData.userId, pointControlData);
+            await replaceUserPictures(userData.userId, userPictures);
+
+            if (userPictures && userPictures.length > 0) {
+                const pictureUrls = userPictures.map(pic => pic.path); // Extrai apenas os caminhos
+                cacheUserImages(pictureUrls); // Manda para o Service Worker
+            }
+
+            console.log(`[${obterHoraFormatada()}] Sincronização via initialData.php concluída.`);
+            return userData;
+        }
+        return null;
+    } catch (error) {
+        console.error(`[${obterHoraFormatada()}] Erro de rede ao buscar dados iniciais:`, error);
+        throw error; // Relança o erro para que a chamada original saiba que falhou.
+    }
+}
+
+
+
+//Verifica token para autenticação
+async function getUserTokenByUserId(userId) {
+    try {
+        const db = await initializeDB();
+        const transaction = db.transaction(userTokenStoreName, 'readonly');
+        const tokenStore = transaction.objectStore(userTokenStoreName);
+        // Usa o índice 'userId' que criamos na store de tokens
+        const index = tokenStore.index('userId');
+        const request = index.get(userId);
+
+        return new Promise((resolve, reject) => {
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(`[${obterHoraFormatada()}] Erro ao obter token por userId: ` + request.error);
+        });
+    } catch (error) {
+        console.error(`[${obterHoraFormatada()}] Erro em getUserTokenByUserId:`, error);
+        return null;
+    }
+}
+
+// Verificar se um token é válido
+async function isTokenValid(token) {
+    try {
+        const db = await initializeDB();
+        const transaction = db.transaction(userTokenStoreName, 'readonly');
+        const userTokenStore = transaction.objectStore(userTokenStoreName);
+        const getRequest = userTokenStore.get(token);
+
+        return new Promise((resolve, reject) => {
+            getRequest.onsuccess = () => {
+                const tokenData = getRequest.result;
+                if (!tokenData) {
+                    resolve(false);
+                    return;
+                }
+
+                // Verificar se o token não expirou (24 horas)
+                const lastUpdated = new Date(tokenData.lastUpdated);
+                const now = new Date();
+                const diffHours = (now - lastUpdated) / (1000 * 60 * 60);
+                resolve(diffHours < 24);
+            };
+            getRequest.onerror = () => {
+                console.error(`[${obterHoraFormatada()}] Erro ao verificar token:`, getRequest.error);
+                resolve(false);
+            };
+        });
+    } catch (error) {
+        console.error(`[${obterHoraFormatada()}] Erro ao verificar validade do token:`, error);
+        return false;
+    }
+}
+
+// ========================
+// Funções de sincronização
+// ========================
+
+// Função para armazenar dados de autenticação no IndexedDB
+/**
+ * Armazena os dados semi-persistentes do usuário no IndexedDB.
+ * @param {object} userDataFromApi - O objeto de dados do usuário que veio da API.
+ * @param {string} offlinePasswordHash - O hash gerado no cliente para validação offline.
+ */
+async function storeAuthData(userData, tokenData, offlinePasswordHash) {
+    try {
+        if (!userData || !tokenData || !userData.nickname || !tokenData.userToken) {
+            throw new Error("Dados de utilizador ou token inválidos para storeAuthData.");
+        }
+
+        // 1. MONTA E SALVA o objeto userData limpo
+        // Se offlinePasswordHash não for nulo, ele é adicionado/atualizado.
+        // Se for nulo, o upsertUser inteligente irá preservar o que já existe.
+        const userDataToStore = { ...userData, offlinePasswordHash };
+        await upsertUser(userDataToStore);
+        console.log(`[${obterHoraFormatada()}] | storeAuthData: Objeto 'userData' salvo:`, userDataToStore);
+
+        // 2. MONTA E SALVA o objeto userToken
+        const tokenDataToStore = {
+            token: tokenData.userToken,
+            userId: userData.userId,
+            tokenDate: tokenData.tokenDate,
+            tokenExpiry: tokenData.tokenExpiry,
+            lastUpdated: new Date().toISOString()
+        };
+        await setUserToken(tokenDataToStore);
+
+        return true;
+    } catch (error) {
+        console.error(`[${obterHoraFormatada()}] | Erro em storeAuthData:`, error);
+        return false;
+    }
+}
+
+/**
+ * Envia um novo registro de ponto (bater o ponto) para o servidor.
+ * @param {number} status - O status do ponto (ex: 1 para entrada, 0 para saída).
+ * @returns {Promise<boolean>} - Retorna true se bem-sucedido, false caso contrário.
+ */
+async function addPointControlRecordToServer(status, coords) {
+    try {
+        if (typeof status === 'undefined') {
+            console.error(`[${obterHoraFormatada()}] Erro ao bater o ponto: o status não foi especificado.`);
+            return false;
+        }
+
+        const userToken = localStorage.getItem('userToken');
+        if (!userToken) {
+            console.error(`[${obterHoraFormatada()}] Erro ao bater o ponto: Token de utilizador não encontrado.`);
+            alert("Sessão inválida. Por favor, faça o login novamente.");
+            return false;
+        }
+
+        console.log(`[${obterHoraFormatada()}] Enviando registo de ponto para o servidor com status: ${status}`);
+
+        const response = await fetch('/Public/Api/pControl.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${userToken}`
+            },
+            body: JSON.stringify({
+                status: status,
+                timestamp: new Date().toISOString(),
+                latitude: coords?.latitude,
+                longitude: coords?.longitude
+            })
+        });
+
+        if (!response.ok) {
+            console.error(`[${obterHoraFormatada()}] Erro do servidor ao bater o ponto:`, response.status, response.statusText);
+            alert('Falha na autenticação ao registar o ponto. A sua sessão pode ter expirado.');
+            return false;
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+            console.log(`[${obterHoraFormatada()}] Ponto batido com sucesso no servidor!`);
+            return true;
+        } else {
+            console.error(`[${obterHoraFormatada()}] Erro ao bater o ponto no servidor:`, data.message);
+            return false;
+        }
+
+    } catch (error) {
+        // --- A CORREÇÃO ESTÁ AQUI ---
+        console.error(`[${obterHoraFormatada()}] Erro fatal ao comunicar com o servidor para bater o ponto:`, error);
+        // Depois de registrar o erro, nós o relançamos para que o chamador (userController.js) possa capturá-lo.
+        throw error;
+    }
+}
+
+// NOVA FUNÇÃO: Limpa os registros de um usuário e insere os novos
+async function replaceUserPointControl(userId, recordsFromServer) {
+    if (!recordsFromServer) return;
+
+    const db = await initializeDB();
+    const transaction = db.transaction(pointControlStoreName, 'readwrite');
+    const store = transaction.objectStore(pointControlStoreName);
+    const index = store.index('userId');
+
+    // 1. Pega todos os registros que já existem localmente para este usuário.
+    const localRecords = await new Promise((resolve, reject) => {
+        const request = index.getAll(userId);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+
+    // 2. Cria um Set com as chaves únicas (id_usuario + data_registro) dos registros locais
+    // para uma verificação rápida. A chave do banco é 'cod', mas a chave lógica é a data.
+    const localRecordKeys = new Set(localRecords.map(rec => rec.dateIn));
+
+    // 3. Itera sobre os registros do servidor e adiciona apenas os que não existem localmente.
+    recordsFromServer.forEach(serverRec => {
+        if (!localRecordKeys.has(serverRec.dateIn)) {
+            console.log(`[Model.js] Adicionando novo registro de ponto do servidor: ${serverRec.dateIn}`);
+            store.put(serverRec);
+        }
+    });
+
+    return new Promise((resolve, reject) => {
+        transaction.oncomplete = resolve;
+        transaction.onerror = (event) => reject(event.target.error);
+    });
+}
+
+// =============================
+// Funções de controle de acesso
+// =============================
+
+/**
+ * Remove todos os registros de um Object Store específico.
+ * @param {string} storeName - O nome do Object Store a ser limpo (ex: 'userData').
+ * @returns {Promise<void>} - Uma promessa que é resolvida quando a limpeza é concluída.
+ */
+async function clearObjectStore(storeName) {
+    try {
+        const db = await initializeDB();
+        const transaction = db.transaction(storeName, 'readwrite');
+        const objectStore = transaction.objectStore(storeName);
+        const clearRequest = objectStore.clear();
+
+        return new Promise((resolve, reject) => {
+            clearRequest.onsuccess = () => {
+                console.log(`[${obterHoraFormatada()}] Object Store '${storeName}' limpo com sucesso.`);
+                resolve();
+            };
+            clearRequest.onerror = (event) => {
+                console.error(`[${obterHoraFormatada()}] Erro ao limpar o Object Store '${storeName}':`, event.target.error);
+                reject(event.target.error);
+            };
+        });
+    } catch (error) {
+        console.error(`[${obterHoraFormatada()}] Erro ao iniciar a transação para limpar '${storeName}':`, error);
+        throw error;
+    }
+}
+
+//Histórico de uso do sistema offline
+async function addActionToSyncQueue(action) {
+    const db = await initializeDB();
+    const transaction = db.transaction(syncQueueStoreName, 'readwrite');
+    const store = transaction.objectStore(syncQueueStoreName);
+    action.timestamp = new Date(); // Adiciona um timestamp
+    store.add(action);
+    return new Promise(resolve => transaction.oncomplete = resolve);
+}
+
+//Manipulação do histórico de uso do sistema offline
+async function getSyncQueue() {
+    const db = await initializeDB();
+    const transaction = db.transaction(syncQueueStoreName, 'readonly');
+    const store = transaction.objectStore(syncQueueStoreName);
+    const request = store.getAll(); // Pega a requisição
+
+    // Embrulha a requisição em uma Promise para garantir que `await` funcione corretamente
+    return new Promise((resolve, reject) => {
+        request.onsuccess = () => {
+            resolve(request.result); // Resolve a Promise com o array de ações
+        };
+        request.onerror = (event) => {
+            console.error(`[${obterHoraFormatada()}] Erro ao buscar a fila de sincronização:`, event.target.error);
+            reject(event.target.error);
+        };
+    });
+}
+
+//Manipulação do histórico de uso do sistema offline
+async function clearSyncQueue() {
+    const db = await initializeDB();
+    const transaction = db.transaction(syncQueueStoreName, 'readwrite');
+    const store = transaction.objectStore(syncQueueStoreName);
+    store.clear();
+    return new Promise(resolve => transaction.oncomplete = resolve);
+}
+
+/**
+ * Adiciona uma nova entrada de histórico no IndexedDB, garantindo um limite de 50 registros.
+ * @param {object} entry - O objeto de histórico. Ex: { userId: 1, description: '...', timestamp: '...', syncStatus: 'offline' }
+ */
+async function addHistoryEntry(entry) {
+    const limit = 50;
+    const db = await initializeDB();
+    const transaction = db.transaction(userHistoryStoreName, 'readwrite');
+    const store = transaction.objectStore(userHistoryStoreName);
+    const index = store.index('userId_timestamp');
+
+    // Conta quantos registros o usuário já tem
+    const countRequest = index.count(IDBKeyRange.bound([entry.userId, ''], [entry.userId, new Date().toISOString()]));
+
+    countRequest.onsuccess = () => {
+        const count = countRequest.result;
+
+        // Se o limite foi atingido, remove o registro mais antigo
+        if (count >= limit) {
+            const cursorRequest = index.openCursor(null, 'next'); // 'next' para pegar o mais antigo
+            cursorRequest.onsuccess = (e) => {
+                const cursor = e.target.result;
+                if (cursor) {
+                    store.delete(cursor.primaryKey);
+                }
+            };
+        }
+    };
+
+    // Adiciona o novo registro
+    store.add(entry);
+
+    return new Promise((resolve, reject) => {
+        transaction.oncomplete = resolve;
+        transaction.onerror = (event) => reject(event.target.error);
+    });
+}
+
+/**
+ * Busca o histórico de um usuário a partir do IndexedDB.
+ * @param {number} userId - O ID do usuário.
+ * @returns {Promise<Array>}
+ */
+async function getLocalHistory(userId, limit = 50) {
+    const db = await initializeDB();
+    const transaction = db.transaction(userHistoryStoreName, 'readonly');
+    const store = transaction.objectStore(userHistoryStoreName);
+    const index = store.index('userId_timestamp');
+    // Busca todos os registros do usuário e o cursor se encarrega da ordenação
+    const request = index.openCursor(IDBKeyRange.bound([userId, ''], [userId, new Date().toISOString()]), 'prev');
+    const results = [];
+
+    return new Promise((resolve, reject) => {
+        request.onsuccess = (event) => {
+            const cursor = event.target.result;
+            if(cursor && results.length < limit) {
+                results.push(cursor.value);
+                cursor.continue();
+            } else {
+                resolve(results);
+            }
+        };
+        request.onerror = (event) => reject(event.target.error);
+    });
+}
+
+async function replaceUserHistory(userId, historyFromServer) {
+    const db = await initializeDB();
+    const transaction = db.transaction(userHistoryStoreName, 'readwrite');
+    const store = transaction.objectStore(userHistoryStoreName);
+    const index = store.index('userId_timestamp');
+
+    // Usamos uma única promessa para controlar o resultado da transação
+    return new Promise((resolve, reject) => {
+        transaction.oncomplete = resolve;
+        transaction.onerror = (event) => reject(event.target.error);
+
+        // Etapa 1: Pega todas as chaves primárias dos registos existentes do utilizador.
+        const keysRequest = index.getAllKeys(IDBKeyRange.bound([userId, ''], [userId, new Date().toISOString()]));
+
+        keysRequest.onsuccess = () => {
+            const keysToDelete = keysRequest.result;
+
+            // Etapa 2: Coloca na fila a exclusão de todas as chaves encontradas.
+            keysToDelete.forEach(key => store.delete(key));
+
+            // Etapa 3: Coloca na fila a adição de todos os novos registos do servidor.
+            historyFromServer.forEach(entry => {
+                store.add({
+                    userId: userId,
+                    description: entry.descricao,
+                    timestamp: entry.data_ocorrencia,
+                    syncStatus: 'online'
+                });
+            });
+        };
+
+        keysRequest.onerror = (event) => {
+            // Se a busca de chaves falhar, rejeita a promessa.
+            reject(event.target.error);
+        };
+    });
+}export {
+
+    //funções de serviço
+    obterHoraFormatada,
+
+    // Funções de usuário
+    upsertUser,
+    getUserById,
+    getUserByNickname,
+    getUserByToken,
+    deleteUser,
+    getAllUsers,
+    replaceUserPictures,
+    getOfflineUserPictures,
+
+    // Funções de controle de ponto
+    addPointControl,
+    getPointControlByUserId,
+    getAllPointControl,
+    addPointControlRecordToServer,
+
+    // Funções de token
+    setUserToken,
+    fetchUserDataByToken,
+    getUserTokenByUserId,
+    isTokenValid,
+
+    // Funções de sincronização
+    storeAuthData,
+    replaceUserPointControl,
+
+    // Funções de controle de acesso
+    clearObjectStore,
+    addActionToSyncQueue,
+    getSyncQueue,
+    clearSyncQueue,
+
+    //Funções de histórico de uso
+    replaceUserHistory,
+    getLocalHistory,
+    addHistoryEntry
+
+};
+
+// ========================
+// 📁 indexDashboard.js
+// ========================
+import { getPointControlByUserId } from '../indexedDB/Model.js';
+
+
+// --- Variáveis Globais ---
+let presenceChart;
+let daysData = {};
+let currentLabels = [];
+let currentDataPoints = [];
+
+// --- DEFINIÇÃO DAS FUNÇÕES AUXILIARES (PRIMEIRO) ---
+
+/**
+ * Processa os registros brutos do IndexedDB e retorna os dados formatados.
+ */
+function processPointControlRecords(records) {
+    const monthlyRecords = {}; // Para detalhes ao clicar
+    const monthlyDaysCount = new Map(); // Para contar os dias únicos por mês
+
+    // 1. Processa os dados recebidos e agrupa por mês
+    records.forEach(record => {
+        if (!record.dateIn) return;
+
+        const parts = record.dateIn.split('-');
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const date = new Date(year, month, parseInt(parts[2], 10));
+        const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+
+        if (!monthlyRecords[monthKey]) {
+            monthlyRecords[monthKey] = [];
+            monthlyDaysCount.set(monthKey, new Set());
+        }
+        monthlyRecords[monthKey].push(record);
+        monthlyDaysCount.get(monthKey).add(date.getDate());
+    });
+
+    // 2. Gera programaticamente os rótulos para os últimos 3 meses
+    const labels = [];
+    const today = new Date();
+    for (let i = 2; i >= 0; i--) {
+        const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        labels.push(`${year}-${month}`);
+    }
+
+    // 3. Mapeia os dados para os rótulos gerados (usando 0 se não houver dados)
+    const dataPoints = labels.map(label => {
+        const daysSet = monthlyDaysCount.get(label);
+        return daysSet ? daysSet.size : 0;
+    });
+
+    return { labels, dataPoints, daysData: monthlyRecords };
+}
+
+/**
+ * Atualiza a instância do gráfico Chart.js com os novos dados.
+ */
+function updateChart(newLabels, newDataPoints) {
+    currentLabels = newLabels;
+    currentDataPoints = newDataPoints;
+
+    if (presenceChart) {
+        presenceChart.data.labels = newLabels;
+        presenceChart.data.datasets[0].data = newDataPoints;
+        presenceChart.update();
+        console.log('4. Gráfico atualizado com sucesso com os novos dados.');
+    }
+}
+
+/**
+ * Exibe o card com os detalhes do mês clicado.
+ */
+function mostrarCardDetalhes(month, value) {
+    document.getElementById('userCard').style.display = 'none';
+    const detailCard = document.getElementById('detailCard');
+    const monthNameElement = document.getElementById('monthName');
+    const monthTotalElement = document.getElementById('monthTotal');
+
+    const [year, monthNum] = month.split('-');
+    const date = new Date(parseInt(year, 10), parseInt(monthNum, 10) - 1, 1);
+    const monthName = date.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+
+    monthNameElement.textContent = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+    monthTotalElement.textContent = `${value} dias`;
+    detailCard.style.display = 'block';
+
+    const detailContent = document.getElementById('detailContent');
+    const recordsForMonth = daysData[month] || [];
+    let tableRows = '';
+
+    if (recordsForMonth.length > 0) {
+        recordsForMonth.sort((a,b) => new Date(a.dateIn) - new Date(b.dateIn)).forEach(item => {
+            // --- CORREÇÃO DE FUSO HORÁRIO APLICADA AQUI TAMBÉM ---
+            const parts = item.dateIn.split('-');
+            const itemDate = new Date(parts[0], parts[1] - 1, parts[2]);
+            const formattedDate = itemDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            // ----------------------------------------------------
+            tableRows += `<tr><td>${formattedDate}</td><td>${item.status}</td></tr>`;
+        });
+    } else {
+        tableRows = `<tr><td colspan="2">Nenhum registro encontrado.</td></tr>`;
+    }
+
+    detailContent.innerHTML = `
+        <table class="table table-striped table-hover">
+            <thead><tr><th>Data</th><th>Status</th></tr></thead>
+            <tbody>${tableRows}</tbody>
+        </table>`;
+}
+
+// Anexa a função de voltar ao objeto window para ser acessível pelo HTML
+window.voltarParaUsuario = function () {
+    document.getElementById('detailCard').style.display = 'none';
+    document.getElementById('userCard').style.display = 'block';
+};
+
+// --- FUNÇÕES DE ORQUESTRAÇÃO (SEGUNDO) ---
+
+/**
+ * Inicializa a instância do Chart.js com uma estrutura vazia.
+ */
+function initializeChart() {
+    if (presenceChart) return;
+
+    const ctx = document.getElementById('presence');
+    if (!ctx) {
+        console.error("Elemento 'presence' do canvas não encontrado.");
+        return;
+    }
+
+    presenceChart = new Chart(ctx, {
+        type: 'line',
+        data: { labels: [], datasets: [{ label: 'Dias presente', data: [], /* ...estilos... */ }] },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
+            onClick: (event, elements) => {
+                if (elements.length > 0) {
+                    const dataIndex = elements[0].index;
+                    mostrarCardDetalhes(currentLabels[dataIndex], currentDataPoints[dataIndex]);
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Orquestra o processo de carregar os dados e atualizar o gráfico.
+ */
+async function loadAndProcessData(userId) {
+    try {
+        console.log('1. Buscando dados para o userId:', userId);
+        const records = await getPointControlByUserId(userId);
+        console.log('2. Registros brutos retornados do IndexedDB:', records);
+
+        if (!records || records.length === 0) {
+            console.log("Nenhum registro de ponto encontrado. Limpando o gráfico.");
+            updateChart([], []);
+            return;
+        }
+
+        const chartData = processPointControlRecords(records);
+        console.log('3. Dados processados para o gráfico:', chartData);
+
+        daysData = chartData.daysData;
+        updateChart(chartData.labels, chartData.dataPoints);
+
+    } catch (error) {
+        console.error("Erro fatal ao carregar e processar os dados do dashboard:", error);
+    }
+}
+
+export function initializeDashboard() {
+    document.addEventListener('userDataReady', async (event) => {
+        const receivedUserId = event.detail.userId;
+        console.log('indexDashboard.js: Event "userDataReady" detected. userId:', receivedUserId);
+
+        if (!receivedUserId) {
+            console.error("Dashboard could not start: User ID was not received in the event.");
+            return;
+        }
+
+        const userId = parseInt(receivedUserId, 10);
+
+        initializeChart();
+        await loadAndProcessData(userId);
+    });
+}
+
+// --- PONTO DE ENTRADA DA APLICAÇÃO (POR ÚLTIMO) ---
+
+document.addEventListener('userDataReady', async (event) => {
+    const receivedUserId = event.detail.userId;
+    console.log('indexDashboard.js: Evento "userDataReady" detectado. userId:', receivedUserId);
+
+    if (!receivedUserId) {
+        console.error("Dashboard não pôde iniciar: ID do usuário não foi recebido no evento.");
+        return;
+    }
+
+    const userId = parseInt(receivedUserId, 10);
+
+    initializeChart();
+    await loadAndProcessData(userId);
+});
+
+// ==========================
+// 📁 settingsController.js
+// ==========================
+import {
+    upsertUser,
+    getUserById,
+    addActionToSyncQueue,
+    fetchUserDataByToken,
+    obterHoraFormatada,
+    getOfflineUserPictures,
+    addHistoryEntry,
+    getLocalHistory,
+    replaceUserHistory
+} from '../indexedDB/Model.js';
+import { isOnline } from '../Core/connectionChecker.js'; // Usaremos nosso verificador de conexão
+import { userDataPromise, triggerSharedUIRefresh } from '../Cogs/UIManager.js';
+import {displayFeedback, withApiHandler, showToast, getCurrentPosition} from '../Cogs/utils.js'; //withApiHandler é uma introdução ao AOP (programação orientada a aspectos)
+import { applyTheme, initializeThemeFromLocalData } from '../Cogs/ThemeManager.js';
+
+let confirmationModal;
+let profilePhotoModal;
+
+function getFormData() {
+    const form = document.getElementById('formUserData');
+    const email = document.getElementById('floatingInputEmail')?.value?.trim() || '';
+    const nickname = document.getElementById('floatingInputNickname')?.value?.trim() || '';
+    const name = document.getElementById('floatingInputName')?.value?.trim() || '';
+    const defaultTheme = document.getElementById('themeSwitch')?.checked ? 1 : 0;
+
+    const oldPassword = document.getElementById('floatingInputCurrentPassword')?.value || '';
+    const newPassword = document.getElementById('floatingInputNewPassword')?.value || '';
+    const confirmPassword = document.getElementById('floatingInputConfirmNewPassword')?.value || '';
+
+    return { email, nickname, name, defaultTheme, oldPassword, newPassword, confirmPassword };
+}
+
+function validatePasswords(newPassword, confirmPassword, oldPassword) {
+    if (!newPassword && !confirmPassword) return { ok: true };
+    if (!oldPassword) return { ok: false, msg: 'Informe a senha atual.' };
+    if (newPassword !== confirmPassword) return { ok: false, msg: 'A nova senha e a confirmação não coincidem.' };
+    // Regras básicas (ex.: ao menos 1 maiúscula e 1 dígito)
+    if (!/[A-Z]/.test(newPassword) || !/\d/.test(newPassword)) {
+        return { ok: false, msg: 'A nova senha precisa de pelo menos 1 letra maiúscula e 1 número.' };
+    }
+    return { ok: true };
+}
+
+// Esta função agora só se preocupa com a comunicação e os dados.
+async function submitSettingsOnline(payload) {
+    const userToken = localStorage.getItem('userToken');
+    const resp = await fetch('/Public/Api/userSettings.php', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${userToken}`
+        },
+        body: JSON.stringify(payload)
+    });
+
+    if (!resp.ok) {
+        const errorData = await resp.json().catch(() => ({ message: 'Erro desconhecido do servidor.' }));
+        throw new Error(errorData.message || `HTTP ${resp.status}`);
+    }
+
+    const data = await resp.json();
+    if (!data?.success) throw new Error(data?.message || 'Falha ao atualizar usuário');
+
+    // Após o sucesso, busca os dados frescos para atualizar o IndexedDB
+    await fetchUserDataByToken(userToken);
+}
+
+// Função para submeter offline
+async function submitSettingsOffline(actionPayload, localPatch) {
+    const coords = await getCurrentPosition();
+    await addActionToSyncQueue({ type: 'UPDATE_PROFILE', payload: actionPayload, timestamp: new Date().toISOString(), latitude: coords?.latitude, longitude: coords?.longitude });
+    const activeUserId = parseInt(localStorage.getItem('activeUserId') || '0', 10);
+    if (activeUserId) {
+        const currentUser = await getUserById(activeUserId);
+        if(currentUser) {
+            await upsertUser({ ...currentUser, ...localPatch });
+        }
+    }
+}
+
+// Função principal que é chamada no evento de submit
+async function onFormSubmit(ev) {
+    ev.preventDefault();
+    const button = ev.submitter;
+    // --- INÍCIO DA NOVA LÓGICA DE VALIDAÇÃO ---
+
+    const coords = await getCurrentPosition();
+    // 1. Coleta os dados do formulário
+    const { email, nickname, name, defaultTheme, oldPassword, newPassword, confirmPassword } = getFormData();
+
+    // 2. Busca os dados atuais do usuário no IndexedDB para comparação
+    const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
+    if (!activeUserId) {
+        showToast('Sessão de usuário inválida.', 'error');
+        return;
+    }
+    const currentUser = await getUserById(activeUserId);
+
+    // 3. Verifica se houve alguma alteração nos dados do perfil
+    const profileDataChanged = currentUser.name !== name ||
+        currentUser.email !== email ||
+        currentUser.nickname !== nickname ||
+        currentUser.theme !== defaultTheme;
+
+    // 4. Verifica se o usuário está tentando alterar a senha
+    const isPasswordChangeAttempt = oldPassword || newPassword || confirmPassword;
+
+    // 5. Se NADA mudou, interrompe a execução
+    if (!profileDataChanged && !isPasswordChangeAttempt) {
+        showToast('Nenhuma alteração detectada.', 'info');
+        // Reabilita o botão, pois o AOP não será chamado
+        button.disabled = false;
+        button.textContent = 'Salvar alterações';
+        return;
+    }
+
+    // --- FIM DA NOVA LÓGICA DE VALIDAÇÃO ---
+
+    // 6. A validação de senha existente continua, mas agora só roda se houver uma tentativa de mudança
+    if (isPasswordChangeAttempt) {
+        const pwdValidation = validatePasswords(newPassword, confirmPassword, oldPassword);
+        if (!pwdValidation.ok) {
+            showToast(pwdValidation.msg, 'error');
+            return;
+        }
+    }
+
+    // 7. Monta o payload SOMENTE com os dados que serão enviados
+    const payload = { email, nickname, name, defaultTheme, timestamp: new Date().toISOString(), latitude: coords?.latitude, longitude: coords?.longitude };
+    if (isPasswordChangeAttempt) {
+        payload.passwordChange = { oldPassword, newPassword };
+    }
+
+    // 8. O fluxo online/offline continua como antes
+    if (isOnline) {
+        payload.obs = 'online';
+        const handleApiSubmit = withApiHandler(submitSettingsOnline, { button });
+        const success = await handleApiSubmit(payload);
+        if (success) {
+            // ADICIONA HISTÓRICO "ONLINE"
+            await addHistoryEntry({
+                userId: activeUserId,
+                description: 'Informações de perfil atualizadas. | Origem: ' + payload.obs,
+                timestamp: payload.timestamp,
+                syncStatus: 'online'
+            });
+            document.dispatchEvent(new CustomEvent('historyShouldRefresh'));
+            await triggerSharedUIRefresh();
+        }
+    } else {
+        payload.obs = 'offline';
+        const localPatch = { name, email, nickname, defaultTheme };
+        await submitSettingsOffline(payload, localPatch);
+        // ADICIONA HISTÓRICO "OFFLINE"
+        await addHistoryEntry({
+            userId: activeUserId,
+            description: 'Informações de perfil salvas offline.',
+            timestamp: payload.timestamp,
+            syncStatus: 'offline'
+        });
+        document.dispatchEvent(new CustomEvent('historyShouldRefresh'));
+        showToast('Alterações salvas offline. Sincronizando em breve.', 'info');
+        await triggerSharedUIRefresh();
+    }
+}
+
+async function fetchAndDisplayUserPictures() {
+    const photoGallery = document.getElementById('photoGallery');
+    if (!photoGallery) return;
+    photoGallery.innerHTML = '<div class="spinner-border text-primary mx-auto" role="status"></div>';
+
+    const userToken = localStorage.getItem('userToken');
+    const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
+    let pictures = [];
+
+    try {
+        if (isOnline) {
+            console.log(obterHoraFormatada()," Modo Online: Buscando fotos da API.");
+            const response = await fetch('/Public/Api/userPictures.php', {
+                headers: { 'Authorization': `Bearer ${userToken}` }
+            });
+
+            // --- A CORREÇÃO ESTÁ AQUI ---
+            // Precisamos processar a resposta e colocá-la na variável 'result'
+            const result = await response.json();
+
+            if (result.success) {
+                pictures = result.pictures;
+            } else {
+                // Se a API retornar um erro, exibimos a mensagem
+                throw new Error(result.message || 'Falha ao buscar fotos da API.');
+            }
+        } else {
+            console.log(obterHoraFormatada()," Modo Offline: Buscando fotos do IndexedDB.");
+            pictures = await getOfflineUserPictures(activeUserId);
+        }
+
+        photoGallery.innerHTML = '';
+        if (pictures && pictures.length > 0) {
+            // A sua lógica para exibir as fotos (forEach, etc.) está correta e continua aqui
+            pictures.forEach(pic => {
+                const col = document.createElement('div');
+                col.className = 'col-4';
+                const a = document.createElement('a');
+                a.href = '#';
+                a.title = `Definir "${pic.name}" como perfil`;
+                a.onclick = (e) => {
+                    e.preventDefault();
+                    const confirmBtn = document.getElementById('confirmActionBtn');
+                    confirmBtn.dataset.photoId = pic.picId;
+                    confirmationModal.show();
+                };
+                const img = document.createElement('img');
+                img.src = pic.path;
+                img.alt = pic.name;
+                img.className = `img-fluid rounded img-thumbnail ${pic.isProfile == 1 ? 'border-primary border-3' : ''}`;
+                a.appendChild(img);
+                col.appendChild(a);
+                photoGallery.appendChild(col);
+            });
+        } else {
+            photoGallery.textContent = 'Nenhuma foto encontrada.';
+        }
+    } catch (error) {
+        photoGallery.textContent = 'Erro ao carregar fotos.';
+        console.error(obterHoraFormatada()," Erro ao buscar fotos:", error);
+    }
+}
+
+/**
+ * Envia um novo arquivo de imagem para a API de upload.
+ * @param {File} file - O arquivo de imagem a ser enviado.
+ */
+async function uploadNewPicture(file, button) { // Passa o botão como argumento
+    const coords = await getCurrentPosition();
+    const userToken = localStorage.getItem('userToken');
+    const formData = new FormData();
+    formData.append('picture', file);
+    if (coords) {
+        formData.append('latitude', coords.latitude);
+        formData.append('longitude', coords.longitude);
+    }
+
+    // A função de negócio pura
+    const doUpload = async () => {
+        const response = await fetch('/Public/Api/uploadPicture.php', {
+            method: 'POST', headers: { 'Authorization': `Bearer ${userToken}` }, body: formData
+        });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message);
+    };
+
+    // Aplica o aspecto AOP
+    const handleUpload = withApiHandler(doUpload, { button });
+    const success = await handleUpload();
+
+    // Ações pós-sucesso
+    if (success) {
+        const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
+        // Adiciona o histórico e dispara o evento
+        await addHistoryEntry({ userId: activeUserId, description: `Upload de nova foto: ${file.name}`, timestamp: new Date().toISOString(), syncStatus: 'online'});
+        document.dispatchEvent(new CustomEvent('historyShouldRefresh'));
+
+        await triggerSharedUIRefresh();
+        await fetchAndDisplayUserPictures();
+        const profilePhotoModalEl = document.getElementById('profilePhotoModal');
+        const profilePhotoModal = bootstrap.Modal.getInstance(profilePhotoModalEl);
+        if (profilePhotoModal) profilePhotoModal.hide();
+    }
+}
+
+/**
+ * Chama a API para definir uma foto existente como a de perfil.
+ * @param {number} photoId - O ID da foto a ser definida como perfil.
+ */
+async function setAsProfilePicture(photoId) {
+    const userToken = localStorage.getItem('userToken');
+    const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
+    if (!userToken || !activeUserId) return;
+
+    try {
+        const coords = await getCurrentPosition();
+        const response = await fetch('/Public/Api/setProfilePicture.php', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
+            body: JSON.stringify({
+                photoId,
+                latitude: coords?.latitude,
+                longitude: coords?.longitude})
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            showToast('Foto de perfil atualizada!', 'success');
+
+            await addHistoryEntry({
+                userId: activeUserId,
+                description:  `Definiu nova foto de perfil (ID da Foto: ${photoId})`,
+                timestamp: new Date().toISOString(),
+                syncStatus: 'online'
+            })
+            document.dispatchEvent(new CustomEvent('historyShouldRefresh'));
+
+            await triggerSharedUIRefresh();
+            await fetchAndDisplayUserPictures();
+            if (profilePhotoModal) profilePhotoModal.hide();
+
+        } else {
+            throw new Error(result.message);
+        }
+    } catch (error) {
+        showToast(`Erro: ${error.message}`, 'error');
+        console.error(obterHoraFormatada()," Erro ao definir foto:", error);
+    }
+}
+
+async function handleThemeChange(event) {
+    const newThemeValue = event.target.checked ? 1 : 0;
+    applyTheme(newThemeValue); // Aplica a mudança visual imediatamente
+
+    const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
+    if (!activeUserId) return;
+
+    if (isOnline) {
+        try {
+            const userToken = localStorage.getItem('userToken');
+            const response = await fetch('/Public/Api/updateTheme.php', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
+                body: JSON.stringify({ theme: newThemeValue })
+            });
+            const result = await response.json();
+            if (!result.success) throw new Error(result.message);
+
+            // Atualiza o IndexedDB com os dados frescos do servidor
+            await fetchUserDataByToken(userToken);
+            console.log(obterHoraFormatada()," Preferência de tema salva no servidor.");
+        } catch (error) {
+            console.error(obterHoraFormatada()," Falha ao salvar tema no servidor:", error);
+            // Opcional: Reverter a UI ou mostrar erro
+        }
+    } else {
+        console.log(obterHoraFormatada()," Offline: Ação de mudança de tema adicionada à fila.");
+        // Atualiza o IndexedDB localmente
+        const currentUser = await getUserById(activeUserId);
+        if (currentUser) {
+            currentUser.theme = newThemeValue;
+            await upsertUser(currentUser);
+        }
+        // Adiciona a ação à fila para sincronização futura
+        await addActionToSyncQueue({ type: 'UPDATE_THEME', payload: { theme: newThemeValue }, timestamp: new Date().toISOString() });
+    }
+}
+
+function renderHistory(historyData, tableBody) {
+    tableBody.innerHTML = ''; // Limpa a tabela
+    if (historyData && historyData.length > 0) {
+        historyData.forEach(entry => {
+            const row = tableBody.insertRow();
+            const date = new Date(entry.timestamp);
+
+            row.insertCell(0).textContent = entry.description;
+            row.insertCell(1).textContent = date.toLocaleString('pt-BR', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            });
+
+
+            // Adiciona a coluna de status
+            const statusCell = row.insertCell(2);
+            if (entry.syncStatus === 'offline') {
+                statusCell.innerHTML = '<span class="badge bg-secondary">Offline</span>';
+            } else {
+                statusCell.innerHTML = '<span class="badge bg-success">Online</span>';
+            }
+        });
+    } else {
+        tableBody.innerHTML = '<tr><td colspan="3">Nenhum histórico encontrado.</td></tr>';
+    }
+}
+
+async function fetchAndDisplayHistory(limit = 20, forceSync = false) {
+    const historyTableBody = document.getElementById('historyTableBody');
+    if (!historyTableBody) return;
+
+    const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
+
+    // Função auxiliar para renderizar a partir da fonte de dados local (IndexedDB)
+    const renderFromLocal = async (fetchLimit) => {
+        try {
+            const localHistory = await getLocalHistory(activeUserId, fetchLimit);
+            renderHistory(localHistory, historyTableBody);
+        } catch (error) {
+            console.error(obterHoraFormatada()," Erro ao renderizar histórico local:", error);
+            historyTableBody.innerHTML = '<tr><td colspan="3">Falha ao carregar histórico local.</td></tr>';
+        }
+    };
+
+    // ETAPA 1: Renderiza imediatamente o que quer que esteja no IndexedDB.
+    // Isso fornece uma UI instantânea para o usuário, seja online ou offline.
+    await renderFromLocal(limit);
+
+    // ETAPA 2: Se estiver online, sincroniza com o servidor.
+    if (isOnline && forceSync) {
+        try {
+            const userToken = localStorage.getItem('userToken');
+            // Busca um limite maior quando online para ter a visão completa
+            const onlineLimit = 100;
+            const response = await fetch(`/Public/Api/userHistory.php?limit=${onlineLimit}`, {
+                headers: { 'Authorization': `Bearer ${userToken}` }
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                // Atualiza o IndexedDB com os dados "oficiais" do servidor.
+                await replaceUserHistory(activeUserId, result.history);
+
+                // Renderiza novamente a partir do IndexedDB agora atualizado.
+                await renderFromLocal(limit);
+            }
+        } catch (error) {
+            console.warn(obterHoraFormatada()," Não foi possível sincronizar o histórico com o servidor. Exibindo dados locais.", error);
+            // Se a busca online falhar, não fazemos nada, pois o usuário já está vendo os dados locais.
+        }
+    }
+}
+
+// Função que inicializa o controller
+export async function initSettingsController() {
+    const form = document.getElementById('formUserData');
+    if (form) form.addEventListener('submit', onFormSubmit);
+
+    const savePictureBtn = document.getElementById('savePictureBtn');
+    if (savePictureBtn) {
+        savePictureBtn.addEventListener('click', () => {
+            const fileInput = document.getElementById('inputGroupFile04');
+            if (fileInput.files.length > 0) {
+                // Passa o próprio botão para o AOP gerenciar
+                uploadNewPicture(fileInput.files[0], savePictureBtn);
+                fileInput.value = '';
+            } else {
+                showToast('Por favor, selecione um arquivo.', 'info');
+            }
+        });
+    }
+
+    const profilePhotoModal = document.getElementById('profilePhotoModal');
+    if (profilePhotoModal) {
+        profilePhotoModal.addEventListener('show.bs.modal', fetchAndDisplayUserPictures);
+    }
+
+    const themeSwitch = document.getElementById('themeSwitch');
+    if (themeSwitch) {
+        themeSwitch.addEventListener('change', handleThemeChange);
+    }
+
+    const modalEl = document.getElementById('confirmationModal');
+    if(modalEl) confirmationModal = new bootstrap.Modal(modalEl);
+
+    const confirmBtn = document.getElementById('confirmActionBtn');
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', () => {
+            const photoIdToSet = confirmBtn.dataset.photoId;
+            if (photoIdToSet) {
+
+                // 1. TIRA O FOCO DO BOTÃO
+                confirmBtn.blur();
+
+                // 2. FECHA O MODAL DE CONFIRMAÇÃO
+                if (confirmationModal) confirmationModal.hide();
+
+                // 3. EXECUTA A AÇÃO PRINCIPAL
+                setAsProfilePicture(photoIdToSet);
+            }
+        });
+    }
+
+    const searchHistoryBtn = document.getElementById('searchHistoryBtn');
+    const limitInput = document.querySelector('input[name="registro"]');
+    if (searchHistoryBtn && limitInput) {
+        searchHistoryBtn.addEventListener('click', () => {
+            const limit = parseInt(limitInput.value, 10) || 20;
+            fetchAndDisplayHistory(limit, false);
+        });
+    }
+
+    if (limitInput && searchHistoryBtn) {
+        limitInput.addEventListener('keydown', (event) => {
+            // Verifica se a tecla pressionada foi "Enter"
+            if (event.key === 'Enter') {
+                // 1. Impede o comportamento padrão (que seria submeter o formulário principal)
+                event.preventDefault();
+
+                // 2. Simula um clique no botão "Pesquisar"
+                searchHistoryBtn.click();
+            }
+        });
+    }
+
+
+    document.addEventListener('historyShouldRefresh', () => {
+        fetchAndDisplayHistory(limitInput?.value || 20, false);
+    });
+
+    await fetchAndDisplayHistory(20, true);
+}
+
+// ========================
+// 📁 userController.js
+// ========================
+
+import {
+    addActionToSyncQueue,
+    addPointControlRecordToServer,
+    addPointControl,
+    getPointControlByUserId,
+    fetchUserDataByToken
+} from '../indexedDB/Model.js';
+import { userDataPromise, triggerSharedUIRefresh } from '../Cogs/UIManager.js';
+import { showToast, withApiHandler, UserFacingError, getCurrentPosition } from '../Cogs/utils.js';
+import { isOnline } from '../Core/connectionChecker.js';
+
+// --- A LÓGICA DE NEGÓCIO PURA ---
+async function doOnlinePresence() {
+    const coords = await getCurrentPosition();
+    const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
+    if (!activeUserId) throw new Error('Sessão de utilizador inválida.');
+
+    // --- VALIDAÇÃO NO FRONT-END ---
+    const today = new Date().toISOString().split('T')[0];
+    const localRecords = await getPointControlByUserId(activeUserId);
+
+    // Verifica se já existe um registro para hoje, tanto online quanto offline
+    if (localRecords.some(rec => rec.dateIn === today)) {
+        throw new UserFacingError('Presença já registrada para hoje.');
+    }
+    // --- FIM DA VALIDAÇÃO ---
+
+    const success = await addPointControlRecordToServer("Verificação pendente", coords); // Status inicial
+    if (!success) {
+        throw new UserFacingError('Falha ao registrar o ponto no servidor.');
+    }
+
+    const userToken = localStorage.getItem('userToken');
+    await fetchUserDataByToken(userToken);
+}
+
+async function doOfflinePresence() {
+    const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);
+    if (!activeUserId) throw new Error('Sessão de utilizador inválida.');
+
+    const coords = await getCurrentPosition();
+    const today = new Date().toISOString().split('T')[0];
+    const localRecords = await getPointControlByUserId(activeUserId);
+    if (localRecords.some(rec => rec.dateIn === today)) {
+        // Lança um erro customizado que o AOP pode capturar
+        throw new UserFacingError('Presença já registrada para hoje.');
+    }
+    const status = "Verificação pendente";
+    const obs = "offline";
+    await addPointControl({ userId: activeUserId, status, dateIn: today, obs });
+    await addActionToSyncQueue({ type: 'CREATE_POINT', payload: { status, obs, latitude: coords?.latitude, longitude: coords?.longitude }});
+}
+
+// --- O MANIPULADOR DE EVENTO QUE USA AOP ---
+async function handleConfirmPresenceClick(event) {
+    const button = event.currentTarget;
+
+    if (isOnline) {
+        const handleApiPresence = withApiHandler(doOnlinePresence, { button });
+        const success = await handleApiPresence();
+        if (success) {
+            await triggerSharedUIRefresh(); // Atualiza o dashboard sem recarregar
+        }
+    } else {
+        // Para offline, podemos usar o AOP também, mas uma chamada direta é mais clara
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = 'Processando...';
+        try {
+            await doOfflinePresence();
+            showToast('Presença registrada offline!');
+            await triggerSharedUIRefresh();
+        } catch (error) {
+            showToast(`Aviso: ${error.message}`, 'info');
+        } finally {
+            button.disabled = false;
+            button.textContent = originalText;
+        }
+    }
+}
+
+// Lógica pura da API: Invalida o token no servidor.
+async function doOnlineLogoutApi() {
+    const userToken = localStorage.getItem('userToken');
+    if (!userToken) return;
+
+    const response = await fetch('/Public/Api/logout.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${userToken}`
+        }
+    });
+
+    if (!response.ok) {
+        console.warn('A invalidação do token no servidor falhou, mas o logout local prosseguirá.');
+    }
+}
+
+// Lógica de limpeza do cliente: O que acontece no navegador.
+function handleClientSideLogout() {
+    // ESTA FUNÇÃO APENAS LIMPA O LOCALSTORAGE.
+    // O INDEXEDDB PERMANECE INTACTO PARA PERMITIR O LOGIN OFFLINE FUTURO.
+    try {
+        localStorage.removeItem('activeUserId');
+        localStorage.removeItem('userToken');
+    } catch (error) {
+        console.error("Erro durante a limpeza do logout local:", error);
+    } finally {
+        window.location.href = '/Public/View/Index/index.php';
+    }
+}
+
+// O orquestrador principal que substitui sua função de logout existente.
+async function handleLogout(event) {
+    event.preventDefault();
+    const button = event.currentTarget;
+    if (button) button.style.pointerEvents = 'none'; // Evita cliques duplos
+
+    if (isOnline) {
+        // CAMINHO ONLINE: Tenta invalidar a sessão no servidor primeiro.
+        const handleApiLogout = withApiHandler(doOnlineLogoutApi, {
+            button,
+            onSuccess: () => {
+                showToast('Sessão encerrada com sucesso!', 'info');
+                setTimeout(handleClientSideLogout, 1000);
+            }
+        });
+        await handleApiLogout();
+    } else {
+        // CAMINHO OFFLINE: Nenhuma chamada de rede é feita.
+        // Apenas executa a limpeza local diretamente.
+        showToast('Sessão local encerrada.', 'info');
+        handleClientSideLogout();
+    }
+}
+
+async function handleThemeChange(newTheme) {
+    if (isOnline) {
+        // Lógica online: Tenta atualizar diretamente no servidor
+        const success = await syncThemeToServer(newTheme); // Uma nova função que fala com a API
+        if (success) {
+            // Se funcionou, atualiza o IndexedDB localmente
+            const activeUserId = localStorage.getItem('activeUserId');
+            const user = await getUserById(parseInt(activeUserId, 10));
+            user.theme = newTheme;
+            await upsertUser(user);
+        }
+    } else {
+        // Lógica OFFLINE: Adiciona a ação à fila
+        console.log("Offline. Ação de mudança de tema adicionada à fila de sincronização.");
+        const action = {
+            type: 'updateTheme', // Um novo tipo de ação
+            payload: { theme: newTheme },
+            timestamp: new Date()
+        };
+        await addActionToSyncQueue(action);
+
+        // Atualiza a UI imediatamente para o utilizador ver a mudança
+        const activeUserId = localStorage.getItem('activeUserId');
+        const user = await getUserById(parseInt(activeUserId, 10));
+        user.theme = newTheme;
+        await upsertUser(user);
+        alert("Você está offline. A sua preferência de tema foi guardada e será sincronizada.");
+    }
+}
+
+/**
+ * Anexa os event listeners aos elementos da página.
+ */
+function attachEventListeners() {
+    const confirmButton = document.getElementById('confirmPresenceBtn');
+    if (confirmButton) {
+        confirmButton.addEventListener('click', handleConfirmPresenceClick);
+    }
+    const logoutButton = document.getElementById('logoutBtn');
+    if (logoutButton) {
+        logoutButton.addEventListener('click', handleLogout);
+    }
+    // Adicione outros listeners aqui (ex: formulário de settings)
+}
+
+/**
+ * Inicializa o controlador, esperando pelos dados do utilizador.
+ */
+async function initializeController() {
+    // Pausa a execução até que a promessa do userInterface.js seja resolvida.
+    const userData = await userDataPromise;
+    if (userData) {
+        console.log("userController.js: Dados do utilizador prontos. Anexando listeners.");
+        attachEventListeners();
+    } else {
+        console.warn("userController.js: Dados do utilizador não carregaram. Listeners não anexados.");
+    }
+}
+
+export { initializeController };
+
+// ========================
+// 📁 userInterface.js
+// ========================
+
+function updateSettingsForm(userData) {
+    if (!window.location.pathname.includes('/User/settings.php') || !userData) return;
+
+    const formFields = {
+        'floatingInputName': userData.name,
+        'floatingInputEmail': userData.email,
+        'floatingInputNickname': userData.nickname,
+    };
+    Object.entries(formFields).forEach(([inputId, value]) => {
+        const element = document.getElementById(inputId);
+        if (element && value !== null && value !== undefined) {
+            element.value = value;
+        }
+    });
+    const themeSwitch = document.getElementById('themeSwitch');
+    if (themeSwitch) {
+        themeSwitch.checked = userData.theme == 1;
+    }
+}
+
+function updateDashboardCard(userData) {
+    // Verifica se estamos na página do dashboard
+    if (document.body.id !== 'page-dashboard' || !userData) return;
+
+    const elements = {
+        'responseName': userData.name,
+        'responseNickname': userData.nickname,
+        'responseEmail': userData.email,
+    };
+    Object.entries(elements).forEach(([id, value]) => {
+        const element = document.getElementById(id);
+        if (element && value) {
+            element.textContent = value;
+        } else if (element) {
+            element.textContent = ''; // Limpa o campo se não houver valor
+        }
+    });
+}
+
+/**
+ * Inicializa a interface específica para a seção de Usuário (USR).
+ */
+export function initializeUserInterface() {
+    // Ouve o evento disparado pelo CoreUIManager
+    document.addEventListener('userDataReady', (event) => {
+        const userData = event.detail.userData;
+        console.log("Interface USR: Dados recebidos, atualizando componentes específicos.");
+
+        // Executa as funções de UI que SÓ existem na área do usuário
+        updateSettingsForm(userData);
+        updateDashboardCard(userData);
+    });
+}
+
+// ========================
+// 📁 Main.js
+// ========================
+
+import { initializeUI } from './Cogs/UIManager.js';
+import { initializeSyncController } from './Core/syncController.js';
+import { initializeConnectionChecker } from './Core/connectionChecker.js';
+
+function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/Public/service-worker.js')
+                .then(function(registration) {
+                    console.log('Service Worker registrado com sucesso:', registration.scope);
+                })
+                .catch(function(err) {
+                    console.log('Falha ao registrar o Service Worker:', err);
+                });
+        });
+    }
+}
+
+function main() {
+    initializeConnectionChecker();
+
+    const pageId = document.body.id;
+    const userType = document.body.dataset.userType;
+
+    // Lógica para páginas públicas
+    if (pageId === 'page-login' || pageId === 'page-register') {
+        if (pageId === 'page-login') {
+            import('./IDX/authController.js').then(module => module.initializeAuthController());
+        } else if (pageId === 'page-register') {
+            import('./IDX/registerController.js').then(module => module.initializeRegisterController());
+        }
+    } else {
+        // Lógica para páginas autenticadas
+        initializeSyncController();
+        initializeUI();
+
+        // Carrega os módulos base, que podem ser necessários para todos os tipos de usuário
+        // dependendo da página em que eles estiverem.
+
+        // Módulos específicos para páginas de usuário comum
+        if (userType === 'usr') {
+            switch (pageId) {
+                case 'page-dashboard':
+                    import('./USR/userInterface.js').then(module => module.initializeUserInterface());
+                    import('./USR/indexDashboard.js').then(module => module.initializeDashboard());
+                    import('./USR/userController.js').then(module => module.initializeController());
+                    break;
+                case 'page-settings':
+                    import('./USR/userInterface.js').then(module => module.initializeUserInterface());
+                    import('./USR/settingsController.js').then(module => module.initSettingsController());
+                    break;
+            }
+        }
+
+        // Módulos específicos para páginas de administrador
+        if (userType === 'hkg') {
+            switch (pageId) {
+                case 'page-dashboard':
+                    // Se um administrador acessar a página de dashboard de usuário
+                    import('./USR/userInterface.js').then(module => module.initializeUserInterface());
+                    import('./USR/indexDashboard.js').then(module => module.initializeDashboard());
+                    import('./USR/userController.js').then(module => module.initializeController());
+                    break;
+                case 'page-settings':
+                    // Se um administrador acessar a página de configurações
+                    import('./USR/userInterface.js').then(module => module.initializeUserInterface());
+                    import('./USR/settingsController.js').then(module => module.initSettingsController());
+                    break;
+                case 'page-hkg-dashboard':
+                    // Se um administrador acessar a página de admin
+                    import('./HKG/hkgInterface.js').then(module => module.initializeHkgInterface());
+                    import('./HKG/hkgController.js').then(module => module.initializeHkgController());
+                    break;
+                case 'page-hkg-users':
+                    // Se um administrador acessar a página de admin
+                    import('./HKG/hkgInterface.js').then(module => module.initializeHkgInterface());
+                    import('./HKG/hkgController.js').then(module => module.initializeHkgController());
+                    break;
+            }
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    registerServiceWorker();
+    main();
+});
+
+// ========================
+// 📁 service-worker.js
+// ========================
+const CACHE_NAME = 'v3-static'; // Renomeado para clareza
+const DYNAMIC_CACHE_NAME = 'v3-dynamic'; // Novo cache para conteúdo do usuário
+const urlsToCache = [
+    //CSS Bootstrap
+    '/Public/CSS/bootstrap.min.css',
+    '/Public/JS/bootstrap.bundle.js',
+
+    //Chart JS
+    "/Public/JS/chartjs/dist/chart.umd.js",
+
+    //Cogs;
+    '/Public/JS/Cogs/utils.js',
+    '/Public/JS/Cogs/UIManager.js',
+
+    //Core;
+    '/Public/JS/Core/connectionChecker.js',
+    '/Public/JS/Core/syncController.js',
+
+    //IndexedDB;
+    '/Public/JS/indexedDB/Config.js',
+    '/Public/JS/indexedDB/Model.js',
+
+    //Index/index;
+    '/Public/View/Index/index.php',
+    '/Public/View/Index/register.php',
+    '/Public/CSS/IDX/style.css',
+    '/Public/JS/IDX/authController.js',
+    '/Public/JS/IDX/registerController.js',
+
+    //User
+    '/Public/JS/USR/userInterface.js',
+
+    //User/index;
+    '/Public/View/User/index.php',
+    '/Public/CSS/USR/dashboard.css',
+    '/Public/JS/USR/indexDashboard.js',
+    '/Public/JS/USR/userController.js',
+
+    //User/settings;
+    '/Public/View/User/settings.php',
+    '/Public/CSS/USR/handworking.css',
+    '/Public/JS/USR/settingsController.js',
+
+    //User/community;
+    '/Public/View/User/community.php',
+
+    //Housekeeping/index;
+    '/Public/View/Housekeeping/index.php',
+    '/Public/JS/HKG/indexDashboard.js',
+
+    //Housekeeping/users;
+    '/Public/View/Housekeeping/users.php',
+
+    //Demais arquivos;
+    '/Public/JS/script.js',
+    '/Public/Assets/img/offlineLogo.png',
+    '/Public/Assets/img/logo.png'
+];
+
+self.addEventListener('install', function(event) {
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then(function(cache) {
+                console.log('Cache aberto!');
+                return cache.addAll(urlsToCache);
+            })
+    );
+});
+
+self.addEventListener('activate', function(event) {
+    const cacheWhitelist = [CACHE_NAME, DYNAMIC_CACHE_NAME]; // Lista de caches a serem mantidos
+    event.waitUntil(
+        caches.keys().then(function(cacheNames) {
+            return Promise.all(
+                cacheNames.map(function(cacheName) {
+                    // Se o nome do cache não estiver na nossa lista, ele é deletado
+                    if (cacheWhitelist.indexOf(cacheName) === -1) {
+                        console.log('SW: Deletando cache antigo:', cacheName);
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
+        })
+    );
+});
+
+self.addEventListener('fetch', event => {
+    const url = new URL(event.request.url);
+
+    // --- CORREÇÃO ADICIONADA AQUI ---
+    // Se a URL do pedido contém '/Public/Api/', o Service Worker deve ignorá-la.
+    // O navegador irá tratar a requisição de rede normalmente.
+    if (url.pathname.startsWith('/Public/Api/')) {
+        return; // Deixa a requisição passar, ignorando o cache.
+    }
+    // --- FIM DA CORREÇÃO ---
+
+    // A sua lógica de "Network falling back to cache" para os outros arquivos continua.
+    if (event.request.method !== 'GET') {
+        return;
+    }
+
+    event.respondWith(
+        fetch(event.request)
+            .then(networkResponse => {
+                return caches.open(CACHE_NAME).then(cache => {
+                    if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+                        cache.put(event.request, networkResponse.clone());
+                    }
+                    return networkResponse;
+                });
+            })
+            .catch(() => {
+                console.warn(`SW: Falha na rede para ${event.request.url}. Servindo do cache.`);
+                return caches.match(event.request).then(responseFromCache => {
+                    if (responseFromCache) {
+                        return responseFromCache;
+                    }
+                    console.error(`SW: O ficheiro ${event.request.url} não foi encontrado no cache.`);
+                    return new Response('Recurso não encontrado no cache', { status: 404, statusText: 'Not Found in Cache' });
+                });
+            })
+    );
+});
+
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'CACHE_DYNAMIC_FILES') {
+        const urlsToCache = event.data.payload;
+        console.log('SW: Recebida mensagem para cachear arquivos dinâmicos:', urlsToCache);
+
+        event.waitUntil(
+            caches.open(DYNAMIC_CACHE_NAME).then((cache) => {
+                // O método addAll faz o fetch e o cache de uma vez
+                return cache.addAll(urlsToCache).catch(error => {
+                    console.error('SW: Falha ao cachear um ou mais arquivos dinâmicos:', error);
+                });
+            })
+        );
+    }
+});

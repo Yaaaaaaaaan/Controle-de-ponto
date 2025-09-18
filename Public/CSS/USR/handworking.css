@@ -40,6 +40,16 @@
     height: 226px;
 }
 
+.polaroid a{
+    text-decoration: none;
+    color: black;
+}
+
+.polaroid a:hover{
+    text-decoration: none;
+    color: gray;
+}
+
 .modal-body #pPictureModal{
     object-fit: cover;
     width:125px;
@@ -75,6 +85,7 @@ body {
     margin: 0 auto;
     height: 350px;
     min-width: 245px;
+    color: #1a1d20;
 }
 
 .badge-card:hover {
@@ -99,6 +110,7 @@ body {
     font-size: 20px;
     margin-bottom: 6px;
     text-align: center;
+    color: #1a1d20;
 }
 
 .badge-card .user-nickname {
@@ -138,6 +150,7 @@ body {
     max-width: 100%;
     margin: 0 auto;
     height: 350px;
+    color: #1a1d20;
 }
 
 .detailCard:hover {
@@ -159,7 +172,7 @@ body {
 
 /* Regras específicas para o tema escuro */
 body[data-bs-theme="dark"] .badge-card {
-    background-color: #343a40;
+    background-color: #343a40 !important;
     color: #f8f9fa;
 }
 

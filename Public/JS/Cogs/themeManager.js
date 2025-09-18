@@ -1,4 +1,6 @@
-
+// ========================
+// 📁 themeManager.js
+// ========================
 /**
  * Aplica o tema visual (light/dark) à página.
  * @param {0|1} themeValue - 0 para claro, 1 para escuro.
@@ -18,5 +20,3 @@ export function initializeThemeFromLocalData(userData) {
         applyTheme(userData.theme);
     }
 }
-
-//teste

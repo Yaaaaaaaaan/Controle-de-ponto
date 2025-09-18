@@ -1,9 +1,8 @@
 <?php
-
-
 if (!defined('APP_RAN')) {
     die('Acesso não permitido.');
 }
+date_default_timezone_set('America/Sao_Paulo');
 
 require_once __DIR__ . '/history.php';
 
@@ -73,7 +72,7 @@ class PointControl
 
         try {
             if ($stmt->execute()) {
-                $historyDescription = "Registo de ponto {$obs} bem-sucedido: {$status}";
+                $historyDescription = "Regisro de ponto bem-sucedido: {$status}";
                 $this->createUserHistory($historyDescription, $userId, $occurrenceDate, $obs, $longitude, $latitude);
                 return ['success' => true];
             }

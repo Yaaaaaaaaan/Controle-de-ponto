@@ -1,8 +1,8 @@
 <?php
-
 if (!defined('APP_RAN')) {
     die('Acesso não permitido.');
 }
+date_default_timezone_set('America/Sao_Paulo');
 
 class History{
     private $conn;

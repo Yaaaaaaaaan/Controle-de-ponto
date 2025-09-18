@@ -2,7 +2,6 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 define('APP_RAN', true);
-date_default_timezone_set('America/Sao_Paulo');
 header('Content-Type: application/json');
 
 // Dependências

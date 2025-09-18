@@ -1,3 +1,7 @@
+// ========================
+// 📁 Main.js
+// ========================
+
 import { initializeUI } from './Cogs/UIManager.js';
 import { initializeSyncController } from './Core/syncController.js';
 import { initializeConnectionChecker } from './Core/connectionChecker.js';

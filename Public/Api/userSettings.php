@@ -47,6 +47,10 @@ $defaultTheme = $data['defaultTheme'] ?? 0;
 $oldPassword = $data['passwordChange']['oldPassword'] ?? '';
 $newPassword = $data['passwordChange']['newPassword'] ?? '';
 
+$obs = $data['obs'] ?? '';
+$latitude = $data['latitude'] ?? null;
+$longitude = $data['longitude'] ?? null;
+
 // 5. Chamar o método do Controller para atualizar o usuário
 // (Nota: updateUser no seu UserController já retorna um array ['success' => bool, 'message' => string])
 $result = $userController->updateUser(
@@ -59,7 +63,9 @@ $result = $userController->updateUser(
     $newPassword, // confirmPassword é igual a newPassword
     $defaultTheme,
     date('Y-m-d H:i:s'), // Parâmetro 9: A data de ocorrência (agora)
-    $obs             // Parâmetro 10: A observação de origem
+    $obs,             // Parâmetro 10: A observação de origem
+    $latitude,
+    $longitude
 );
 
 // 6. Retornar o resultado

@@ -53,17 +53,9 @@ class UserController {
     }
 
     public function updateUser($name, $id, $email, $nickname, $oldPassword, $newPassword, $confirmPassword, $defaultTheme, $occurrenceDate, $obs, $latitude, $longitude): array{
-        $this->user->name = filter_var($name, FILTER_SANITIZE_FULL_SPECIAL_CHARS);;
-        $this->user->id = $id;
-        $this->user->email = filter_var($email, FILTER_SANITIZE_FULL_SPECIAL_CHARS);;
-        $this->user->nickname = filter_var($nickname, FILTER_SANITIZE_FULL_SPECIAL_CHARS);;
-        $this->user->oldPassword = $oldPassword;
-        $this->user->newPassword = $newPassword;
-        $this->user->confirmPassword = $confirmPassword;
-        $this->user->defaultTheme = $defaultTheme ? 1 : 0;
-        $this->user->obs = $obs;
+        $success = $this->user->updateUser($name, $id, $email, $nickname, $oldPassword, $newPassword, $confirmPassword, $defaultTheme, $occurrenceDate, $obs, $latitude, $longitude);
 
-        if ($this->user->updateUser()) {
+        if ($success) {
             return ['success' => true, 'message' => 'Alterações efetuadas com sucesso.'];
         } else {
             return ['success' => false, 'message' => 'Alterações não efetuadas.'];
@@ -133,14 +125,14 @@ class UserController {
         return $this->user->deleteTokenForUser($userId);
     }
 
-    public function insertUserPicture(int $userId, string $filePath, string $originalFileName): ?int
+    public function insertUserPicture(int $userId, string $filePath, string $originalFileName, ?float $latitude, ?float $longitude): ?int
     {
-        return $this->user->insertNewUserPicture($userId, $filePath, $originalFileName);
+        return $this->user->insertNewUserPicture($userId, $filePath, $originalFileName, $latitude, $longitude);
     }
 
-    public function setUserProfilePicture(int $userId, int $photoId): bool
+    public function setUserProfilePicture(int $userId, int $photoId, ?float $latitude, ?float $longitude): bool
     {
-        return $this->user->setActiveProfilePicture($userId, $photoId);
+        return $this->user->setActiveProfilePicture($userId, $photoId, $latitude, $longitude);
     }
 
     public function getAllUserPictures(int $userId): array

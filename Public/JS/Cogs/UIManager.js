@@ -76,7 +76,7 @@ export async function initializeUI() {
     }
 }
 
-export async function triggerUIRefresh(freshUserData = null) {
+export async function triggerSharedUIRefresh(freshUserData = null) {
     let userData = freshUserData;
     if (!userData) {
         const activeUserId = parseInt(localStorage.getItem('activeUserId'), 10);

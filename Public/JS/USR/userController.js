@@ -9,7 +9,7 @@ import {
     getPointControlByUserId,
     fetchUserDataByToken
 } from '../indexedDB/Model.js';
-import { userDataPromise, triggerUIRefresh } from '../Cogs/UIManager.js';
+import { userDataPromise, triggerSharedUIRefresh } from '../Cogs/UIManager.js';
 import { showToast, withApiHandler, UserFacingError, getCurrentPosition } from '../Cogs/utils.js';
 import { isOnline } from '../Core/connectionChecker.js';
 
@@ -63,7 +63,7 @@ async function handleConfirmPresenceClick(event) {
         const handleApiPresence = withApiHandler(doOnlinePresence, { button });
         const success = await handleApiPresence();
         if (success) {
-            await triggerUIRefresh(); // Atualiza o dashboard sem recarregar
+            await triggerSharedUIRefresh(); // Atualiza o dashboard sem recarregar
         }
     } else {
         // Para offline, podemos usar o AOP também, mas uma chamada direta é mais clara
@@ -73,7 +73,7 @@ async function handleConfirmPresenceClick(event) {
         try {
             await doOfflinePresence();
             showToast('Presença registrada offline!');
-            await triggerUIRefresh();
+            await triggerSharedUIRefresh();
         } catch (error) {
             showToast(`Aviso: ${error.message}`, 'info');
         } finally {

@@ -1,3 +1,6 @@
+// ========================
+// 📁 service-worker.js
+// ========================
 const CACHE_NAME = 'v3-static'; // Renomeado para clareza
 const DYNAMIC_CACHE_NAME = 'v3-dynamic'; // Novo cache para conteúdo do usuário
 const urlsToCache = [

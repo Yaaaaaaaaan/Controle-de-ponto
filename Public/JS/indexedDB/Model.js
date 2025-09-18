@@ -56,20 +56,20 @@ async function upsertUser(userObjectToSave) {
         // --- FIM DA LÓGICA DE PRESERVAÇÃO ---
 
         // 3. Salva o objeto final e mesclado, que agora garantidamente contém o hash se ele existia.
-        const putRequest = userDataStore.put(finalUserObject);
+       userDataStore.put(finalUserObject);
 
         return new Promise((resolve, reject) => {
-            putRequest.onsuccess = () => {
-                console.log(`[${obterHoraFormatada()}] upsertUser (INTELIGENTE): Sucesso ao salvar/atualizar '${finalUserObject.nickname}'. Objeto final:`, finalUserObject);
+            transaction.oncomplete = () => {
+                console.log(`[${obterHoraFormatada()}] upsertUser: Sucesso ao salvar/atualizar '${finalUserObject.nickname}'. Objeto final:`, finalUserObject);
                 resolve(finalUserObject);
             };
-            putRequest.onerror = () => {
-                console.error(`[${obterHoraFormatada()}] upsertUser (INTELIGENTE): ERRO ao salvar/atualizar '${finalUserObject.nickname}'.`, putRequest.error);
-                reject(`[${obterHoraFormatada()}] Erro ao adicionar/atualizar usuário: ` + putRequest.error);
+            transaction.onerror = () => {
+                console.error(`[${obterHoraFormatada()}] upsertUser: ERRO na transação de salvar/atualizar `, event.target.error);
+                reject(event.target.error);
             };
         });
     } catch (error) {
-        console.error(`[${obterHoraFormatada()}] Erro em upsertUser (INTELIGENTE):`, error);
+        console.error(`[${obterHoraFormatada()}] Erro em upsertUser:`, error);
         throw error;
     }
 }
@@ -362,14 +362,14 @@ async function setUserToken(tokenData) { // Agora recebe o objeto completo
             throw new Error("Objeto de token inválido para setUserToken.");
         }
 
-        const putRequest = userTokenStore.put(tokenData);
+        userTokenStore.put(tokenData);
 
         return new Promise((resolve, reject) => {
-            putRequest.onsuccess = () => {
+            transaction.oncomplete = () => {
                 console.log(`[${obterHoraFormatada()}] | setUserToken: Token para userId ${tokenData.userId} salvo/atualizado com sucesso.`);
                 resolve();
             };
-            putRequest.onerror = (event) => {
+            transaction.onerror = (event) => {
                 console.error(`[${obterHoraFormatada()}] | setUserToken: Erro ao salvar token.`, event.target.error);
                 reject(event.target.error);
             };
@@ -717,18 +717,24 @@ async function addHistoryEntry(entry) {
  * @param {number} userId - O ID do usuário.
  * @returns {Promise<Array>}
  */
-async function getLocalHistory(userId) {
+async function getLocalHistory(userId, limit = 50) {
     const db = await initializeDB();
     const transaction = db.transaction(userHistoryStoreName, 'readonly');
     const store = transaction.objectStore(userHistoryStoreName);
     const index = store.index('userId_timestamp');
     // Busca todos os registros do usuário e o cursor se encarrega da ordenação
-    const request = index.getAll(IDBKeyRange.bound([userId, ''], [userId, new Date().toISOString()]), undefined);
+    const request = index.openCursor(IDBKeyRange.bound([userId, ''], [userId, new Date().toISOString()]), 'prev');
+    const results = [];
 
     return new Promise((resolve, reject) => {
-        request.onsuccess = () => {
-            // Inverte para mostrar os mais recentes primeiro
-            resolve(request.result.reverse());
+        request.onsuccess = (event) => {
+            const cursor = event.target.result;
+            if(cursor && results.length < limit) {
+                results.push(cursor.value);
+                cursor.continue();
+            } else {
+                resolve(results);
+            }
         };
         request.onerror = (event) => reject(event.target.error);
     });
@@ -740,34 +746,38 @@ async function replaceUserHistory(userId, historyFromServer) {
     const store = transaction.objectStore(userHistoryStoreName);
     const index = store.index('userId_timestamp');
 
-    // 1. Limpa todas as entradas de histórico existentes para este usuário
-    const clearRequest = index.openCursor(IDBKeyRange.bound([userId, ''], [userId, new Date().toISOString()]));
-    clearRequest.onsuccess = (event) => {
-        const cursor = event.target.result;
-        if (cursor) {
-            store.delete(cursor.primaryKey);
-            cursor.continue();
-        }
-    };
-
-    // 2. Adiciona as novas entradas vindas do servidor
-    historyFromServer.forEach(entry => {
-        // Mapeia os campos do servidor para o schema do IndexedDB
-        store.add({
-            userId: userId,
-            description: entry.descricao,
-            timestamp: entry.data_ocorrencia,
-            syncStatus: 'online' // Toda entrada do servidor é, por definição, 'online'
-        });
-    });
-
+    // Usamos uma única promessa para controlar o resultado da transação
     return new Promise((resolve, reject) => {
         transaction.oncomplete = resolve;
         transaction.onerror = (event) => reject(event.target.error);
-    });
-}
 
-export {
+        // Etapa 1: Pega todas as chaves primárias dos registos existentes do utilizador.
+        const keysRequest = index.getAllKeys(IDBKeyRange.bound([userId, ''], [userId, new Date().toISOString()]));
+
+        keysRequest.onsuccess = () => {
+            const keysToDelete = keysRequest.result;
+
+            // Etapa 2: Coloca na fila a exclusão de todas as chaves encontradas.
+            keysToDelete.forEach(key => store.delete(key));
+
+            // Etapa 3: Coloca na fila a adição de todos os novos registos do servidor.
+            historyFromServer.forEach(entry => {
+                store.add({
+                    userId: userId,
+                    description: entry.descricao,
+                    timestamp: entry.data_ocorrencia,
+                    syncStatus: 'online'
+                });
+            });
+        };
+
+        keysRequest.onerror = (event) => {
+            // Se a busca de chaves falhar, rejeita a promessa.
+            reject(event.target.error);
+        };
+    });
+}export {
+
     //funções de serviço
     obterHoraFormatada,
 

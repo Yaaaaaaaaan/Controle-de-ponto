@@ -20,7 +20,7 @@ require_once __DIR__ . "/../Layout/header.php"; // Inclui o cabeçalho e menu
                             <img id="pPicture" alt="Imagem de perfil">
                             <div class="polaroid-caption">
                                 <small>
-                                    <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#profilePhotoModal">
+                                    <a href="#" data-bs-toggle="modal" data-bs-target="#profilePhotoModal">
                                         Quero mudar minha foto de perfil...
                                     </a>
                                 </small>
