@@ -155,6 +155,70 @@ class UserController {
         // Apenas repassa a chamada para o método que já corrigimos no Model.
         return $this->user->getUserHistory($userId, $limit);
     }
+// Em App/Controller/UserController.php
 
+public function updatePresenceHousekeeping($userId, $codRegistro, $statusId, $dateInput) {
+    // --- DEBUG: Descobrir qual campo está vazio ---
+    if (empty($codRegistro)) {
+        return ['success' => false, 'message' => 'Erro: Código do registro (cod) não encontrado.'];
+    }
+    if (empty($statusId)) {
+        return ['success' => false, 'message' => 'Erro: Status não selecionado.'];
+    }
+    if (empty($dateInput)) {
+        return ['success' => false, 'message' => 'Erro: Data não informada.'];
+    }
+
+    // --- Lógica de Formatação da Data ---
+    $dateFormatted = $dateInput;
+    // Se vier DD/MM/YYYY, converte para YYYY-MM-DD
+    if (strpos($dateInput, '/') !== false) {
+        $parts = explode('/', $dateInput);
+        if (count($parts) === 3) {
+            $dateFormatted = $parts[2] . '-' . $parts[1] . '-' . $parts[0];
+        }
+    }
+
+    // --- Chama o Model ---
+    // Certifique-se que a função updateRegistryStatus existe no Model/User.php
+    $updateResult = $this->user->updateRegistryStatus($codRegistro, $statusId, $dateFormatted);
+
+    if ($updateResult) {
+        return ['success' => true, 'message' => 'Registro atualizado com sucesso.'];
+    } else {
+        return ['success' => false, 'message' => 'Erro no Banco de Dados (SQL).'];
+    }
+}
+public function saveUserAdmin($id, $name, $nickname, $email, $rank, $password) {
+    if (empty($name) || empty($nickname) || empty($email)) {
+        return ['success' => false, 'message' => 'Preencha os campos obrigatórios.'];
+    }
+
+    if (!empty($id)) {
+        // --- EDIÇÃO ---
+        // A senha é opcional na edição
+        if ($this->user->updateUserByAdmin($id, $name, $nickname, $email, $rank, $password)) {
+            return ['success' => true, 'message' => 'Usuário atualizado com sucesso.'];
+        }
+    } else {
+        // --- CRIAÇÃO ---
+        if (empty($password)) {
+            return ['success' => false, 'message' => 'Senha é obrigatória para novos usuários.'];
+        }
+        if ($this->user->createUserByAdmin($name, $nickname, $email, $rank, $password)) {
+            return ['success' => true, 'message' => 'Usuário criado com sucesso.'];
+        }
+    }
+
+    return ['success' => false, 'message' => 'Erro ao salvar no banco de dados.'];
+}
+
+// Deletar Usuário
+public function deleteUserAdmin($id) {
+    if ($this->user->softDeleteUser($id)) {
+        return ['success' => true, 'message' => 'Usuário inativado com sucesso.'];
+    }
+    return ['success' => false, 'message' => 'Erro ao inativar usuário.'];
+}
 }
 ?>

@@ -574,5 +574,152 @@ require_once __DIR__ . '/history.php';
             return false;
         }
     }
+
+    public function getAllRegistersForAdmin() {
+    $query = "SELECT 
+                r.registro_id as cod, 
+                r.data_registro as dateIn, 
+                r.status as status, 
+                u.id_usuario as userId,
+                u.nome_completo as nome
+              FROM registros_ponto r
+              INNER JOIN usuarios u ON r.id_usuario = u.id_usuario
+              ORDER BY r.data_registro DESC";
+
+        try {
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute();
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return $result;
+        } catch (PDOException $e) {
+            error_log("Erro no Model getAllRegistersForAdmin: " . $e->getMessage());
+            return [];
+        }
+    }
+public function updateRegistryStatus($cod, $statusId, $newDate) {
+    // 1. Mapeia o ID do select (1, 2, 3) para o texto do banco
+    $statusMap = [
+        '1' => 'Verificação pendente',
+        '2' => 'Já verificado',
+        '3' => 'Recusado'
+    ];
+    
+    // Se não encontrar, mantém o que veio ou define um padrão
+    $statusText = $statusMap[$statusId] ?? 'Verificação pendente';
+
+    // 2. Query SQL
+    $query = "UPDATE registros_ponto 
+              SET status = :status, data_registro = :data 
+              WHERE registro_id = :cod";
+
+    try {
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':status', $statusText);
+        $stmt->bindParam(':data', $newDate);
+        $stmt->bindParam(':cod', $cod);
+        
+        return $stmt->execute();
+    } catch (PDOException $e) {
+        error_log("Erro SQL updateRegistryStatus: " . $e->getMessage());
+        return false;
+    }
 }
+public function getAllUsers() {
+    // Adicionado: WHERE u.is_inactive = 0
+    $query = "SELECT 
+                u.id_usuario, u.nome_completo, u.nome_usuario, u.email, u.nivel_acesso, 
+                f.caminho_arquivo as foto_perfil
+              FROM usuarios u
+              LEFT JOIN fotos f ON u.id_usuario = f.id_usuario AND f.perfil = 1
+              WHERE u.is_inactive = 0 
+              ORDER BY u.nome_completo ASC";
+    try {
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Erro ao listar usuários: " . $e->getMessage());
+        return [];
+    }
+}
+
+// 2. NOVO MÉTODO: Soft Delete (Inativar)
+public function softDeleteUser($id) {
+    $query = "UPDATE usuarios SET is_inactive = 1 WHERE id_usuario = :id";
+    try {
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        return $stmt->execute();
+    } catch (PDOException $e) {
+        error_log("Erro softDelete: " . $e->getMessage());
+        return false;
+    }
+}
+
+// 3. NOVO MÉTODO: Atualizar Usuário (Admin)
+public function updateUserByAdmin($id, $name, $nickname, $email, $rank, $password = null) {
+    try {
+        $this->conn->beginTransaction();
+
+        $query = "UPDATE usuarios SET 
+                    nome_completo = :name, 
+                    nome_usuario = :nickname, 
+                    email = :email, 
+                    nivel_acesso = :rank";
+        
+        // Se a senha foi informada, adiciona à query
+        if (!empty($password)) {
+            $query .= ", senha_hash = :password";
+        }
+        
+        $query .= " WHERE id_usuario = :id";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':name', $name);
+        $stmt->bindParam(':nickname', $nickname);
+        $stmt->bindParam(':email', $email);
+        $stmt->bindParam(':rank', $rank);
+        $stmt->bindParam(':id', $id);
+
+        if (!empty($password)) {
+            $hash = password_hash($password, PASSWORD_DEFAULT);
+            $stmt->bindParam(':password', $hash);
+        }
+
+        $stmt->execute();
+        $this->conn->commit();
+        return true;
+
+    } catch (Exception $e) {
+        $this->conn->rollBack();
+        error_log("Erro updateAdmin: " . $e->getMessage());
+        return false;
+    }
+}
+
+// 4. NOVO MÉTODO: Criar Usuário (Admin)
+// Simplificado para o painel administrativo
+public function createUserByAdmin($name, $nickname, $email, $rank, $password) {
+    // ... Lógica similar ao createUser original, mas recebendo parâmetros ...
+    // ... Se quiser usar o createUser original, precisaremos adaptar o Controller.
+    // Vou sugerir usar uma lógica direta aqui para evitar conflitos com o código legado:
+    
+    $query = "INSERT INTO usuarios (nome_completo, nome_usuario, email, nivel_acesso, senha_hash) 
+              VALUES (:name, :nickname, :email, :rank, :pass)";
+    try {
+        $stmt = $this->conn->prepare($query);
+        $hash = password_hash($password, PASSWORD_DEFAULT);
+        $stmt->bindValue(':name', $name);
+        $stmt->bindValue(':nickname', $nickname);
+        $stmt->bindValue(':email', $email);
+        $stmt->bindValue(':rank', $rank);
+        $stmt->bindValue(':pass', $hash);
+        return $stmt->execute();
+    } catch (PDOException $e) {
+        return false;
+    }
+}
+}
+
+
 ?>

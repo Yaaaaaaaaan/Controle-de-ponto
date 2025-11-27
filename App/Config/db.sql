@@ -16,6 +16,7 @@ create table usuarios(
     senha_hash varchar(255) null,
     nivel_acesso int(2) null comment 'Ex: 1 para Admin, 2 para Usuário Padrão',
     tema_padrao tinyint(1) default 0 not null,
+    is_inactive tinyint(1) default 0 not null,
     constraint idx_email_unico unique (email),
     constraint idx_nome_usuario_unico unique (nome_usuario)
 );

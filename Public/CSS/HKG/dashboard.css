@@ -1,18 +1,66 @@
-@media (max-width: 375px) {
-    #contentChart {
+/* Container que segura os dois elementos lado a lado */
+    .dashboard-container {
+        display: flex;
         width: 100%;
-        height: 75vh;
-        padding: 0;
+        overflow: hidden; /* Evita rolagem horizontal durante animação */
+        transition: all 0.5s ease;
     }
-    .mt-6{
-        margin-top:2rem;
+
+    /* O GRÁFICO: Começa ocupando 100% da largura */
+    #contentChart {
+        width: 100%; /* Largura inicial total */
+        height: 70vh;
+        transition: width 0.6s cubic-bezier(0.25, 0.8, 0.25, 1); /* Animação suave */
+        
+        /* Centraliza o canvas dentro da div */
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
-}
-/* -- -- -- */
-#contentChart {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    transition: width 0.5s ease-in-out;
-    overflow: hidden;
-}
+
+    /* Quando a classe .shrink é adicionada, ele encolhe para a esquerda */
+    #contentChart.shrink {
+        width: 40%; /* Tamanho final do gráfico */
+    }
+
+    /* O CARD DE DETALHES: Começa com largura ZERO */
+    #detailCard {
+        width: 0%;      /* Começa invisível por não ter largura */
+        height: 70vh;
+        opacity: 0;
+        
+        overflow: hidden; /* IMPORTANTE: Esconde o conteúdo enquanto a largura é 0 */
+        background-color: #f8f9fa;
+        border-radius: 12px;
+        box-shadow: -5px 0 15px rgba(0,0,0,0.05); /* Sombra na esquerda */
+        
+        transition: width 0.6s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.4s ease;
+    }
+
+    /* Quando a classe .expand é adicionada, ele cresce para a direita */
+    #detailCard.expand {
+        width: 60%; /* Tamanho final do card (40% + 60% = 100%) */
+        opacity: 1;
+        padding: 20px;
+        border: 1px solid #ddd;
+    }
+    
+    /* Ajustes internos */
+    #pointControlUsersData {
+        width: 100% !important;
+        height: auto !important;
+        max-height: 100%;
+    }
+    
+    .contentDetailCard {
+        height: calc(100% - 80px);
+        overflow-y: auto;
+    }
+
+    /* Responsividade */
+    @media (max-width: 768px) {
+        .dashboard-container { flex-direction: column; }
+        #contentChart, #contentChart.shrink { width: 100%; height: 50vh; }
+        #detailCard { width: 100%; height: 0; }
+        #detailCard.expand { width: 100%; height: auto; margin-top: 20px; }
+    }

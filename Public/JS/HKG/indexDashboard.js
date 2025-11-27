@@ -1,49 +1,137 @@
-// ========================
-// 📁 indexDashboard.js
-// ========================
-import { 
-    getAllPointControl, 
-    syncServerToIndexedDB 
-} from '../indexedDB/Model.js';
-
-// Variáveis globais para armazenar dados
+// Variáveis globais
 let labels = [];
 let dataPoints = [];
 let detalhes = {};
+let chartInstance = null;
+let categoriaAtiva = null; 
+let listaCategoriaAtual = []; 
+let estadoOrdenacao = { coluna: 'data', direcao: 'desc' };
 
 document.addEventListener('DOMContentLoaded', async function() {
-    // Buscar dados do IndexedDB
-    await loadDataFromIndexedDB();
+    console.log("Dashboard Iniciado");
+    await loadDataFromAPI();
+    configurarPesquisa();
+    
+    // NOVO: Configura o envio do formulário de edição
+    const form = document.getElementById('formEditar');
+    if (form) {
+        form.addEventListener('submit', handleFormSubmit);
+    }
+});
 
-    // Tentar sincronizar com o servidor se estiver online
-    if (navigator.onLine) {
-        try {
-            await syncServerToIndexedDB();
-            // Recarregar dados após sincronização
-            await loadDataFromIndexedDB();
-        } catch (error) {
-            console.error("Erro ao sincronizar dados com o servidor:", error);
+// === NOVA LÓGICA DE ENVIO DO FORMULÁRIO ===
+async function handleFormSubmit(event) {
+    event.preventDefault(); 
+    
+    const form = event.target;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Salvando...';
+
+    const formData = new FormData(form);
+
+    try {
+        // --- CORREÇÃO AQUI ---
+        // Removemos "/controle-de-ponto". 
+        // A barra "/" no início diz: "comece da raiz do site (localhost:8080)"
+        const response = await fetch('/Public/Api/updateHousekeep.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (response.status === 404) {
+            // Dica de depuração no console
+            console.error("Caminho testado: /Public/Api/updateHousekeep.php");
+            throw new Error('API não encontrada (404).');
         }
-    }
+        
+        if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status}`);
+        }
 
-    // Inicializar o gráfico
-    const ctx = document.getElementById('pointControlUsersData');
-    if (!ctx) {
-        console.error("Elemento 'pointControlUsersData' não encontrado");
-        return;
+        const result = await response.json();
+
+        if (result.success) {
+            const modalEl = document.getElementById('editarModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+
+            await loadDataFromAPI();
+
+            if (categoriaAtiva) {
+                if (!detalhes[categoriaAtiva] || detalhes[categoriaAtiva].length === 0) {
+                    fecharDetalhes();
+                } else {
+                    mostrarDetalhes(categoriaAtiva);
+                }
+            }
+        } else {
+            alert('Erro ao salvar: ' + result.message);
+        }
+
+    } catch (error) {
+        console.error('Erro detalhado:', error);
+        alert('Erro ao processar: ' + error.message);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
     }
+}
+
+// === RESTO DAS FUNÇÕES (IGUAL AO ANTERIOR) ===
+
+async function loadDataFromAPI() {
+    const url = '../../Api/housekeep.php';
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Erro na API');
+        const registros = await response.json();
+        
+        // Se estiver vazio
+        if (!registros || registros.length === 0) {
+            // Se tinha gráfico, destroi
+            if(chartInstance) chartInstance.destroy();
+            document.getElementById('contentChart').innerHTML = '<h4 class="text-center mt-5">Nenhum dado.</h4>';
+            return;
+        }
+
+        processarDados(registros);
+        initChart();
+    } catch (error) {
+        console.error("Erro:", error);
+    }
+}
+
+function processarDados(registros) {
+    detalhes = { 'Verificação pendente': [], 'Já verificado': [], 'Recusado': [] };
+    registros.forEach(reg => {
+        let status = reg.status || 'Verificação pendente';
+        if (!detalhes[status]) detalhes[status] = [];
+        detalhes[status].push(reg);
+    });
+    labels = Object.keys(detalhes).filter(k => detalhes[k].length > 0);
+    dataPoints = labels.map(k => detalhes[k].length);
+}
+
+function initChart() {
+    const ctx = document.getElementById('pointControlUsersData');
+    if (!ctx) return;
+
+    const coresMap = {
+        'Verificação pendente': 'rgb(173,181,189)',
+        'Já verificado': 'rgb(32,201,151)',
+        'Recusado': 'rgb(253,126,20)'
+    };
+    const cores = labels.map(l => coresMap[l] || '#333');
 
     const data = {
         labels: labels,
         datasets: [{
-            label: " ",
             data: dataPoints,
-            backgroundColor: [
-                detalhes['Verificação pendente'] && detalhes['Verificação pendente'].length > 0 ? 'rgb(173,181,189)' : '',
-                detalhes['Já verificado'] && detalhes['Já verificado'].length > 0 ? 'rgb(32,201,151)' : '',
-                detalhes['Recusado'] && detalhes['Recusado'].length > 0 ? 'rgb(253,126,20)' : ''
-            ].filter(color => color !== ''),
-            hoverOffset: 4
+            backgroundColor: cores,
+            hoverOffset: 10
         }]
     };
 
@@ -53,271 +141,160 @@ document.addEventListener('DOMContentLoaded', async function() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const label = context.label || '';
-                            const value = context.raw || 0;
-                            return `${label}: ${value}`;
-                        }
-                    }
-                }
-            },
+            plugins: { legend: { position: 'bottom' } },
             onClick: handleChartClick
         }
     };
 
-    const chart = new Chart(ctx, config);
-
-    function handleChartClick(event, elements) {
-        if (!elements || elements.length === 0) return;
-        const index = elements[0].index;
-        const categoriaSelecionada = labels[index]; // Renomeado
-        mostrarDetalhes(categoriaSelecionada);
+    if (chartInstance) {
+        // Apenas atualiza os dados para ter animação suave
+        chartInstance.data = data;
+        chartInstance.update();
+    } else {
+        chartInstance = new Chart(ctx, config);
     }
+}
 
-    function mostrarDetalhes(categoriaSelecionada) {
-        const contentChart = document.getElementById('contentChart');
-        const detailCard = document.getElementById('detailCard');
-        const detailTitle = document.getElementById('detailTitle');
-        const detailTotal = document.getElementById('detailTotal');
-        const detailContent = document.getElementById('detailContent');
+function handleChartClick(evt, elements) {
+    if (!elements || elements.length === 0) return;
+    const index = elements[0].index;
+    const categoriaClicada = labels[index];
+    const contentChart = document.getElementById('contentChart');
 
-        // Atualiza dados
-        detailTitle.textContent = categoriaSelecionada;
-        detailTotal.textContent = dataPoints[labels.indexOf(categoriaSelecionada)];
-        detailContent.innerHTML = '';
+    if (contentChart.classList.contains('shrink')) {
+        if (categoriaAtiva === categoriaClicada) fecharDetalhes();
+        else mostrarDetalhes(categoriaClicada);
+    } else {
+        mostrarDetalhes(categoriaClicada);
+    }
+}
 
-        const registros = detalhes[categoriaSelecionada] || [];
-        const registrosPorId = {}; // Novo objeto para mapear IDs para registros
+function fecharDetalhes() {
+    const contentChart = document.getElementById('contentChart');
+    const detailCard = document.getElementById('detailCard');
+    detailCard.classList.remove('expand');
+    contentChart.classList.remove('shrink');
+    categoriaAtiva = null;
+    const searchInput = document.getElementById('searchDashboard');
+    if(searchInput) searchInput.value = '';
+}
 
-        registros.forEach(registro => {
-            registrosPorId[registro.id] = registro; // Mapeia o ID para o registro
+function mostrarDetalhes(categoria) {
+    categoriaAtiva = categoria;
+    const contentChart = document.getElementById('contentChart');
+    const detailCard = document.getElementById('detailCard');
+    const searchInput = document.getElementById('searchDashboard');
 
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-            <td>${registro.data}</td>
-            <td>${categoriaSelecionada}</td>
-            <td>${registro.nome}</td>
-            <td>
-                <button class="btn btn-primary btn-sm" onclick="editarRegistro(${registro.id}, ${registro.cod}, '${registro.data}', '${registro.nome}', '${registro.descricao}')">
-                    <i class="fas fa-edit"></i> Editar
-                </button>
-            </td>
-        `;
-            detailContent.appendChild(tr);
-        });
+    // Se não for uma atualização automática (o usuário está digitando ou trocando categoria), limpa pesquisa
+    // Mas se for refresh pós-salvamento, mantém o estado seria ideal, mas por simplicidade limpamos ou re-filtramos
+    // Aqui vamos apenas atualizar os dados base
+    
+    document.getElementById('detailTitle').textContent = categoria;
+    document.getElementById('detailTotal').textContent = detalhes[categoria] ? detalhes[categoria].length : 0;
+    
+    listaCategoriaAtual = detalhes[categoria] || [];
+    
+    // Reseta ordenação apenas se mudou de categoria visualmente
+    // (Poderíamos melhorar isso, mas ok para agora)
+    // estadoOrdenacao = { coluna: 'data', direcao: 'desc' };
+    
+    aplicarFiltrosEOrdenacao();
 
-        // Armazena o mapeamento para uso posterior
-        detailCard.registrosPorId = registrosPorId;
-
-        // Ativa animações
+    if (!contentChart.classList.contains('shrink')) {
         contentChart.classList.add('shrink');
-        detailCard.classList.add('expand');
-        setTimeout(() => {
-            detailCard.style.display = 'block';
-            detailCard.classList.add('expand');
-        }, 480);
+        setTimeout(() => { detailCard.classList.add('expand'); }, 50);
     }
+}
 
-    function atualizarTabela(registros, categoriaSelecionada) { // Renomeado
-        tbody.innerHTML = '';
-        registros.forEach(registro => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${registro.data}</td>
-                <td>${categoriaSelecionada}</td>
-                <td>${registro.nome}</td>
-                <td>
-                    <button class="btn btn-primary btn-sm" onclick="editarRegistro(${registro.id}, ${registro.cod}, '${registro.data}', '${registro.nome}', '${registro.descricao}')">
-                        Editar
-                    </button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-    }
+function aplicarFiltrosEOrdenacao() {
+    const searchInput = document.getElementById('searchDashboard');
+    const termo = searchInput ? searchInput.value.toLowerCase().trim() : '';
 
-    const estadoOrdenacao = {
-        data: true,
-        nome: true
-    };
+    let listaFiltrada = listaCategoriaAtual.filter(reg => {
+        if (!termo) return true;
+        return reg.nome.toLowerCase().includes(termo);
+    });
 
-    function ordenarTabela(coluna) {
-        const tbody = document.getElementById('detailContent');
-        const linhas = Array.from(tbody.querySelectorAll('tr'));
-        const crescente = estadoOrdenacao[coluna];
-
-        linhas.sort((a, b) => {
-            let valorA, valorB;
-
-            if (coluna === 'data') {
-                valorA = new Date(formatarDataISO(a.cells[0].textContent));
-                valorB = new Date(formatarDataISO(b.cells[0].textContent));
-            } else if (coluna === 'nome') {
-                valorA = a.cells[2].textContent.trim().toLowerCase();
-                valorB = b.cells[2].textContent.trim().toLowerCase();
-            }
-
-            if (valorA < valorB) return crescente ? -1 : 1;
-            if (valorA > valorB) return crescente ? 1 : -1;
-            return 0;
-        });
-
-        linhas.forEach(linha => tbody.appendChild(linha));
-        estadoOrdenacao[coluna] = !estadoOrdenacao[coluna];
-    }
-
-    function formatarDataISO(dataString) {
-        const partes = dataString.trim().split('/');
-        return `${partes[2]}-${partes[1]}-${partes[0]}`;
-    }
-
-    function encontrarRegistroPorId(id) {
-        for (const categoria in detalhes) {
-            const lista = detalhes[categoria];
-            const encontrado = lista.find(item => item.id === id);
-            if (encontrado) {
-                console.log("Registro encontrado:", encontrado); // Depuração!
-                return encontrado;
-            }
+    listaFiltrada.sort((a, b) => {
+        let valA, valB;
+        if (estadoOrdenacao.coluna === 'data') {
+            valA = new Date(a.dateIn);
+            valB = new Date(b.dateIn);
+        } else if (estadoOrdenacao.coluna === 'nome') {
+            valA = a.nome.toLowerCase();
+            valB = b.nome.toLowerCase();
         }
-        return null;
-    }
+        if (valA < valB) return estadoOrdenacao.direcao === 'asc' ? -1 : 1;
+        if (valA > valB) return estadoOrdenacao.direcao === 'asc' ? 1 : -1;
+        return 0;
+    });
 
-    function formatarDataParaExibir(data) {
-        if (!data) return '';
-        if (!(data instanceof Date)) {
-            console.error("Não é um objeto Date:", data);
-            return 'Não é Data';
-        }
-        const dia = String(data.getDate()).padStart(2, '0');
-        const mes = String(data.getMonth() + 1).padStart(2, '0');
-        const ano = data.getFullYear();
-        return `${dia}/${mes}/${ano}`;
-    }
+    renderizarTabela(listaFiltrada);
+}
 
-    window.ordenarTabela = ordenarTabela;
-    window.editarRegistro = function(id, cod, data, nome, descricao) {
-        const registro = encontrarRegistroPorId(id);
-        if (!registro) return;
-
-        let descricaoValue = null;
-        if (registro.descricao === 'Verificação pendente') {
-            descricaoValue = 1;
-        } else if (registro.descricao === 'Já verificado') {
-            descricaoValue = 2;
-        } else if (registro.descricao === 'Recusado') {
-            descricaoValue = 3;
-        }
-
-        console.log("editarRegistro - id:", id);
-        console.log("editarRegistro - cod:", cod);
-        console.log("editarRegistro - data:", data);
-        console.log("editarRegistro - nome:", nome);
-        console.log("editarRegistro - descricao:", registro.descricao);  // Original
-        console.log("editarRegistro - descricaoValue:", descricaoValue);
-
-        document.getElementById('inputId').value = id;
-        document.getElementById('inputCod').value = cod;
-        document.getElementById('inputNome').textContent = nome;
-        document.getElementById('inputData').value = data;
-        document.getElementById('inputDescricao').value = descricaoValue;
-
-        const modal = new bootstrap.Modal(document.getElementById('editarModal'));
-        modal.show();
-    };
-
-    //  ***ADICIONEI***
-    const inputPesquisa = document.querySelector('#detailCard .input-group input');
-    const botaoPesquisar = document.querySelector('#detailCard .input-group button');
+function renderizarTabela(lista) {
     const tbody = document.getElementById('detailContent');
-    let registrosExibidos = [];
+    tbody.innerHTML = '';
 
-    function filtrarRegistros() {
-        const termoPesquisa = inputPesquisa.value.trim().toLowerCase();
-        const registrosFiltrados = registrosExibidos.filter(registro => {
-            const dataFormatada = formatarDataParaExibir(new Date(registro.data)).toLowerCase();
-            const nome = registro.nome.toLowerCase();
-            return dataFormatada.includes(termoPesquisa) || nome.includes(termoPesquisa);
-        });
-        atualizarTabela(registrosFiltrados, document.getElementById('detailTitle').textContent); // ***ADICIONEI***
+    if (lista.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">Nenhum registro encontrado.</td></tr>';
+        return;
     }
 
-    botaoPesquisar.addEventListener('click', filtrarRegistros);
-    inputPesquisa.addEventListener('input', filtrarRegistros);
-    // Função para carregar dados do IndexedDB
-    async function loadDataFromIndexedDB() {
-        try {
-            // Buscar todos os registros de ponto
-            const pointControlRecords = await getAllPointControl();
+    lista.forEach(reg => {
+        let d = reg.dateIn;
+        try { d = d.split('-').reverse().join('/'); } catch(e){}
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${d}</td>
+            <td>${reg.status}</td>
+            <td>${reg.nome}</td>
+            <td><button class="btn btn-primary btn-sm" onclick="editarRegistro(${reg.cod}, '${reg.nome}', '${reg.dateIn}', '${reg.status}', ${reg.userId})">Editar</button></td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
 
-            if (!pointControlRecords || pointControlRecords.length === 0) {
-                console.log("Nenhum registro de ponto encontrado");
-                return;
-            }
-
-            // Processar registros para obter dados por status
-            const statusData = processPointControlRecords(pointControlRecords);
-
-            // Atualizar variáveis globais
-            labels = statusData.labels;
-            dataPoints = statusData.dataPoints;
-            detalhes = statusData.detalhes;
-
-            console.log("Dados carregados do IndexedDB:", { labels, dataPoints, detalhes });
-        } catch (error) {
-            console.error("Erro ao carregar dados do IndexedDB:", error);
-        }
+window.ordenarTabela = function(coluna) {
+    if (estadoOrdenacao.coluna === coluna) {
+        estadoOrdenacao.direcao = estadoOrdenacao.direcao === 'asc' ? 'desc' : 'asc';
+    } else {
+        estadoOrdenacao.coluna = coluna;
+        estadoOrdenacao.direcao = 'asc';
     }
+    // Atualiza ícones (simplificado)
+    document.querySelectorAll('.sort-icon').forEach(el => el.textContent = '⇵');
+    const th = document.querySelector(`th[onclick="ordenarTabela('${coluna}')"] .sort-icon`);
+    if(th) th.textContent = estadoOrdenacao.direcao === 'asc' ? '▲' : '▼';
 
-    // Função para processar registros de ponto e obter dados por status
-    function processPointControlRecords(records) {
-        // Agrupar registros por status
-        const statusGroups = {
-            'Verificação pendente': [],
-            'Já verificado': [],
-            'Recusado': []
-        };
+    aplicarFiltrosEOrdenacao();
+}
 
-        // Mapear códigos de status para descrições
-        const statusMap = {
-            '1': 'Verificação pendente',
-            '2': 'Já verificado',
-            '3': 'Recusado'
-        };
-
-        records.forEach(record => {
-            // Verificar se temos status
-            if (!record.status) return;
-
-            // Obter descrição do status
-            const statusDesc = statusMap[record.status] || 'Verificação pendente';
-
-            // Inicializar grupo do status se não existir
-            if (!statusGroups[statusDesc]) {
-                statusGroups[statusDesc] = [];
-            }
-
-            // Adicionar registro ao grupo do status
-            statusGroups[statusDesc].push({
-                cod: record.cod,
-                data: new Date(record.dateIn).toLocaleDateString('pt-BR'),
-                nome: record.nome || 'Usuário',
-                status: statusDesc,
-                id: record.userId
-            });
-        });
-
-        // Criar arrays para labels e dataPoints
-        const labels = Object.keys(statusGroups).filter(status => statusGroups[status].length > 0);
-        const dataPoints = labels.map(status => statusGroups[status].length);
-
-        return {
-            labels,
-            dataPoints,
-            detalhes: statusGroups
-        };
+function configurarPesquisa() {
+    const searchInput = document.getElementById('searchDashboard');
+    if(searchInput) {
+        searchInput.addEventListener('input', () => aplicarFiltrosEOrdenacao());
     }
-});
+}
+
+window.editarRegistro = function(cod, nome, data, status, userId) {
+    document.getElementById('inputId').value = userId;
+    document.getElementById('inputCod').value = cod;
+    document.getElementById('inputNome').textContent = nome;
+    
+    // Converte YYYY-MM-DD para DD/MM/YYYY para exibir no input
+    if(data.includes('-')) {
+        try { data = data.split('-').reverse().join('/'); } catch(e){}
+    }
+    document.getElementById('inputData').value = data;
+    
+    let val = "1";
+    if(status == 'Já verificado') val = "2";
+    if(status == 'Recusado') val = "3";
+    document.getElementById('inputDescricao').value = val;
+
+    const modal = new bootstrap.Modal(document.getElementById('editarModal'));
+    modal.show();
+}
+
+window.fecharDetalhes = fecharDetalhes;
