@@ -1,24 +1,18 @@
 <?php
+// Public/Api/saveUser.php
+ini_set('display_errors', 0);
 define('APP_RAN', true);
 session_start();
 header('Content-Type: application/json');
-require_once __DIR__ . '/../../Config/db.php'; // Ajuste caminhos se necessário
-require_once __DIR__ . '/../../App/Model/User.php';
-require_once __DIR__ . '/../../App/Controller/UserController.php';
+
+require_once __DIR__ . '/../../App/Controller/HousekeepingController.php';
 
 if (!isset($_SESSION['logged']) || $_SESSION['logged'] !== true) {
     echo json_encode(['success' => false, 'message' => 'Acesso negado']); exit;
 }
 
-$id = $_POST['userId'] ?? '';
-$name = $_POST['name'] ?? '';
-$nickname = $_POST['nickname'] ?? '';
-$email = $_POST['email'] ?? '';
-$rank = $_POST['rank'] ?? 2;
-$password = $_POST['password'] ?? '';
+// Passamos o $_POST inteiro para o Controller tratar
+$controller = new HousekeepingController();
+$response = $controller->saveUser($_POST);
 
-$controller = new UserController();
-$result = $controller->saveUserAdmin($id, $name, $nickname, $email, $rank, $password);
-
-echo json_encode($result);
-?>
+echo json_encode($response);

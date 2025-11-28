@@ -189,36 +189,6 @@ public function updatePresenceHousekeeping($userId, $codRegistro, $statusId, $da
         return ['success' => false, 'message' => 'Erro no Banco de Dados (SQL).'];
     }
 }
-public function saveUserAdmin($id, $name, $nickname, $email, $rank, $password) {
-    if (empty($name) || empty($nickname) || empty($email)) {
-        return ['success' => false, 'message' => 'Preencha os campos obrigatórios.'];
-    }
 
-    if (!empty($id)) {
-        // --- EDIÇÃO ---
-        // A senha é opcional na edição
-        if ($this->user->updateUserByAdmin($id, $name, $nickname, $email, $rank, $password)) {
-            return ['success' => true, 'message' => 'Usuário atualizado com sucesso.'];
-        }
-    } else {
-        // --- CRIAÇÃO ---
-        if (empty($password)) {
-            return ['success' => false, 'message' => 'Senha é obrigatória para novos usuários.'];
-        }
-        if ($this->user->createUserByAdmin($name, $nickname, $email, $rank, $password)) {
-            return ['success' => true, 'message' => 'Usuário criado com sucesso.'];
-        }
-    }
-
-    return ['success' => false, 'message' => 'Erro ao salvar no banco de dados.'];
-}
-
-// Deletar Usuário
-public function deleteUserAdmin($id) {
-    if ($this->user->softDeleteUser($id)) {
-        return ['success' => true, 'message' => 'Usuário inativado com sucesso.'];
-    }
-    return ['success' => false, 'message' => 'Erro ao inativar usuário.'];
-}
 }
 ?>

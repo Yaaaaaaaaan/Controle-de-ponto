@@ -70,15 +70,20 @@ function main() {
                     import('./USR/userInterface.js').then(module => module.initializeUserInterface());
                     import('./USR/settingsController.js').then(module => module.initSettingsController());
                     break;
+
+                // Admin no Housekeeping (Nomes de arquivo simplificados)
                 case 'page-hkg-dashboard':
-                    // Se um administrador acessar a página de admin
-                    import('./HKG/hkgInterface.js').then(module => module.initializeHkgInterface());
-                    import('./HKG/hkgController.js').then(module => module.initializeHkgController());
+                    // O dashboardController.js já se auto-inicializa, basta importar
+                    import('./HKG/dashboardController.js').then(() => {
+                        console.log("HKG Dashboard carregado");
+                    });
                     break;
+
                 case 'page-hkg-users':
-                    // Se um administrador acessar a página de admin
-                    import('./HKG/hkgInterface.js').then(module => module.initializeHkgInterface());
-                    import('./HKG/hkgController.js').then(module => module.initializeHkgController());
+                    // O userController.js já se auto-inicializa, basta importar
+                    import('./HKG/userController.js').then(() => {
+                        console.log("HKG Users carregado");
+                    });
                     break;
             }
         }
