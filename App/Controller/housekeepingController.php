@@ -83,5 +83,48 @@ class HousekeepingController {
 
         return ['success' => false, 'message' => 'Erro ao salvar no banco de dados.'];
     }
+    /**
+     * Retorna os dados para o gráfico e tabela do dashboard.
+     */
+    public function getDashboardStats() {
+        return $this->hkgModel->getDashboardData();
+    }
+
+    /**
+     * Processa a atualização de um registro de ponto.
+     */
+    public function updatePoint($cod, $statusId, $dateInput) {
+        // 1. Validação Básica
+        if (empty($cod) || empty($statusId) || empty($dateInput)) {
+            return ['success' => false, 'message' => 'Dados incompletos.'];
+        }
+
+        // 2. Mapeamento de Status (ID -> Texto)
+        $statusMap = [
+            '1' => 'Verificação pendente',
+            '2' => 'Já verificado',
+            '3' => 'Recusado'
+        ];
+        
+        // Se o ID não existir no mapa, usa o valor padrão
+        $statusText = $statusMap[$statusId] ?? 'Verificação pendente';
+
+        // 3. Formatação de Data (DD/MM/YYYY -> YYYY-MM-DD)
+        $dateFormatted = $dateInput;
+        if (strpos($dateInput, '/') !== false) {
+            $parts = explode('/', $dateInput);
+            if (count($parts) === 3) {
+                $dateFormatted = $parts[2] . '-' . $parts[1] . '-' . $parts[0];
+            }
+        }
+
+        // 4. Executa no Model
+        if ($this->hkgModel->updatePointStatus($cod, $statusText, $dateFormatted)) {
+            return ['success' => true, 'message' => 'Registro atualizado com sucesso.'];
+        }
+        
+        return ['success' => false, 'message' => 'Erro ao atualizar no banco de dados.'];
+    }
 }
+
 ?>

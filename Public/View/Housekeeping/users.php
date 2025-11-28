@@ -131,6 +131,5 @@ if ($userRank != 1) {
     </div>
 </div>
 
-<script type="module" src="../../JS/HKG/userController.js?v=<?php echo time(); ?>"></script>
 
 <?php require_once __DIR__ . "/../Layout/footer.php"; ?>

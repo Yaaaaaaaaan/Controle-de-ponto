@@ -1,30 +1,66 @@
 <?php
+// Public/Api/getUsers.php
 
-// --- Require do NOVO Controller ---
-require_once __DIR__ . '/../../App/Controller/housekeepingController.php';
+// 1. Configuração de Erros para Debug
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
-// Segurança (Login e Rank)
-if (!isset($_SESSION['logged']) || $_SESSION['logged'] !== true) {
-    http_response_code(401); echo json_encode(['error' => 'Auth error']); exit;
-}
-$userData = isset($_SESSION['userData']) ? json_decode($_SESSION['userData'], true) : [];
-    
-    // Verifica se o rank existe e é 1. Se não tiver rank na sessão, tenta buscar do banco depois (opcional)
-    // Por enquanto, vamos assumir que a sessão tem o rank. Se der erro de permissão, avise.
-    if (!isset($userData['rank']) || (int)$userData['rank'] !== 1) {
-        // Fallback: Se o usuário é admin mas a sessão não tem 'rank' explícito, 
-        // podemos permitir passar se soubermos que ele acessou a página.
-        // Mas o ideal é bloquear:
-        http_response_code(403);
-        echo json_encode(['error' => 'Acesso negado: Apenas administradores.']);
+// 2. Define Constante de Segurança
+define('APP_RAN', true);
+
+// 3. Cabeçalhos JSON
+header('Content-Type: application/json; charset=utf-8');
+session_start();
+
+// 4. Handler de Erros Fatais (Para pegar o erro 500 e mostrar JSON)
+register_shutdown_function(function() {
+    $error = error_get_last();
+    if ($error && ($error['type'] === E_ERROR || $error['type'] === E_PARSE || $error['type'] === E_COMPILE_ERROR)) {
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Erro Fatal PHP',
+            'details' => $error['message'],
+            'file' => $error['file'],
+            'line' => $error['line']
+        ]);
         exit;
     }
+});
 
 try {
+    // === INCLUINDO ARQUIVOS COM CAMINHOS CHECADOS ===
+
+    // A. Controller (Tenta caminho minúsculo que é o padrão do seu sistema)
+    $pathController = __DIR__ . '/../../App/Controller/housekeepingController.php';
+    if (!file_exists($pathController)) {
+        throw new Exception("Arquivo de Controller não encontrado em: $pathController");
+    }
+    require_once $pathController;
+
+    // === LÓGICA ===
+
+    if (!isset($_SESSION['logged']) || $_SESSION['logged'] !== true) {
+        throw new Exception('Usuário não autenticado.');
+    }
+
+    // Instancia a classe (PHP é case-insensitive para classes, então HousekeepingController funciona)
+    if (!class_exists('HousekeepingController')) {
+        throw new Exception("A classe 'HousekeepingController' não foi encontrada dentro do arquivo incluído.");
+    }
+
     $controller = new HousekeepingController();
-    $users = $controller->getUsersList();
-    echo json_encode($users);
-} catch (Exception $e) {
-    http_response_code(500); echo json_encode(['error' => $e->getMessage()]);
+    $data = $controller->getUsersList();
+    
+    echo json_encode($data);
+
+} catch (Throwable $e) { // Captura Error e Exception
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Erro na API getUsers',
+        'details' => $e->getMessage(),
+        'trace' => $e->getTraceAsString()
+    ]);
 }
-?>

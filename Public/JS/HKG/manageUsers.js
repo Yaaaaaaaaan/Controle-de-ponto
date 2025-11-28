@@ -1,4 +1,4 @@
-// Public/JS/HKG/manageUsers.js
+/*// Public/JS/HKG/manageUsers.js
 
 let allUsers = []; // Armazena a lista localmente para busca rápida
 
@@ -223,4 +223,4 @@ window.excluirUsuario = async function(id) {
         console.error(error);
         alert('Erro ao processar exclusão.');
     }
-}
+}*/

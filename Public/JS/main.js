@@ -1,5 +1,5 @@
 // ========================
-// 📁 Main.js
+// 📁 Main.js - Refatorado e Corrigido
 // ========================
 
 import { initializeUI } from './Cogs/UIManager.js';
@@ -21,75 +21,123 @@ function registerServiceWorker() {
 }
 
 function main() {
+    // Inicializa verificador de conexão globalmente
     initializeConnectionChecker();
 
     const pageId = document.body.id;
     const userType = document.body.dataset.userType;
 
-    // Lógica para páginas públicas
+    console.log(`[Main.js] Iniciando... Página: ${pageId}, Tipo Usuário: ${userType}`);
+
+    // --- Lógica para Páginas Públicas (Login/Registro) ---
     if (pageId === 'page-login' || pageId === 'page-register') {
         if (pageId === 'page-login') {
-            import('./IDX/authController.js').then(module => module.initializeAuthController());
+            import('./IDX/authController.js').then(module => {
+                if (typeof module.initializeAuthController === 'function') module.initializeAuthController();
+            }).catch(err => console.error("Erro ao carregar authController:", err));
         } else if (pageId === 'page-register') {
-            import('./IDX/registerController.js').then(module => module.initializeRegisterController());
+            import('./IDX/registerController.js').then(module => {
+                if (typeof module.initializeRegisterController === 'function') module.initializeRegisterController();
+            }).catch(err => console.error("Erro ao carregar registerController:", err));
         }
-    } else {
-        // Lógica para páginas autenticadas
-        initializeSyncController();
-        initializeUI();
+        return; // Sai da função para não executar lógica de usuário logado
+    }
 
-        // Carrega os módulos base, que podem ser necessários para todos os tipos de usuário
-        // dependendo da página em que eles estiverem.
+    // --- Lógica para Páginas Autenticadas (USR ou HKG) ---
+    
+    // Inicializa controladores globais
+    initializeSyncController();
+    initializeUI();
 
-        // Módulos específicos para páginas de usuário comum
-        if (userType === 'usr') {
-            switch (pageId) {
-                case 'page-dashboard':
-                    import('./USR/userInterface.js').then(module => module.initializeUserInterface());
-                    import('./USR/indexDashboard.js').then(module => module.initializeDashboard());
-                    import('./USR/userController.js').then(module => module.initializeController());
-                    break;
-                case 'page-settings':
-                    import('./USR/userInterface.js').then(module => module.initializeUserInterface());
-                    import('./USR/settingsController.js').then(module => module.initSettingsController());
-                    break;
-            }
+    // Roteamento dinâmico baseado no tipo de usuário e ID da página
+    
+    // === USUÁRIO COMUM (USR) ===
+    if (userType === 'usr') {
+        switch (pageId) {
+            case 'page-dashboard':
+                Promise.all([
+                    import('./USR/userInterface.js'),
+                    import('./USR/indexDashboard.js'),
+                    import('./USR/userController.js')
+                ]).then(([ui, dashboard, controller]) => {
+                    if (ui.initializeUserInterface) ui.initializeUserInterface();
+                    if (dashboard.initializeDashboard) dashboard.initializeDashboard();
+                    if (controller.initializeController) controller.initializeController();
+                }).catch(err => console.error("Erro ao carregar módulos USR:", err));
+                break;
+                
+            case 'page-settings':
+                Promise.all([
+                    import('./USR/userInterface.js'),
+                    import('./USR/settingsController.js')
+                ]).then(([ui, settings]) => {
+                    if (ui.initializeUserInterface) ui.initializeUserInterface();
+                    if (settings.initSettingsController) settings.initSettingsController();
+                }).catch(err => console.error("Erro ao carregar settings USR:", err));
+                break;
         }
+    }
 
-        // Módulos específicos para páginas de administrador
-        if (userType === 'hkg') {
-            switch (pageId) {
-                case 'page-dashboard':
-                    // Se um administrador acessar a página de dashboard de usuário
-                    import('./USR/userInterface.js').then(module => module.initializeUserInterface());
-                    import('./USR/indexDashboard.js').then(module => module.initializeDashboard());
-                    import('./USR/userController.js').then(module => module.initializeController());
-                    break;
-                case 'page-settings':
-                    // Se um administrador acessar a página de configurações
-                    import('./USR/userInterface.js').then(module => module.initializeUserInterface());
-                    import('./USR/settingsController.js').then(module => module.initSettingsController());
-                    break;
+    // === ADMINISTRADOR (HKG) ===
+    if (userType === 'hkg') {
+        switch (pageId) {
+            // Admin acessando Dashboard Pessoal (Reaproveita módulos USR)
+            case 'page-dashboard':
+                Promise.all([
+                    import('./USR/userInterface.js'),
+                    import('./USR/indexDashboard.js'),
+                    import('./USR/userController.js')
+                ]).then(([ui, dashboard, controller]) => {
+                    if (ui.initializeUserInterface) ui.initializeUserInterface();
+                    if (dashboard.initializeDashboard) dashboard.initializeDashboard();
+                    if (controller.initializeController) controller.initializeController();
+                });
+                break;
 
-                // Admin no Housekeeping (Nomes de arquivo simplificados)
-                case 'page-hkg-dashboard':
-                    // O dashboardController.js já se auto-inicializa, basta importar
-                    import('./HKG/dashboardController.js').then(() => {
-                        console.log("HKG Dashboard carregado");
-                    });
-                    break;
+            // Admin acessando Configurações Pessoais (Reaproveita módulos USR)
+            case 'page-settings':
+                Promise.all([
+                    import('./USR/userInterface.js'),
+                    import('./USR/settingsController.js')
+                ]).then(([ui, settings]) => {
+                    if (ui.initializeUserInterface) ui.initializeUserInterface();
+                    if (settings.initSettingsController) settings.initSettingsController();
+                });
+                break;
 
-                case 'page-hkg-users':
-                    // O userController.js já se auto-inicializa, basta importar
-                    import('./HKG/userController.js').then(() => {
-                        console.log("HKG Users carregado");
-                    });
-                    break;
-            }
+            // Admin acessando Painel de Controle (Housekeeping Dashboard)
+            case 'page-hkg-dashboard':
+                console.log("[Main.js] Carregando módulo HKG Dashboard...");
+                import('./HKG/dashboardController.js')
+                    .then(module => {
+                        console.log("[Main.js] Módulo Dashboard carregado. Iniciando...");
+                        // Chama a função init() que exportamos explicitamente
+                        if (module.init) module.init();
+                        else console.warn("[Main.js] Aviso: Função init() não encontrada em dashboardController.js");
+                    })
+                    .catch(err => console.error("[Main.js] Erro ao carregar dashboardController:", err));
+                break;
+
+            // Admin acessando Gerenciamento de Usuários
+            case 'page-hkg-users':
+                console.log("[Main.js] Carregando módulo HKG Users...");
+                import('./HKG/userController.js')
+                    .then(module => {
+                        console.log("[Main.js] Módulo Users carregado. Iniciando...");
+                        // Chama a função init() que exportamos explicitamente
+                        if (module.init) module.init(); 
+                        else console.warn("[Main.js] Aviso: Função init() não encontrada em userController.js");
+                    })
+                    .catch(err => console.error("[Main.js] Erro ao carregar userController:", err));
+                break;
+                
+            default:
+                console.warn(`[Main.js] Nenhuma rota definida para pageId: ${pageId} no modo Admin.`);
         }
     }
 }
 
+// Inicializa tudo quando o DOM estiver pronto
 document.addEventListener('DOMContentLoaded', () => {
     registerServiceWorker();
     main();

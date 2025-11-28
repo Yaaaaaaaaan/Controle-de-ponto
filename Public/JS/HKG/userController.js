@@ -72,7 +72,7 @@ function setupEventListeners() {
     }
 }
 
-async function handleFormSubmit(event) {
+export async function handleFormSubmit(event) {
     event.preventDefault();
     const form = event.target;
     const formData = new FormData(form);
@@ -90,7 +90,7 @@ async function handleFormSubmit(event) {
     }
 }
 
-async function handleDelete(id) {
+export async function handleDelete(id) {
     if (!confirm('Atenção: O usuário perderá acesso ao sistema. Continuar?')) return;
     try {
         await UserService.deleteUser(id);

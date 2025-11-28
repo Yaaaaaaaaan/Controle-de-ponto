@@ -3,30 +3,21 @@
 
 if (!defined('APP_RAN')) { die('Acesso não permitido'); }
 
-class Housekeeping {
+class Housekeeping { // Classe com H Maiúsculo (Padrão PSR, mas PHP aceita variações)
     private $conn;
-    private $table = 'registros_ponto';
-    private $$tableUsers = 'usuarios';
+    private $table = 'usuarios'; // Verifique se o nome da tabela no banco é 'usuarios' ou 'users'
 
     public function __construct($db) {
         $this->conn = $db;
     }
 
-    /**
-     * Lista todos os usuários ativos (is_inactive = 0)
-     * e junta com a foto de perfil atual.
-     */
     public function getAllUsers() {
-        $query = "SELECT 
-                    u.id_usuario, 
-                    u.nome_completo, 
-                    u.nome_usuario, 
-                    u.email, 
-                    u.nivel_acesso, 
-                    u.tema_padrao,
-                    f.caminho_arquivo as foto_perfil
-                  FROM " . $this->table . " u
-                  LEFT JOIN " . $this->tablePics . " f ON u.id_usuario = f.id_usuario AND f.perfil = 1
+        // Verifica se a coluna is_inactive existe. Se não existir, vai dar erro no execute().
+        // query segura
+        $query = "SELECT u.id_usuario, u.nome_completo, u.nome_usuario, u.email, u.nivel_acesso, 
+                         f.caminho_arquivo as foto_perfil
+                  FROM usuarios u
+                  LEFT JOIN fotos f ON u.id_usuario = f.id_usuario AND f.perfil = 1
                   WHERE u.is_inactive = 0 
                   ORDER BY u.nome_completo ASC";
 
@@ -35,8 +26,8 @@ class Housekeeping {
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            error_log("HKG Model Error (getAllUsers): " . $e->getMessage());
-            return false;
+            // Retorna o erro para ser capturado pelo controller
+            throw new Exception("Erro SQL: " . $e->getMessage());
         }
     }
 
@@ -118,6 +109,52 @@ class Housekeeping {
         } catch (Exception $e) {
             $this->conn->rollBack();
             error_log("HKG Model Error (update): " . $e->getMessage());
+            return false;
+        }
+    }
+    /**
+     * Busca dados para o Dashboard (Gráfico e Tabela Detalhada).
+     * Junta registros de ponto com dados do usuário.
+     */
+    public function getDashboardData() {
+        // Assume que a tabela de registros é 'registros_ponto'
+        // Se for outra, ajuste aqui (ex: $this->tableRegistros)
+        $query = "SELECT 
+                    r.registro_id as cod, 
+                    r.data_registro as dateIn, 
+                    r.status as status, 
+                    u.id_usuario as userId,
+                    u.nome_completo as nome
+                  FROM registros_ponto r
+                  INNER JOIN usuarios u ON r.id_usuario = u.id_usuario
+                  ORDER BY r.data_registro DESC";
+
+        try {
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("HKG Dashboard Error: " . $e->getMessage());
+            return []; // Retorna array vazio em caso de erro para não quebrar o JS
+        }
+    }
+
+    /**
+     * Atualiza o status e a data de um registro de ponto específico.
+     */
+    public function updatePointStatus($cod, $statusText, $newDate) {
+        $query = "UPDATE registros_ponto 
+                  SET status = :status, data_registro = :data 
+                  WHERE registro_id = :cod";
+
+        try {
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindValue(':status', $statusText);
+            $stmt->bindValue(':data', $newDate);
+            $stmt->bindValue(':cod', $cod);
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log("HKG Update Point Error: " . $e->getMessage());
             return false;
         }
     }

@@ -1,4 +1,4 @@
-// Variáveis globais
+/*// Variáveis globais
 let labels = [];
 let dataPoints = [];
 let detalhes = {};
@@ -297,4 +297,4 @@ window.editarRegistro = function(cod, nome, data, status, userId) {
     modal.show();
 }
 
-window.fecharDetalhes = fecharDetalhes;
+window.fecharDetalhes = fecharDetalhes;*/
