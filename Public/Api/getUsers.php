@@ -1,7 +1,7 @@
 <?php
 
 // --- Require do NOVO Controller ---
-require_once __DIR__ . '/../../App/Controller/HousekeepingController.php';
+require_once __DIR__ . '/../../App/Controller/housekeepingController.php';
 
 // Segurança (Login e Rank)
 if (!isset($_SESSION['logged']) || $_SESSION['logged'] !== true) {

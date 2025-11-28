@@ -4,7 +4,7 @@
 if (!defined('APP_RAN')) { die('Acesso não permitido'); }
 
 require_once __DIR__ . '/../Config/db.php';
-require_once __DIR__ . '/../Model/Housekeeping.php';
+require_once __DIR__ . '/../Model/housekeeping.php';
 
 class HousekeepingController {
     private $hkgModel;

@@ -5,8 +5,8 @@ if (!defined('APP_RAN')) { die('Acesso não permitido'); }
 
 class Housekeeping {
     private $conn;
-    private $table = 'usuarios';
-    private $tablePics = 'fotos';
+    private $table = 'registros_ponto';
+    private $$tableUsers = 'usuarios';
 
     public function __construct($db) {
         $this->conn = $db;

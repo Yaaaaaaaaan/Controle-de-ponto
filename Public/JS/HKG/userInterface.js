@@ -1,4 +1,4 @@
-import { handleUserSubmit, handleDeleteUser } from './userController.js';
+import { handleFormSubmit, handleDelete } from './userController.js';
 let _localUsersData = [];
 
 export function renderTable(users) {

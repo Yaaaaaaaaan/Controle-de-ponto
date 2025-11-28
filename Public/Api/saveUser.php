@@ -5,7 +5,7 @@ define('APP_RAN', true);
 session_start();
 header('Content-Type: application/json');
 
-require_once __DIR__ . '/../../App/Controller/HousekeepingController.php';
+require_once __DIR__ . '/../../App/Controller/housekeepingController.php';
 
 if (!isset($_SESSION['logged']) || $_SESSION['logged'] !== true) {
     echo json_encode(['success' => false, 'message' => 'Acesso negado']); exit;

@@ -4,7 +4,7 @@ define('APP_RAN', true);
 session_start();
 header('Content-Type: application/json');
 
-require_once __DIR__ . '/../../App/Controller/UserController.php';
+require_once __DIR__ . '/../../App/Controller/userController.php';
 
 // 1. Verificação de Segurança (Apenas Admin)
 if (!isset($_SESSION['logged']) || $_SESSION['logged'] !== true) {
